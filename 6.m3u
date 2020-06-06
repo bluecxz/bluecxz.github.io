@@ -1,4 +1,6 @@
 #EXTM3U
+#EXTINF:-1 ,====== $c_star荒野间谍第一季$c_end ======
+http://0/0.m3u8
 EXTINF:-1 group-title="荒野间谍第一季",第01集
 https://youku.cdn3-okzy.com/20200313/7378_466819bd/index.m3u8
 EXTINF:-1 group-title="荒野间谍第一季",第02集
