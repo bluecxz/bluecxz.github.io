@@ -1,23 +1,19 @@
 #EXTM3U
 #EXTINF:-1 group-title="厦门电视",厦门一套
-http://cstvpull.live.wscdns.com/live/xiamen1.flv,http://112.50.243.7/PLTV/88888888/224/3221226814/2.m3u8
+http://cstvpull.live.wscdns.com/live/xiamen1.flv
 
 
 #EXTINF:-1 group-title="厦门电视" ,厦门二套
-http://cstvpull.live.wscdns.com/live/xiamen2.flv;http://112.50.243.7/PLTV/88888888/224/3221226777/1.m3u8
+http://cstvpull.live.wscdns.com/live/xiamen2.flv
 
 #EXTINF:-1 group-title="厦门电视" ,厦门三套
 http://cstvpull.live.wscdns.com/live/xiamen3.flv
-#EXTINF:-1 group-title="厦门电视" ,厦门三套
-http://112.50.243.7/PLTV/88888888/224/3221226760/2.m3u8
-#EXTINF:-1 group-title="厦门电视" ,厦门三套
-http://cstv.live.wscdns.com/live/xiamen3/playlist.m3u8
+
 #EXTINF:-1 group-title="厦门电视" ,厦门四套
 http://112.50.243.7/PLTV/88888888/224/3221226764/2.m3u8
 #EXTINF:-1 group-title="厦门电视" ,厦门卫视
 http://cstvpull.live.wscdns.com/live/xiamen.flv
-#EXTINF:-1 group-title="厦门电视" ,厦门卫视
-http://cstv.live.wscdns.com/live/xiamen/playlist.m3u8
+
 #EXTINF:-1 group-title="厦门电视" ,厦门移动电视
 http://cstvpull.live.wscdns.com/live/xiamenyidong.flv
 #EXTINF:-1 group-title="央视" ,CCTV-1
