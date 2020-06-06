@@ -1,83 +1,81 @@
 #EXTM3U
-
-
-#EXTINF:-1  group-title="荒野间谍第一季",第01集
+#EXTINF:-1 group-title="荒野间谍第一季",第01集
 https://youku.cdn3-okzy.com/20200313/7378_466819bd/index.m3u8
-#EXTINF:-1  group-title="荒野间谍第一季", 第02集
+#EXTINF:-1 group-title="荒野间谍第一季",第02集
 https://youku.cdn3-okzy.com/20200313/7379_8cbe4b12/index.m3u8
-#EXTINF:-1  group-title="荒野间谍第一季",第03集
+#EXTINF:-1 group-title="荒野间谍第一季",第03集
 https://youku.cdn3-okzy.com/20200313/7380_aaa27d9d/index.m3u8
-#EXTINF:-1  group-title="荒野间谍第一季", 第04集
+#EXTINF:-1 group-title="荒野间谍第一季",第04集
 https://youku.cdn3-okzy.com/20200313/7381_6d1755a2/index.m3u8
-#EXTINF:-1  group-title="荒野间谍第一季", 第05集
+#EXTINF:-1 group-title="荒野间谍第一季",第05集
 https://youku.cdn3-okzy.com/20200313/7384_d196a367/index.m3u8
 
 
-#EXTINF:-1  group-title="荒野间谍第二季",第01集
+#EXTINF:-1 group-title="荒野间谍第二季",第01集
 https://iqiyi.cdn8-okzy.com/20200424/8491_4764ea5d/index.m3u8
-#EXTINF:-1  group-title="荒野间谍第二季",第02集
+#EXTINF:-1 group-title="荒野间谍第二季",第02集
 https://iqiyi.cdn8-okzy.com/20200424/8492_e8879d0e/index.m3u8
-#EXTINF:-1  group-title="荒野间谍第二季",第03集
+#EXTINF:-1 group-title="荒野间谍第二季",第03集
 https://iqiyi.cdn8-okzy.com/20200424/8493_87a2c0f0/index.m3u8
-#EXTINF:-1  group-title="荒野间谍第二季",第04集
+#EXTINF:-1 group-title="荒野间谍第二季",第04集
 https://iqiyi.cdn8-okzy.com/20200424/8494_5f2e02c0/index.m3u8
 
 
-#EXTINF:-1  group-title="花开中国",第01集
+#EXTINF:-1 group-title="花开中国",第01集
 https://iqiyi.cdn26-okzy.com/20200525/12665_f67be7c2/index.m3u8
-#EXTINF:-1  group-title="花开中国" ,第02集
+#EXTINF:-1 group-title="花开中国",第02集
 https://iqiyi.cdn26-okzy.com/20200525/12666_de833029/index.m3u8
-#EXTINF:-1  group-title="花开中国" ,第03集
+#EXTINF:-1 group-title="花开中国",第03集
 https://iqiyi.cdn26-okzy.com/20200525/12667_c520a310/index.m3u8
-#EXTINF:-1  group-title="花开中国",第04集
+#EXTINF:-1 group-title="花开中国",第04集
 https://iqiyi.cdn26-okzy.com/20200525/12668_8c768a23/index.m3u8
-#EXTINF:-1  group-title="花开中国",第05集
+#EXTINF:-1 group-title="花开中国",第05集
 https://iqiyi.cdn26-okzy.com/20200525/12669_76859487/index.m3u8
 
 
-#EXTINF:-1  group-title="中华老字号",第01集
+#EXTINF:-1 group-title="中华老字号",第01集
 https://iqiyi.cdn26-okzy.com/20200527/13150_a9c010e5/index.m3u8
-#EXTINF:-1  group-title="中华老字号",第02集
+#EXTINF:-1 group-title="中华老字号",第02集
 https://iqiyi.cdn26-okzy.com/20200527/13151_c633265d/index.m3u8
-#EXTINF:-1  group-title="中华老字号",第03集
+#EXTINF:-1 group-title="中华老字号",第03集
 https://iqiyi.cdn26-okzy.com/20200527/13152_ddce20bc/index.m3u8
-#EXTINF:-1  group-title="中华老字号",第04集
+#EXTINF:-1 group-title="中华老字号",第04集
 https://iqiyi.cdn26-okzy.com/20200527/13153_350e355e/index.m3u8
-#EXTINF:-1  group-title="中华老字号",第05集
+#EXTINF:-1 group-title="中华老字号",第05集
 https://iqiyi.cdn26-okzy.com/20200527/13154_554f08b4/index.m3u8
-#EXTINF:-1  group-title="中华老字号",第06集
+#EXTINF:-1 group-title="中华老字号",第06集
 https://iqiyi.cdn26-okzy.com/20200527/13155_f1bd0cad/index.m3u8
 
 
 
 
-#EXTINF:-1  group-title="航拍中国第三季" ,第01集
+#EXTINF:-1 group-title="航拍中国第三季" ,第01集
 https://youku.cdn4-okzy.com/20200522/7446_9552979b/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季",第02集
+#EXTINF:-1 group-title="航拍中国第三季",第02集
 https://iqiyi.cdn9-okzy.com/20200523/10477_df2c7a44/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季",第03集
+#EXTINF:-1 group-title="航拍中国第三季",第03集
 https://youku.cdn4-okzy.com/20200528/7573_938a842d/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季" ,第04集
+#EXTINF:-1 group-title="航拍中国第三季" ,第04集
 https://youku.cdn4-okzy.com/20200528/7574_4119c7b1/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季" ,第05集
+#EXTINF:-1 group-title="航拍中国第三季" ,第05集
 https://youku.cdn4-okzy.com/20200528/7575_7c3f39b3/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季" ,第06集
+#EXTINF:-1 group-title="航拍中国第三季" ,第06集
 https://youku.cdn4-okzy.com/20200528/7576_088156c9/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季" ,第07集
+#EXTINF:-1 group-title="航拍中国第三季" ,第07集
 https://youku.cdn4-okzy.com/20200528/7577_bca701b7/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季" ,第08集
+#EXTINF:-1 group-title="航拍中国第三季" ,第08集
 https://youku.cdn4-okzy.com/20200531/7623_9235a586/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季" ,第09集
+#EXTINF:-1 group-title="航拍中国第三季" ,第09集
 https://youku.cdn4-okzy.com/20200531/7624_9b381187/index.m3u8
-#EXTINF:-1  group-title="航拍中国第三季" ,第10集
+#EXTINF:-1 group-title="航拍中国第三季" ,第10集
 https://youku.cdn4-okzy.com/20200531/7625_be4515af/index.m3u8
 
 
-#EXTINF:-1  group-title="从太空看地球" ,第01集
+#EXTINF:-1 group-title="从太空看地球" ,第01集
 https://iqiyi.cdn26-okzy.com/20200530/14220_4e9b1e61/index.m3u8
-#EXTINF:-1  group-title="从太空看地球" ,第02集
+#EXTINF:-1 group-title="从太空看地球" ,第02集
 https://iqiyi.cdn26-okzy.com/20200530/14221_4d56a01c/index.m3u8
-#EXTINF:-1  group-title="从太空看地球" ,第03集
+#EXTINF:-1 group-title="从太空看地球" ,第03集
 https://iqiyi.cdn26-okzy.com/20200530/14222_e2614cd5/index.m3u8
-#EXTINF:-1  group-title="从太空看地球" ,第04集
+#EXTINF:-1 group-title="从太空看地球" ,第04集
 https://iqiyi.cdn26-okzy.com/20200530/14223_82a1fe4d/index.m3u8
