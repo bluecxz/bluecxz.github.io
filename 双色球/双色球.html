@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>双色球预测系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .input-group { margin: 10px 0; }
+        button { padding: 8px 15px; margin: 5px; cursor: pointer; }
+        .chart-container { width: 80%; margin: 20px auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 数据输入区 -->
+        <div class="section">
+            <h3>历史数据录入</h3>
+            <div class="input-group">
+                红球（逗号分隔）：<input type="text" id="redInput">
+                蓝球：<input type="number" id="blueInput" min="1" max="16">
+                <button onclick="addHistory()">添加数据</button>
+                <button onclick="loadSampleData()">加载示例数据</button>
+            </div>
+        </div>
+ 
+        <!-- 预测控制区 -->
+        <div class="section">
+            <h3>号码生成</h3>
+            <button onclick="generate('random')">随机生成</button>
+            <button onclick="generate('frequency')">频率生成</button>
+            <button onclick="generate('balanced')">均衡生成</button>
+            <button onclick="generate('smart')">智能生成</button>
+            生成组数：<input type="number" id="genCount" value="5" min="1" style="width:60px">
+        </div>
+ 
+        <!-- 结果显示区 -->
+        <div class="section">
+            <h3>预测结果</h3>
+            <div id="results"></div>
+        </div>
+ 
+        <!-- 统计图表区 -->
+        <div class="section">
+            <h3>统计分析</h3>
+            <div class="chart-container">
+                <canvas id="redChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="blueChart"></canvas>
+            </div>
+        </div>
+    </div>
+ 
+<script>
+// 数据存储对象
+const predictor = {
+    redBalls: Array.from({length:33}, (_,i)=>i+1),
+    blueBalls: Array.from({length:16}, (_,i)=>i+1),
+    history: JSON.parse(localStorage.getItem('lotteryData')) || [],
+    redFreq: {},
+    blueFreq: {},
+ 
+    // 初始化频率统计
+    initFreq() {
+        this.redFreq = this.history.reduce((acc, [red]) => {
+            red.forEach(n => acc[n] = (acc[n] || 0) + 1);
+            return acc;
+        }, {});
+         
+        this.blueFreq = this.history.reduce((acc, [,blue]) => {
+            acc[blue] = (acc[blue] || 0) + 1;
+            return acc;
+        }, {});
+    },
+ 
+    // 添加历史数据
+    addData(red, blue) {
+        const redNumbers = red.map(Number).sort((a,b) => a-b);
+        if(new Set(redNumbers).size !==6 || redNumbers.some(n => n<1 || n>33)) {
+            alert('红球必须为6个1-33的不重复数字');
+            return false;
+        }
+        if(blue<1 || blue>16) {
+            alert('蓝球必须为1-16之间的数字');
+            return false;
+        }
+         
+        this.history.push([redNumbers, blue]);
+        localStorage.setItem('lotteryData', JSON.stringify(this.history));
+        this.initFreq();
+        return true;
+    },
+ 
+    // 生成方法集合
+    generate(method='random') {
+        const methods = {
+            random: () => this.randomGenerate(),
+            frequency: () => this.freqGenerate(),
+            balanced: () => this.balancedGenerate(),
+            smart: () => this.smartGenerate()
+        };
+        return methods[method]();
+    },
+ 
+    // 随机生成
+    randomGenerate() {
+        const red = [...this.redBalls].sort(() => Math.random()-.5).slice(0,6).sort((a,b)=>a-b);
+        const blue = this.blueBalls[Math.floor(Math.random()*16)];
+        return [red, blue];
+    },
+ 
+    // 频率生成
+    freqGenerate() {
+        const redCandidates = Object.entries(this.redFreq)
+            .sort((a,b) => b[1]-a[1])
+            .slice(0,20)
+            .map(([n]) => +n);
+             
+        const red = this.selectUnique(redCandidates,6);
+        const blue = this.selectBlueByFreq();
+        return [red, blue];
+    },
+ 
+    // 均衡生成
+    balancedGenerate() {
+        const ranges = [[1,11], [12,22], [23,33]];
+        let red = [];
+        ranges.forEach(([start,end]) => {
+            const candidates = this.redBalls.filter(n => n>=start && n<=end);
+            red.push(...this.selectUnique(candidates,2));
+        });
+        return [red.sort((a,b)=>a-b), Math.floor(Math.random()*8)+5];
+    },
+ 
+    // 智能生成（加权算法）
+    smartGenerate() {
+        const recentFreq = this.getRecentFreq(20);
+        const redWeights = this.redBalls.map(n => 
+            (this.redFreq[n] || 0)*0.6 + recentFreq[n]*0.4
+        );
+         
+        const red = this.selectByWeight(redWeights,6);
+        const blue = this.balancedBlueSelect();
+        return [red, blue];
+    },
+ 
+    // 辅助方法
+    selectUnique(arr, count) {
+        let selected = [];
+        while(selected.length < count) {
+            const pool = arr.filter(n => !selected.includes(n));
+            if(pool.length ===0) break;
+            selected.push(pool[Math.floor(Math.random()*pool.length)]);
+        }
+        return selected.sort((a,b)=>a-b);
+    },
+ 
+    getRecentFreq(lookback=20) {
+        const recent = this.history.slice(-lookback);
+        return this.redBalls.reduce((acc, n) => {
+            acc[n] = recent.filter(([red]) => red.includes(n)).length;
+            return acc;
+        }, {});
+    },
+ 
+    balancedBlueSelect() {
+        const sorted = Object.entries(this.blueFreq).sort((a,b) => a[1]-b[1]);
+        const split = Math.floor(sorted.length*0.3);
+        const cold = sorted.slice(0,split).map(([n]) => +n);
+        const hot = sorted.slice(-split).map(([n]) => +n);
+        const candidates = [...cold, ...hot];
+        return candidates[Math.floor(Math.random()*candidates.length)] || this.randomGenerate()[1];
+    }
+};
+ 
+// 图表实例
+let redChart, blueChart;
+ 
+// 界面操作函数
+function addHistory() {
+    const redInput = document.getElementById('redInput').value;
+    const blue = +document.getElementById('blueInput').value;
+     
+    const red = redInput.split(',').map(n => parseInt(n.trim()));
+    if(predictor.addData(red, blue)) {
+        updateCharts();
+        document.getElementById('redInput').value = '';
+        document.getElementById('blueInput').value = '';
+    }
+}
+ 
+function generate(method) {
+    const count = +document.getElementById('genCount').value;
+    let html = '<div class="results">';
+     
+    for(let i=0; i<count; i++) {
+        const [red, blue] = predictor.generate(method);
+        html += `<div>第 ${i+1} 组: 
+            红球 ${red.join(', ')} | 
+            蓝球 <span style="color:blue">${blue}</span>
+        </div>`;
+    }
+     
+    document.getElementById('results').innerHTML = html;
+}
+ 
+function updateCharts() {
+    // 红球图表
+    const redData = predictor.redBalls.map(n => predictor.redFreq[n] || 0);
+    if(redChart) redChart.destroy();
+    redChart = new Chart(document.getElementById('redChart'), {
+        type: 'bar',
+        data: {
+            labels: predictor.redBalls,
+            datasets: [{
+                label: '红球出现次数',
+                data: redData,
+                backgroundColor: 'rgba(255,99,132,0.5)'
+            }]
+        }
+    });
+ 
+    // 蓝球图表
+    const blueData = predictor.blueBalls.map(n => predictor.blueFreq[n] || 0);
+    if(blueChart) blueChart.destroy();
+    blueChart = new Chart(document.getElementById('blueChart'), {
+        type: 'bar',
+        data: {
+            labels: predictor.blueBalls,
+            datasets: [{
+                label: '蓝球出现次数',
+                data: blueData,
+                backgroundColor: 'rgba(54,162,235,0.5)'
+            }]
+        }
+    });
+}
+ 
+// 初始化加载
+predictor.initFreq();
+updateCharts();
+ 
+// 示例数据加载
+function loadSampleData() {
+    for(let i=0; i<50; i++) {
+        const red = [...predictor.redBalls]
+            .sort(() => Math.random()-0.5)
+            .slice(0,6)
+            .sort((a,b) => a-b);
+        const blue = Math.floor(Math.random()*16)+1;
+        predictor.addData(red, blue);
+    }
+    updateCharts();
+}
+</script>
+</body>
+</html>
