@@ -544,5 +544,45 @@
     </div>
 
     <script src="js/Quiz.js"></script>
+
+    <!-- 自动导入同目录下的 list.xlsx (其他功能不变) -->
+    <script>
+        (function() {
+            // 等待页面和所有脚本加载完成后执行，确保 fileInput 存在且事件监听已绑定
+            window.addEventListener('load', function() {
+                // 尝试获取 list.xlsx 文件
+                fetch('list.xlsx')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('文件不存在或无法访问 (HTTP ' + response.status + ')');
+                        }
+                        return response.arrayBuffer();
+                    })
+                    .then(arrayBuffer => {
+                        // 创建一个 File 对象
+                        const file = new File([arrayBuffer], 'list.xlsx', { 
+                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                        });
+                        
+                        const fileInput = document.getElementById('fileInput');
+                        if (!fileInput) return;
+
+                        // 使用 DataTransfer 模拟文件选择
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+
+                        // 触发 change 事件，通知 Quiz.js 处理导入
+                        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                        console.log('自动导入 list.xlsx 成功');
+                    })
+                    .catch(err => {
+                        // 静默失败，不干扰用户手动操作
+                        console.log('自动导入 list.xlsx 失败 (不影响手动导入):', err.message);
+                    });
+            });
+        })();
+    </script>
 </body>
 </html>
