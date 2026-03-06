@@ -2,119 +2,17 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>考试题库练习系统 · 移动优化版</title>
-    <!-- 注意：tailwindcss.min.js 并非标准样式，但保留以兼容原有环境；同时添加内联样式增强移动端适配 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考试题库练习系统</title>
     <script src="css/tailwindcss.min.js"></script>
     <script src="js/xlsx.full.min.js"></script>
     <script src="js/qrcode.min.js"></script>
-    <style>
-        /* 移动端竖屏优化：增大触摸区域，调整间距，优化进度格子 */
-        @media (max-width: 640px) {
-            /* 所有按钮增加最小高度，方便手指点按 */
-            button {
-                min-height: 44px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-            }
-            /* 文件操作行按钮适当缩小文字，但保留触摸区域 */
-            #importBtn, #exportBtn, #templateBtn, #resetBtn, #showQRCodeBtn {
-                font-size: 0.8rem;
-                padding-top: 0.5rem;
-                padding-bottom: 0.5rem;
-            }
-            /* 模式按钮内部文字微调 */
-            #practiceBtn, #randomPracticeBtn, #examBtn, #wrongQuestionsBtn {
-                font-size: 0.85rem;
-                white-space: nowrap;
-            }
-            /* 题目进度指示器方块：更紧凑，一行显示更多 */
-            #questionProgress button,
-            #questionProgress a,
-            #questionProgress div[class*="progress"] {
-                width: 2.2rem !important;
-                height: 2.2rem !important;
-                font-size: 0.75rem !important;
-                line-height: 2.2rem !important;
-                margin: 0.15rem !important;
-                border-radius: 0.375rem !important;
-                flex-shrink: 0;
-            }
-            /* 进度容器最大高度降低，避免占据太多屏幕 */
-            #questionProgress {
-                max-height: 200px !important;
-            }
-            /* 开关按钮微调，更贴合手指 */
-            .toggle-switch label {
-                width: 2.8rem !important;
-                height: 1.5rem !important;
-            }
-            .toggle-switch .toggle-slider {
-                width: 1.2rem !important;
-                height: 1.2rem !important;
-            }
-            /* 题目选项区域文字适当缩小，防止换行混乱 */
-            #optionsArea label {
-                font-size: 0.9rem;
-                padding: 0.4rem 0;
-            }
-            /* 模态框内容内边距优化 */
-            .p-4, .p-6 {
-                padding: 0.75rem !important;
-            }
-            /* 考试设置选项卡字体 */
-            #tabByType, #tabByDomain {
-                font-size: 0.9rem;
-                padding: 0.5rem 0.75rem;
-            }
-            /* 确保任何按钮不溢出屏幕 */
-            .container {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-            /* 题型过滤标签紧凑 */
-            #questionTypeFilter label span {
-                font-size: 0.75rem;
-            }
-            /* 已导入题库信息文字 */
-            #importedFileInfo span, #importedFileInfo div {
-                font-size: 0.75rem;
-            }
-        }
-        /* 额外：保证所有模态框在小屏上边缘有间距 */
-        @media (max-width: 480px) {
-            .fixed .bg-white {
-                width: 95% !important;
-                margin: 0 auto;
-            }
-        }
-        /* 保持开关原有功能（样式由js控制，我们只调整尺寸，不干预逻辑） */
-        .toggle-switch input:checked + label {
-            background-color: #4f46e5; /*  fallback，但具体由js处理 */
-        }
-        /* 滑块动画基础，不影响js交互 */
-        .toggle-switch label {
-            transition: background-color 0.2s;
-        }
-        .toggle-switch .toggle-slider {
-            transition: transform 0.2s;
-        }
-        /* 确保进度指示器容器可以滚动 */
-        #questionProgress {
-            overflow-y: auto;
-            display: flex;
-            flex-wrap: wrap;
-            align-content: flex-start;
-            gap: 0.25rem;
-        }
-    </style>
 </head>
-<body class="bg-gray-100 antialiased">
+<body class="bg-gray-100">
     <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <h1 class="text-xl sm:text-3xl font-bold text-center mb-4 sm:mb-8">考试题库练习系统</h1>
         
-        <!-- 第一行：文件操作按钮 (保留原有flex-wrap，移动端已通过全局样式优化触摸) -->
+        <!-- 第一行：文件操作按钮 -->
         <div class="flex flex-wrap gap-2 sm:gap-3 mb-3 sm:mb-4 justify-center">
             <button id="importBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[80px] sm:min-w-[100px]">
                 导入题库
@@ -181,41 +79,37 @@
             </div>
         </div>
         
-        <!-- 第三行：模式选择和开关 (移动端改为两列网格，确保按钮易点) -->
+        <!-- 第三行：模式选择和开关 -->
         <div class="flex flex-col gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <!-- 模式按钮容器：小屏两列，sm以上恢复flex一行 -->
-            <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 justify-center">
-                <!-- 顺序练习 -->
-                <div class="flex flex-col items-center w-full sm:w-auto">
-                    <button id="practiceBtn" class="bg-purple-500 hover:bg-purple-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[90px] sm:min-w-[120px] w-full sm:w-auto">
+            <!-- 模式按钮 -->
+            <div class="flex flex-wrap gap-2 sm:gap-3 justify-center">
+                <div class="flex flex-col items-center">
+                    <button id="practiceBtn" class="bg-purple-500 hover:bg-purple-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[90px] sm:min-w-[120px]">
                         顺序练习
                     </button>
                     <div id="practiceModeIndicator" class="w-20 sm:w-24 h-1 bg-purple-500 mt-1 hidden"></div>
                 </div>
-                <!-- 随机练习 -->
-                <div class="flex flex-col items-center w-full sm:w-auto">
-                    <button id="randomPracticeBtn" class="bg-teal-500 hover:bg-teal-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[90px] sm:min-w-[120px] w-full sm:w-auto">
+                <div class="flex flex-col items-center">
+                    <button id="randomPracticeBtn" class="bg-teal-500 hover:bg-teal-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[90px] sm:min-w-[120px]">
                         随机练习
                     </button>
                     <div id="randomPracticeModeIndicator" class="w-20 sm:w-24 h-1 bg-teal-500 mt-1 hidden"></div>
                 </div>
-                <!-- 考试模式 -->
-                <div class="flex flex-col items-center w-full sm:w-auto">
-                    <button id="examBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[90px] sm:min-w-[120px] w-full sm:w-auto">
+                <div class="flex flex-col items-center">
+                    <button id="examBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[90px] sm:min-w-[120px]">
                         考试模式
                     </button>
                     <div id="examModeIndicator" class="w-20 sm:w-24 h-1 bg-indigo-500 mt-1 hidden"></div>
                 </div>
-                <!-- 查看错题集 -->
-                <div class="flex flex-col items-center w-full sm:w-auto">
-                    <button id="wrongQuestionsBtn" class="bg-red-500 hover:bg-red-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[90px] sm:min-w-[120px] w-full sm:w-auto">
+                <div class="flex flex-col items-center">
+                    <button id="wrongQuestionsBtn" class="bg-red-500 hover:bg-red-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base min-w-[90px] sm:min-w-[120px]">
                         查看错题集
                     </button>
                     <div id="wrongQuestionsModeIndicator" class="w-20 sm:w-24 h-1 bg-red-500 mt-1 hidden"></div>
                 </div>
             </div>
             
-            <!-- 开关选项 (保留原有flex-wrap) -->
+            <!-- 开关选项 -->
             <div class="flex flex-wrap gap-3 sm:gap-4 justify-center items-center">
                 <div class="flex items-center">
                     <span class="mr-1.5 sm:mr-2 text-xs sm:text-sm font-medium text-gray-700">显示答案</span>
@@ -247,7 +141,7 @@
             </div>
         </div>
         
-        <!-- 题目显示区域 (结构完全不变) -->
+        <!-- 题目显示区域 -->
         <div id="questionArea" class="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6 sm:mb-8 hidden">
             <div class="flex flex-col md:flex-row gap-4 sm:gap-6">
                 <!-- 左侧主要内容区 -->
@@ -309,7 +203,7 @@
                     </div>
                 </div>
                 
-                <!-- 右侧题目进度指示器 (移动端在下方，已通过样式优化方块大小) -->
+                <!-- 右侧题目进度指示器 -->
                 <div class="w-full md:w-1/5 mt-4 md:mt-0">
                     <h4 class="text-xs sm:text-sm font-medium text-gray-700 mb-2">题目进度</h4>
                     <div id="questionProgress" class="flex flex-wrap gap-1 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
@@ -333,11 +227,11 @@
             </div>
         </div>
         
-        <!-- 隐藏的文件输入 (手机导入XLSX的关键) -->
+        <!-- 隐藏的文件输入 -->
         <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden">
     </div>
 
-    <!-- 错题集模态框 (所有模态框结构不变) -->
+    <!-- 错题集模态框 -->
     <div id="wrongQuestionsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-lg shadow-xl w-11/12 max-w-4xl max-h-[90vh] flex flex-col">
             <div class="p-4 sm:p-6 border-b">
@@ -544,45 +438,5 @@
     </div>
 
     <script src="js/Quiz.js"></script>
-
-    <!-- 自动导入同目录下的 list.xlsx (其他功能不变) -->
-    <script>
-        (function() {
-            // 等待页面和所有脚本加载完成后执行，确保 fileInput 存在且事件监听已绑定
-            window.addEventListener('load', function() {
-                // 尝试获取 list.xlsx 文件
-                fetch('list.xlsx')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('文件不存在或无法访问 (HTTP ' + response.status + ')');
-                        }
-                        return response.arrayBuffer();
-                    })
-                    .then(arrayBuffer => {
-                        // 创建一个 File 对象
-                        const file = new File([arrayBuffer], 'list.xlsx', { 
-                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-                        });
-                        
-                        const fileInput = document.getElementById('fileInput');
-                        if (!fileInput) return;
-
-                        // 使用 DataTransfer 模拟文件选择
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        fileInput.files = dataTransfer.files;
-
-                        // 触发 change 事件，通知 Quiz.js 处理导入
-                        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-
-                        console.log('自动导入 list.xlsx 成功');
-                    })
-                    .catch(err => {
-                        // 静默失败，不干扰用户手动操作
-                        console.log('自动导入 list.xlsx 失败 (不影响手动导入):', err.message);
-                    });
-            });
-        })();
-    </script>
 </body>
 </html>
