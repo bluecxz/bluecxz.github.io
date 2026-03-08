@@ -127,7 +127,7 @@
             color: var(--text-soft);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
             cursor: pointer;
             transition: 0.2s;
             box-shadow: 0 4px 8px rgba(0,0,0,0.02);
@@ -444,6 +444,8 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
+        /* ==================== 移动端竖屏适配（自动） ==================== */
+        /* 平板/横屏过渡 */
         @media (max-width: 850px) {
             .container {
                 grid-template-columns: 1fr;
@@ -451,7 +453,7 @@
             }
             .playlist-card {
                 height: auto;
-                max-height: 300px;
+                max-height: 320px;
             }
             .player-row {
                 grid-template-columns: 1fr;
@@ -463,6 +465,86 @@
             .controls {
                 flex-direction: column;
                 align-items: stretch;
+            }
+        }
+
+        /* 手机竖屏专用优化（自动触发） */
+        @media (max-width: 600px) and (orientation: portrait) {
+            body {
+                padding: 12px;
+            }
+            .container {
+                gap: 12px;
+            }
+            .playlist-card {
+                padding: 15px 10px;
+                max-height: 38vh;           /* 竖屏时歌单占屏幕合理高度 */
+            }
+            .song-item {
+                padding: 13px 16px;
+                margin: 6px 0;
+                font-size: 0.93rem;
+            }
+            .player-card {
+                padding: 20px 20px 24px;
+            }
+            .album-art-container {
+                width: 190px;
+                height: 190px;
+                margin-bottom: 18px;
+            }
+            .song-title {
+                font-size: 1.35rem;
+            }
+            .lyrics-wrapper {
+                height: 190px;
+            }
+            .lyrics-line {
+                height: 36px;
+                line-height: 36px;
+                font-size: 0.95rem;
+            }
+            .lyrics-line.active {
+                font-size: 1.2rem;
+            }
+            .controls {
+                padding: 14px 18px;
+                gap: 14px;
+            }
+            .button-group {
+                gap: 8px;
+            }
+            .control-button {
+                width: 44px;
+                height: 44px;
+                font-size: 1.35rem;
+            }
+            .control-button.main {
+                width: 62px;
+                height: 62px;
+                font-size: 2rem;
+            }
+            .volume-container {
+                padding: 8px 16px;
+                min-width: auto;
+                width: 100%;
+            }
+            .volume-slider {
+                width: 120px;
+            }
+            .progress-area {
+                min-width: auto;
+            }
+        }
+
+        /* 极小竖屏额外优化（iPhone SE 等） */
+        @media (max-width: 380px) and (orientation: portrait) {
+            .album-art-container {
+                width: 170px;
+                height: 170px;
+            }
+            .playlist-card {
+                max-height: 34vh;
             }
         }
     </style>
@@ -614,7 +696,7 @@
             return { artist: '', title: base };
         }
 
-        // ---------- 歌单渲染（仅更新 DOM） ----------
+        // ---------- 歌单渲染 ----------
         function renderSongList() {
             if (!playerState.songs.length) {
                 songList.innerHTML = '<li class="song-item" style="justify-content:center;opacity:0.7;"><i class="fas fa-music"></i> 暂无歌曲</li>';
@@ -639,10 +721,8 @@
             if (index < 0 || index >= playerState.songs.length) return;
 
             const removingCurrent = (index === playerState.currentIndex);
-
             playerState.songs.splice(index, 1);
 
-            // 重置随机索引
             playerState.shuffledIndexes = playerState.isShuffle
                 ? [...Array(playerState.songs.length).keys()].sort(() => Math.random() - 0.5)
                 : [...Array(playerState.songs.length).keys()];
@@ -653,7 +733,6 @@
                     if (nextIndex >= playerState.songs.length) nextIndex = playerState.songs.length - 1;
                     playSong(nextIndex);
                 } else {
-                    // 清空播放器
                     if (audioPlayer.src.startsWith('blob:')) URL.revokeObjectURL(audioPlayer.src);
                     audioPlayer.pause();
                     audioPlayer.src = '';
@@ -662,7 +741,7 @@
                     albumArt.style.backgroundImage = `url('${defaultCover}')`;
                     albumArt.classList.remove('playing');
                     playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-                    playerState.lyrics = [];
+                    playerStateLyrics = [];
                     lyricsInner.style.display = 'none';
                     noLyrics.style.display = 'flex';
                     playerState.currentIndex = -1;
@@ -747,7 +826,7 @@
                 playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
             }
 
-            // 读取标签
+            // 读取标签（完整歌词回退逻辑）
             if (window.jsmediatags) {
                 window.jsmediatags.read(file, {
                     onSuccess: tag => {
@@ -759,7 +838,15 @@
                         }
                         let lyricsText = tag.tags.USLT?.lyrics || tag.tags.unsynchronisedLyrics?.text || tag.tags.lyrics || '';
                         if (lyricsText) {
-                            renderLyrics(/\[\d{1,2}:\d{2}/.test(lyricsText) ? parseLRC(lyricsText) : []);
+                            if (/\[\d{1,2}:\d{2}/.test(lyricsText)) {
+                                renderLyrics(parseLRC(lyricsText));
+                            } else {
+                                // 无时间戳歌词 → 平均分配时间
+                                const lines = lyricsText.split('\n').filter(l => l.trim());
+                                const interval = (audioPlayer.duration || 240) / (lines.length + 1);
+                                const parsed = lines.map((txt, idx) => ({ time: (idx + 1) * interval, text: txt.trim() }));
+                                renderLyrics(parsed);
+                            }
                         }
                     },
                     onError: () => {
@@ -792,29 +879,35 @@
 
         function playNext() {
             if (!playerState.songs.length) return;
-            let nextIdx = playerState.isShuffle
-                ? playerState.shuffledIndexes[(playerState.shuffledIndexes.indexOf(playerState.currentIndex) + 1) % playerState.shuffledIndexes.length]
-                : (playerState.currentIndex + 1) % playerState.songs.length;
-            if (playerState.isShuffle && !playerState.shuffledIndexes.length) {
-                playerState.shuffledIndexes = [...Array(playerState.songs.length).keys()].sort(() => Math.random() - 0.5);
-                nextIdx = playerState.shuffledIndexes[0];
+            let nextIdx;
+            if (playerState.isShuffle) {
+                if (!playerState.shuffledIndexes.length) {
+                    playerState.shuffledIndexes = [...Array(playerState.songs.length).keys()].sort(() => Math.random() - 0.5);
+                }
+                const curPos = playerState.shuffledIndexes.indexOf(playerState.currentIndex);
+                nextIdx = playerState.shuffledIndexes[(curPos + 1) % playerState.shuffledIndexes.length];
+            } else {
+                nextIdx = (playerState.currentIndex + 1) % playerState.songs.length;
             }
             playSong(nextIdx);
         }
 
         function playPrev() {
             if (!playerState.songs.length) return;
-            let prevIdx = playerState.isShuffle
-                ? playerState.shuffledIndexes[(playerState.shuffledIndexes.indexOf(playerState.currentIndex) - 1 + playerState.shuffledIndexes.length) % playerState.shuffledIndexes.length]
-                : (playerState.currentIndex - 1 + playerState.songs.length) % playerState.songs.length;
-            if (playerState.isShuffle && !playerState.shuffledIndexes.length) {
-                playerState.shuffledIndexes = [...Array(playerState.songs.length).keys()].sort(() => Math.random() - 0.5);
-                prevIdx = playerState.shuffledIndexes[playerState.shuffledIndexes.length - 1];
+            let prevIdx;
+            if (playerState.isShuffle) {
+                if (!playerState.shuffledIndexes.length) {
+                    playerState.shuffledIndexes = [...Array(playerState.songs.length).keys()].sort(() => Math.random() - 0.5);
+                }
+                const curPos = playerState.shuffledIndexes.indexOf(playerState.currentIndex);
+                prevIdx = playerState.shuffledIndexes[(curPos - 1 + playerState.shuffledIndexes.length) % playerState.shuffledIndexes.length];
+            } else {
+                prevIdx = (playerState.currentIndex - 1 + playerState.songs.length) % playerState.songs.length;
             }
             playSong(prevIdx);
         }
 
-        // ---------- 事件委托：歌单点击（性能优化） ----------
+        // ---------- 事件委托 ----------
         songList.addEventListener('click', e => {
             const songItem = e.target.closest('.song-item');
             if (!songItem) return;
@@ -837,7 +930,6 @@
                 f.type.startsWith('audio/') || /\.(mp3|flac|wav|m4a|ogg)$/i.test(f.name)
             );
             if (!files.length) return;
-
             playerState.songs = files;
             playerState.shuffledIndexes = [...Array(files.length).keys()];
             playerState.currentIndex = -1;
@@ -864,7 +956,7 @@
             loopBtn.querySelector('i').className = playerState.isLoop ? 'fas fa-infinity' : 'fas fa-sync-alt';
         });
 
-        // ---------- 进度条（拖拽优化） ----------
+        // ---------- 进度条 ----------
         let progressDragging = false;
         progressBar.addEventListener('mousedown', e => {
             progressDragging = true;
@@ -933,7 +1025,6 @@
         });
 
         // ---------- 初始化 ----------
-        // 加载 jsmediatags（异步）
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js';
         document.head.appendChild(script);
