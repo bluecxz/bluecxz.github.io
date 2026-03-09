@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>🎵音乐盒</title>
+    <title>🎵音乐</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,13 +19,14 @@
             --text-soft: #2c3e50;
             --radius-lg: 28px;
             --radius-md: 20px;
+            --radius-sm: 16px;
         }
 
         body {
             font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: linear-gradient(145deg, #c0cfde 0%, #b3c5d8 100%);
             min-height: 100vh;
-            padding: 18px;
+            padding: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -33,11 +34,11 @@
         }
 
         .container {
-            max-width: 900px;          /* 更紧凑 */
+            max-width: 500px;        /* 竖屏舒适宽度 */
             width: 100%;
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
             margin: 0 auto;
         }
 
@@ -51,28 +52,28 @@
             transition: box-shadow 0.3s ease;
         }
 
+        /* ========== 歌单卡片 (竖屏优先) ========== */
         .playlist-card {
-            height: calc(100vh - 40px);
+            max-height: 38vh;         /* 歌单不超过屏幕40% */
             overflow-y: auto;
-            padding: 20px 12px;
+            padding: 16px 12px;
             display: flex;
             flex-direction: column;
             scrollbar-width: thin;
             scrollbar-color: var(--primary) rgba(255,255,255,0.2);
         }
+        .playlist-card::-webkit-scrollbar { width: 4px; }
+        .playlist-card::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 8px; }
+        .playlist-card::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 8px; }
 
-        .playlist-card::-webkit-scrollbar { width: 5px; }
-        .playlist-card::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
-        .playlist-card::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
-
-        .file-picker { margin-bottom: 18px; flex-shrink: 0; }
+        .file-picker { margin-bottom: 12px; flex-shrink: 0; }
 
         .file-picker-button {
             width: 100%;
-            padding: 16px 10px;
-            background: rgba(255,255,255,0.25);
-            border: 2px solid rgba(255,255,255,0.6);
-            border-radius: 60px;
+            padding: 14px 10px;
+            background: rgba(255,255,255,0.3);
+            border: 2px solid rgba(255,255,255,0.7);
+            border-radius: 50px;
             font-weight: 600;
             font-size: 1rem;
             color: var(--text-dark);
@@ -81,44 +82,40 @@
             transition: 0.2s;
             box-shadow: 0 6px 14px rgba(0,0,0,0.05);
         }
-        .file-picker-button:hover {
-            background: rgba(255,255,255,0.45);
-            border-color: white;
-            transform: scale(1.02);
-        }
+        .file-picker-button:hover { background: rgba(255,255,255,0.5); transform: scale(1.01); }
 
-        .song-list { list-style: none; flex: 1; overflow-y: auto; padding-right: 4px; }
+        .song-list { list-style: none; flex: 1; overflow-y: auto; padding-right: 2px; }
 
         .song-item {
-            padding: 3px 10px;
-            margin: 4px 0;
-            background: rgba(255, 255, 255, 0.5);
+            padding: 12px 14px;        /* 增大点按区域 */
+            margin: 6px 0;
+            background: rgba(255, 255, 255, 0.55);
             backdrop-filter: blur(5px);
             border-radius: 40px;
-            border-left: 5px solid transparent;
-            font-size: 0.95rem;
+            border-left: 6px solid transparent;
+            font-size: 1rem;
             font-weight: 500;
             color: var(--text-soft);
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: 0.15s;
             box-shadow: 0 4px 8px rgba(0,0,0,0.02);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .song-item i { width: 22px; color: var(--primary-dark); font-size: 1rem; }
+        .song-item i { width: 24px; color: var(--primary-dark); font-size: 1.1rem; }
         .song-item.active {
-            background: rgba(255,255,255,0.9);
-            border-left: 5px solid var(--primary);
+            background: rgba(255,255,255,0.95);
+            border-left: 6px solid var(--primary);
             font-weight: 600;
             color: var(--primary-dark);
             box-shadow: 0 8px 18px rgba(74, 111, 165, 0.2);
             transform: translateX(4px);
         }
-        .song-item:hover { background: rgba(255, 255, 255, 0.8); transform: translateX(5px); }
+        .song-item:active { background: rgba(255,255,255,0.9); transform: scale(0.99); } /* 触摸反馈 */
 
         .song-item-inner { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
         .song-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -128,43 +125,43 @@
             border: none;
             color: #e74c3c;
             cursor: pointer;
-            font-size: 1.05rem;
-            padding: 5px;
+            font-size: 1.2rem;
+            padding: 8px;             /* 增大移除热区 */
             border-radius: 50%;
-            opacity: 0.75;
+            opacity: 0.8;
             transition: 0.2s ease;
             flex-shrink: 0;
         }
-        .remove-btn:hover { opacity: 1; background: rgba(231,76,60,0.12); transform: scale(1.15); }
+        .remove-btn:active { opacity: 1; background: rgba(231,76,60,0.15); transform: scale(1.2); }
 
-        /* ---------- 右侧播放面板 (极简：无封面，无歌词) ---------- */
+        /* ========== 播放卡片 (竖屏大按钮) ========== */
         .player-card {
-            padding: 28px 22px 32px;
+            padding: 20px 18px 24px;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
 
-        /* 歌曲信息条 —— 替代封面区域 */
+        /* 现在播放条 (更醒目) */
         .now-playing-bar {
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(10px);
             border-radius: 60px;
-            padding: 14px 24px;
+            padding: 14px 20px;
             display: flex;
             align-items: center;
             gap: 16px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
         }
         .now-playing-icon {
-            width: 42px; height: 42px;
+            width: 52px; height: 52px;
             border-radius: 50%;
             background: var(--primary-light);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.4rem;
+            font-size: 1.8rem;
             box-shadow: 0 6px 12px rgba(0,0,0,0.1);
             flex-shrink: 0;
         }
@@ -173,7 +170,7 @@
             overflow: hidden;
         }
         .current-song-name {
-            font-size: 1.35rem;
+            font-size: 1.5rem;        /* 更大字体 */
             font-weight: 700;
             color: var(--text-dark);
             white-space: nowrap;
@@ -182,7 +179,7 @@
             line-height: 1.3;
         }
         .current-artist-name {
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             color: #2e405b;
             opacity: 0.9;
             white-space: nowrap;
@@ -190,10 +187,10 @@
             text-overflow: ellipsis;
         }
 
-        /* 进度条区域 */
+        /* 进度条 */
         .progress-area { width: 100%; }
         .progress-bar {
-            height: 8px;
+            height: 10px;              /* 稍高，易点按 */
             background: rgba(0,0,0,0.1);
             border-radius: 20px;
             cursor: pointer;
@@ -201,7 +198,7 @@
             box-shadow: inset 0 1px 4px rgba(0,0,0,0.1);
         }
         .progress {
-            height: 8px;
+            height: 10px;
             background: linear-gradient(90deg, var(--primary), #8aacdf);
             border-radius: 20px;
             width: 0%;
@@ -211,26 +208,27 @@
         .time-info {
             display: flex;
             justify-content: space-between;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             color: #1f2e41;
-            margin-top: 5px;
+            margin-top: 6px;
             font-weight: 500;
         }
 
-        /* 控制按钮组 (紧凑) */
+        /* 控制按钮组 (大号、间距舒朗) */
         .button-group {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
+            justify-content: space-evenly;  /* 均匀分布 */
+            gap: 6px;
             flex-wrap: wrap;
+            margin: 6px 0;
         }
         .control-button {
             background: transparent;
             border: none;
-            font-size: 1.5rem;
-            width: 48px;
-            height: 48px;
+            font-size: 2rem;           /* 明显增大 */
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
             color: #1e3b5a;
             display: flex;
@@ -239,63 +237,64 @@
             cursor: pointer;
             transition: 0.15s;
             backdrop-filter: blur(4px);
+            touch-action: manipulation; /* 避免双击缩放 */
         }
-        .control-button:hover {
-            background: rgba(255,255,255,0.5);
-            transform: scale(1.1);
-            color: var(--primary-dark);
-        }
+        .control-button:active { background: rgba(255,255,255,0.6); transform: scale(0.96); }
+
         .control-button.main {
             background: white;
             color: var(--primary-dark);
-            font-size: 2.2rem;
-            width: 68px;
-            height: 68px;
-            box-shadow: 0 8px 20px rgba(0,30,50,0.2);
+            font-size: 3rem;            /* 主按钮特大 */
+            width: 84px;
+            height: 84px;
+            box-shadow: 0 8px 20px rgba(0,30,50,0.25);
         }
-        .control-button.main:hover { background: #f0f5ff; transform: scale(1.05); }
-        .control-button.active { color: #1f4a81; text-shadow: 0 0 6px #7ca2df; }
+        .control-button.main:active { background: #f0f5ff; transform: scale(0.98); }
 
-        /* 音量简洁 */
+        .control-button.active { color: #1f4a81; text-shadow: 0 0 8px #7ca2df; }
+
+        /* 音量区 (适配拇指) */
         .volume-container {
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: rgba(255,255,255,0.25);
-            padding: 8px 18px;
+            gap: 14px;
+            background: rgba(255,255,255,0.3);
+            padding: 10px 20px;
             border-radius: 50px;
-            width: fit-content;
-            margin: 0 auto;  /* 居中 */
+            width: 100%;
+            justify-content: center;
         }
         .volume-slider {
-            width: 100px;
-            height: 5px;
+            width: 180px;               /* 足够宽 */
+            height: 8px;
             background: rgba(0,0,0,0.1);
             border-radius: 10px;
             -webkit-appearance: none;
         }
         .volume-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 24px;                 /* 大滑块 */
+            height: 24px;
             background: white;
             border-radius: 50%;
             border: 2px solid var(--primary);
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
+        .volume-slider::-webkit-slider-thumb:active { transform: scale(1.1); background: #f0f0f0; }
 
-        /* 移动端适配 */
-        @media (max-width: 700px) {
-            .container { grid-template-columns: 1fr; gap: 14px; }
-            .playlist-card { height: auto; max-height: 38vh; }
-            .now-playing-bar { padding: 10px 18px; }
+        /* 极小屏 (如 iPhone SE) 微调 */
+        @media (max-width: 380px) {
+            .current-song-name { font-size: 1.3rem; }
+            .control-button { width: 56px; height: 56px; font-size: 1.8rem; }
+            .control-button.main { width: 76px; height: 76px; font-size: 2.6rem; }
+            .volume-slider { width: 140px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- 左侧歌单 (不变) -->
+    <!-- 歌单卡片 (在上) -->
     <div class="playlist-card glass-card">
         <div class="file-picker">
             <button class="file-picker-button" id="filePickerButton">
@@ -306,9 +305,9 @@
         <ul id="songList" class="song-list"></ul>
     </div>
 
-    <!-- 右侧播放器 (极简：无动画封面，无歌词) -->
+    <!-- 播放卡片 (在下) -->
     <div class="player-card glass-card">
-        <!-- 现在播放简洁卡片 -->
+        <!-- 现在播放条 -->
         <div class="now-playing-bar">
             <div class="now-playing-icon"><i class="fas fa-headphones-alt"></i></div>
             <div class="now-playing-text">
@@ -328,7 +327,7 @@
             </div>
         </div>
 
-        <!-- 播放控制组 (保留全部功能) -->
+        <!-- 大按钮组 (适合拇指操作) -->
         <div class="button-group">
             <button class="control-button" id="playModeBtn" title="随机/顺序"><i class="fas fa-arrows-alt-h"></i></button>
             <button class="control-button" id="loopBtn" title="单曲循环"><i class="fas fa-sync-alt"></i></button>
@@ -337,9 +336,9 @@
             <button class="control-button" id="nextBtn" title="下一首"><i class="fas fa-step-forward"></i></button>
         </div>
 
-        <!-- 音量简洁 -->
+        <!-- 音量控制 (宽条) -->
         <div class="volume-container">
-            <i class="fas fa-volume-up" id="volumeIcon"></i>
+            <i class="fas fa-volume-up" id="volumeIcon" style="font-size:1.4rem;"></i>
             <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
         </div>
     </div>
@@ -349,7 +348,7 @@
 
 <script>
 (function() {
-    // ---------- 核心DOM (移除所有歌词/封面相关变量) ----------
+    // ---------- DOM 精简 ----------
     const dom = {
         dirPicker: document.getElementById('directoryPicker'),
         fileBtn: document.getElementById('filePickerButton'),
@@ -368,23 +367,20 @@
         volIcon: document.getElementById('volumeIcon'),
         songTitle: document.getElementById('currentSong'),
         artist: document.getElementById('artist')
-        // 注：albumArt, lyrics相关元素已从HTML移除
     };
 
     // ---------- 状态 ----------
     const state = {
-        songs: [],                 // File 数组
+        songs: [],
         currentIdx: -1,
         shuffled: [],
         shuffleOn: false,
         loopOne: false,
-        revokeUrl: ''              // 用于释放上一个blob
     };
 
-    // ---------- 辅助函数 ----------
+    // ---------- 辅助 ----------
     const fmtTime = s => isNaN(s) ? '00:00' : `${Math.floor(s/60)}`.padStart(2,'0')+':'+`${Math.floor(s%60)}`.padStart(2,'0');
 
-    // 简单从文件名猜测艺术家/标题 (可选)
     const guessMeta = name => {
         let base = name.substring(0, name.lastIndexOf('.')) || name;
         base = base.replace(/\s*[\(\[]([^\)\]]+)[\)\]]/g, '').trim();
@@ -395,7 +391,6 @@
         return { artist: '', title: base };
     };
 
-    // 释放旧blob内存
     function revokeCurrentSrc() {
         if (dom.audio.src && dom.audio.src.startsWith('blob:')) {
             URL.revokeObjectURL(dom.audio.src);
@@ -419,7 +414,7 @@
         dom.songList.innerHTML = html;
     }
 
-    // 移除歌曲 (精简版, 已去除歌词相关)
+    // 移除歌曲
     function removeSong(index) {
         if (index<0 || index>=state.songs.length) return;
         const wasCurrent = (index === state.currentIdx);
@@ -444,30 +439,26 @@
             if (state.currentIdx > index) state.currentIdx--;
             renderPlaylist();
         }
-        // 更新随机索引
         if (state.shuffleOn) {
             state.shuffled = [...Array(state.songs.length).keys()].sort(()=>Math.random()-0.5);
         }
     }
 
-    // 播放指定歌曲
+    // 播放核心
     function playSong(index) {
         if (!state.songs.length || index<0 || index>=state.songs.length) return;
 
-        revokeCurrentSrc();                 // 清除前一个blob
+        revokeCurrentSrc();
         state.currentIdx = index;
         const file = state.songs[index];
         dom.audio.src = URL.createObjectURL(file);
 
-        // 更新界面显示
         dom.songTitle.textContent = file.name;
         dom.artist.textContent = '未知艺术家';
 
-        // 尝试从ID3读取艺术家 (若有jsmediatags)
         if (window.jsmediatags) {
             window.jsmediatags.read(file, {
                 onSuccess: tag => {
-                    // 只提取艺术家和标题，忽略歌词和封面
                     const artistTag = tag.tags?.artist || tag.tags?.performer || '';
                     const titleTag = tag.tags?.title || '';
                     if (artistTag) dom.artist.textContent = artistTag;
@@ -494,7 +485,6 @@
         renderPlaylist();
     }
 
-    // 下一首
     function nextSong() {
         if (!state.songs.length) return;
         if (state.loopOne) { playSong(state.currentIdx); return; }
@@ -529,7 +519,7 @@
         else dom.audio.pause();
     }
 
-    // ---------- 事件绑定 ----------
+    // ---------- 事件 (全部保留, 针对触摸优化) ----------
     dom.songList.addEventListener('click', e => {
         const item = e.target.closest('.song-item');
         if (!item) return;
@@ -573,7 +563,7 @@
         dom.loopBtn.querySelector('i').className = state.loopOne ? 'fas fa-infinity' : 'fas fa-sync-alt';
     });
 
-    // 进度条拖拽 (轻量)
+    // 进度条
     let seeking = false;
     dom.progressBar.addEventListener('mousedown', e => {
         seeking = true;
@@ -604,7 +594,6 @@
     });
     dom.audio.volume = 0.8;
 
-    // 音频事件
     dom.audio.addEventListener('timeupdate', () => {
         if (seeking) return;
         const ct = dom.audio.currentTime || 0, dur = dom.audio.duration || 0;
@@ -625,14 +614,12 @@
         dom.playPause.innerHTML = '<i class="fas fa-pause"></i>';
     });
 
-    // 快捷键
+    // 快捷键 (可选)
     document.addEventListener('keydown', e => {
         if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-        else if (e.code === 'ArrowLeft') { e.preventDefault(); prevSong(); }
-        else if (e.code === 'ArrowRight') { e.preventDefault(); nextSong(); }
     });
 
-    // 按需加载jsmediatags (不强制)
+    // 加载元数据库
     if (!window.jsmediatags) {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js';
