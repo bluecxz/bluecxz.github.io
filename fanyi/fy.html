@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI翻译工具</title>
+    <title>翻译</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -38,6 +38,7 @@
             color: white;
             padding: 20px;
             text-align: center;
+            position: relative;
         }
         
         h1 {
@@ -49,10 +50,37 @@
             font-size: 14px;
             opacity: 0.8;
         }
+
+        /* 配置折叠开关按钮 - 放在header右上角 */
+        .toggle-config-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 30px;
+            padding: 8px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .toggle-config-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .toggle-config-btn i {
+            font-size: 14px;
+        }
         
         .main-content {
             display: flex;
             flex: 1;
+            transition: all 0.2s;
         }
         
         @media (max-width: 900px) {
@@ -61,11 +89,25 @@
             }
         }
         
+        /* 配置面板 - 可隐藏核心 */
         .config-panel {
             width: 300px;
             background-color: #f8f9fa;
             padding: 20px;
             border-right: 1px solid #eaeaea;
+            transition: width 0.2s, padding 0.2s, opacity 0.15s;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        /* 隐藏状态：宽度折叠为0，padding消失，内部完全不可见 */
+        .config-panel.collapsed {
+            width: 0;
+            padding-left: 0;
+            padding-right: 0;
+            border-right: none;
+            opacity: 0;
+            pointer-events: none;      /* 防止隐藏时内部元素被点击 */
         }
         
         @media (max-width: 900px) {
@@ -73,6 +115,12 @@
                 width: 100%;
                 border-right: none;
                 border-bottom: 1px solid #eaeaea;
+            }
+            .config-panel.collapsed {
+                width: 0;
+                height: 0;
+                padding: 0;
+                border-bottom: none;
             }
         }
         
@@ -131,6 +179,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-width: 0;              /* 防止flex溢出 */
         }
         
         .controls {
@@ -139,6 +188,8 @@
             padding: 15px 20px;
             background-color: #f8f9fa;
             border-bottom: 1px solid #eaeaea;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .language-selectors {
@@ -382,11 +433,17 @@
     <div class="container">
         <header>
             <h1>AI翻译工具</h1>
-            
+            <!-- 折叠/展开配置的按钮（默认显示“显示配置”，因为面板初始隐藏） -->
+            <div class="toggle-config-btn" id="toggleConfigBtn">
+                <i class="fas fa-sliders-h"></i>
+                <span id="toggleBtnText">显示配置</span>
+                <i class="fas fa-chevron-left" id="toggleIcon" style="transition: transform 0.2s;"></i>
+            </div>
         </header>
         
         <div class="main-content">
-            <div class="config-panel">
+            <!-- 配置面板，默认添加collapsed类实现隐藏 -->
+            <div class="config-panel collapsed" id="configPanel">
                 <h2 class="config-title"><i class="fas fa-cog"></i> API配置</h2>
                 
                 <div class="config-group">
@@ -415,7 +472,7 @@
                 <div class="status" id="config-status"></div>
                 
                 <div class="instructions">
-                    
+                    <!-- 留空保持原样 -->
                 </div>
                 <div class="auto-translate-notice">
                     <i class="fas fa-bolt"></i> 实时翻译已启用
@@ -438,7 +495,7 @@
                         </select>
                         <span>→</span>
                         <select id="target-lang">
-                            <option value="中文">中文</option>
+                            <option value="中文" selected>中文</option>
                             <option value="英语">英语</option>                            
                             <option value="日语">日语</option>
                             <option value="韩语">韩语</option>
@@ -512,6 +569,12 @@
             const errorDetails = document.getElementById('error-details');
             const showErrorBtn = document.getElementById('show-error');
             
+            // ----- 配置折叠相关元素 -----
+            const configPanel = document.getElementById('configPanel');
+            const toggleConfigBtn = document.getElementById('toggleConfigBtn');
+            const toggleBtnText = document.getElementById('toggleBtnText');
+            const toggleIcon = document.getElementById('toggleIcon');
+
             // 自动翻译相关的变量
             let autoTranslateTimeout = null;
             let lastTranslatedText = '';
@@ -804,9 +867,26 @@
             
             // 初始显示提示
             outputText.innerHTML = '<p style="color: #888;"></p>';
+
+            // ---------- 折叠/展开配置面板功能 ----------
+            // 默认状态为折叠 (collapsed类已在HTML中添加)，按钮文字对应“显示配置”
+            // 不需要额外设置，但保证变量和UI一致
+            let isConfigCollapsed = true;  // 默认隐藏
+
+            toggleConfigBtn.addEventListener('click', function() {
+                configPanel.classList.toggle('collapsed');
+                isConfigCollapsed = configPanel.classList.contains('collapsed');
+                
+                // 更新按钮文字和图标
+                if (isConfigCollapsed) {
+                    toggleBtnText.innerText = '显示配置';
+                    toggleIcon.className = 'fas fa-chevron-left';  // 左箭头表示折叠（当前隐藏，点击展开）
+                } else {
+                    toggleBtnText.innerText = '隐藏配置';
+                    toggleIcon.className = 'fas fa-chevron-right';
+                }
+            });
         });
     </script>
 </body>
 </html>
-
-
