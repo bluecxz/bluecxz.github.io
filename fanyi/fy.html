@@ -36,13 +36,13 @@
         header {
             background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
             color: white;
-            padding: 20px;
+            padding: 10px;
             text-align: center;
             position: relative;
         }
         
         h1 {
-            font-size: 28px;
+            font-size: 1px;
             margin-bottom: 5px;
         }
         
@@ -179,6 +179,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            
             min-width: 0;              /* 防止flex溢出 */
         }
         
@@ -244,14 +245,19 @@
         
         .translation-area {
             display: flex;
-            flex: 1;
+            /* 固定高度：两个区域保持一致，总高度固定，内部内容撑满 */
             height: 350px;
+            
+            min-height: 350px;
+            max-height: 350px;
         }
         
         @media (max-width: 768px) {
             .translation-area {
                 flex-direction: column;
                 height: auto;
+                min-height: 420px;        /* 移动端堆叠后总高度增加，两个区域各占210px左右 */
+                max-height: none;
             }
         }
         
@@ -260,6 +266,9 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
+            /* 确保内部内容撑满，textarea和output-display会占据剩余空间 */
+            height: 100%;
+            min-height: 0;                /* 防止flex溢出 */
         }
         
         .input-section {
@@ -270,18 +279,25 @@
             .input-section {
                 border-right: none;
                 border-bottom: 1px solid #eaeaea;
+                height: 210px;            /* 移动端给每个区域固定高度，避免挤压 */
+                min-height: 210px;
+            }
+            .output-section {
+                height: 210px;
+                min-height: 210px;
             }
         }
         
         textarea {
             width: 100%;
-            flex: 1;
+            flex: 1;                      /* 撑满剩余空间 */
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 8px;
             resize: none;
             font-size: 16px;
             line-height: 1.5;
+            min-height: 0;                /* 防止flex溢出 */
         }
         
         textarea:focus {
@@ -292,7 +308,7 @@
         
         .output-display {
             width: 100%;
-            flex: 1;
+            flex: 1;                      /* 撑满剩余空间 */
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -301,6 +317,7 @@
             font-size: 16px;
             line-height: 1.5;
             white-space: pre-wrap;
+            min-height: 0;                /* 防止flex溢出 */
         }
         
         .label {
@@ -308,6 +325,7 @@
             margin-bottom: 10px;
             color: #555;
             font-weight: 500;
+            flex-shrink: 0;               /* 防止被压缩 */
         }
         
         .footer {
@@ -340,6 +358,7 @@
             color: #888;
             font-size: 12px;
             margin-top: 5px;
+            flex-shrink: 0;
         }
         
         .status {
@@ -432,7 +451,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>AI翻译工具</h1>
+            <h1>.</h1>
             <!-- 折叠/展开配置的按钮（默认显示“显示配置”，因为面板初始隐藏） -->
             <div class="toggle-config-btn" id="toggleConfigBtn">
                 <i class="fas fa-sliders-h"></i>
@@ -870,7 +889,6 @@
 
             // ---------- 折叠/展开配置面板功能 ----------
             // 默认状态为折叠 (collapsed类已在HTML中添加)，按钮文字对应“显示配置”
-            // 不需要额外设置，但保证变量和UI一致
             let isConfigCollapsed = true;  // 默认隐藏
 
             toggleConfigBtn.addEventListener('click', function() {
