@@ -16,10 +16,11 @@
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
+            
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 5px;
         }
         
         .container {
@@ -246,10 +247,10 @@
         .translation-area {
             display: flex;
             /* 固定高度：两个区域保持一致，总高度固定，内部内容撑满 */
-            height: 350px;
+            height: 500px;
             
             min-height: 350px;
-            max-height: 350px;
+            max-height: 500px;
         }
         
         @media (max-width: 768px) {
@@ -561,7 +562,11 @@
                 </div>
             </div>
         </div>
-        
+        <div class="footer">
+            <div class="loader" id="loader"></div>
+            <p>.</p>
+        </div>
+
         
     </div>
 
