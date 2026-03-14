@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>翻译</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 1px;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* 配置折叠开关按钮 - 放在header右上角 */
+        .toggle-config-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 30px;
+            padding: 8px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .toggle-config-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .toggle-config-btn i {
+            font-size: 14px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            transition: all 0.2s;
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+        }
+        
+        /* 配置面板 - 可隐藏核心 */
+        .config-panel {
+            width: 300px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #eaeaea;
+            transition: width 0.2s, padding 0.2s, opacity 0.15s;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        /* 隐藏状态：宽度折叠为0，padding消失，内部完全不可见 */
+        .config-panel.collapsed {
+            width: 0;
+            padding-left: 0;
+            padding-right: 0;
+            border-right: none;
+            opacity: 0;
+            pointer-events: none;      /* 防止隐藏时内部元素被点击 */
+        }
+        
+        @media (max-width: 900px) {
+            .config-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #eaeaea;
+            }
+            .config-panel.collapsed {
+                width: 0;
+                height: 0;
+                padding: 0;
+                border-bottom: none;
+            }
+        }
+        
+        .config-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .config-group {
+            margin-bottom: 15px;
+        }
+        
+        .config-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .config-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .config-group input:focus {
+            outline: none;
+            border-color: #4b6cb7;
+            box-shadow: 0 0 0 2px rgba(75, 108, 183, 0.2);
+        }
+        
+        .save-config {
+            width: 100%;
+            padding: 10px;
+            background-color: #4b6cb7;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+        
+        .save-config:hover {
+            background-color: #3a5999;
+        }
+        
+        .translation-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            
+            min-width: 0;              /* 防止flex溢出 */
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .language-selectors {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: #4b6cb7;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        button:hover {
+            background-color: #3a5999;
+        }
+        
+        button.secondary {
+            background-color: #6c757d;
+        }
+        
+        button.secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .translation-area {
+            display: flex;
+            /* 固定高度：两个区域保持一致，总高度固定，内部内容撑满 */
+            height: 500px;
+            
+            min-height: 350px;
+            max-height: 500px;
+        }
+        
+        @media (max-width: 768px) {
+            .translation-area {
+                flex-direction: column;
+                height: auto;
+                min-height: 420px;        /* 移动端堆叠后总高度增加，两个区域各占210px左右 */
+                max-height: none;
+            }
+        }
+        
+        .input-section, .output-section {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            /* 确保内部内容撑满，textarea和output-display会占据剩余空间 */
+            height: 100%;
+            min-height: 0;                /* 防止flex溢出 */
+        }
+        
+        .input-section {
+            border-right: 1px solid #eaeaea;
+        }
+        
+        @media (max-width: 768px) {
+            .input-section {
+                border-right: none;
+                border-bottom: 1px solid #eaeaea;
+                height: 210px;            /* 移动端给每个区域固定高度，避免挤压 */
+                min-height: 210px;
+            }
+            .output-section {
+                height: 210px;
+                min-height: 210px;
+            }
+        }
+        
+        textarea {
+            width: 100%;
+            flex: 1;                      /* 撑满剩余空间 */
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: none;
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 0;                /* 防止flex溢出 */
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #4b6cb7;
+            box-shadow: 0 0 0 2px rgba(75, 108, 183, 0.2);
+        }
+        
+        .output-display {
+            width: 100%;
+            flex: 1;                      /* 撑满剩余空间 */
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            min-height: 0;                /* 防止flex溢出 */
+        }
+        
+        .label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 500;
+            flex-shrink: 0;               /* 防止被压缩 */
+        }
+        
+        .footer {
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eaeaea;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4b6cb7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .char-count {
+            text-align: right;
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .api-status {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .api-status.connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .api-status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .api-status i {
+            margin-right: 8px;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .error-details {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff3f3;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #721c24;
+            display: none;
+        }
+        
+        .auto-translate-notice {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #e8f4f8;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #2c3e50;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>.</h1>
+            <!-- 折叠/展开配置的按钮（默认显示“显示配置”，因为面板初始隐藏） -->
+            <div class="toggle-config-btn" id="toggleConfigBtn">
+                <i class="fas fa-sliders-h"></i>
+                <span id="toggleBtnText">显示配置</span>
+                <i class="fas fa-chevron-left" id="toggleIcon" style="transition: transform 0.2s;"></i>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <!-- 配置面板，默认添加collapsed类实现隐藏 -->
+            <div class="config-panel collapsed" id="configPanel">
+                <h2 class="config-title"><i class="fas fa-cog"></i> API配置</h2>
+                
+                <div class="config-group">
+                    <label for="api-key">OpenAI API密钥</label>
+                    <input type="password" id="api-key" placeholder="输入您的OpenAI API密钥">
+                </div>
+                
+                <div class="config-group">
+                    <label for="api-host">API端点 (可选)</label>
+                    <input type="text" id="api-host" placeholder="例如: https://api.openai.com" value="https://api.openai.com">
+                </div>
+                
+                <div class="config-group">
+                    <label for="model-id">模型ID (可选)</label>
+                    <input type="text" id="model-id" placeholder="例如: gpt-3.5-turbo" value="gpt-3.5-turbo">
+                </div>
+                
+                <button class="save-config" id="save-config">
+                    <i class="fas fa-save"></i> 保存配置
+                </button>
+                
+                <div class="api-status disconnected" id="api-status">
+                    <i class="fas fa-times-circle"></i> API未配置
+                </div>
+                
+                <div class="status" id="config-status"></div>
+                
+                <div class="instructions">
+                    <!-- 留空保持原样 -->
+                </div>
+                <div class="auto-translate-notice">
+                    <i class="fas fa-bolt"></i> 实时翻译已启用
+                </div>
+            </div>
+            
+            <div class="translation-panel">
+                <div class="controls">
+                    <div class="language-selectors">
+                        <select id="source-lang">
+                            <option value="英语">英语</option>
+                            <option value="中文">中文</option>                            
+                            <option value="日语">日语</option>
+                            <option value="韩语">韩语</option>
+                            <option value="法语">法语</option>
+                            <option value="德语">德语</option>
+                            <option value="西班牙语">西班牙语</option>
+                            <option value="俄语">俄语</option>
+                            <option value="阿拉伯语">阿拉伯语</option>
+                        </select>
+                        <span>→</span>
+                        <select id="target-lang">
+                            <option value="中文" selected>中文</option>
+                            <option value="英语">英语</option>                            
+                            <option value="日语">日语</option>
+                            <option value="韩语">韩语</option>
+                            <option value="法语">法语</option>
+                            <option value="德语">德语</option>
+                            <option value="西班牙语">西班牙语</option>
+                            <option value="俄语">俄语</option>
+                            <option value="阿拉伯语">阿拉伯语</option>
+                        </select>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button id="swap-languages" title="交换语言">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                        <button id="translate-btn">
+                            <i class="fas fa-language"></i> 翻译
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="translation-area">
+                    <div class="input-section">
+                        <span class="label">原文</span>
+                        <textarea id="input-text" placeholder=""></textarea>
+                        <div class="char-count"><span id="char-count">0</span>/2000</div>
+                    </div>
+                    
+                    <div class="output-section">
+                        <span class="label">译文</span>
+                        <div class="output-display" id="output-text">
+                           
+                        </div>
+                        <div class="char-count">
+                            <button id="copy-btn" class="secondary">
+                                <i class="fas fa-copy"></i> 复制译文
+                            </button>
+                            <button id="show-error" class="secondary" style="display: none; margin-left: 10px;">
+                                <i class="fas fa-bug"></i> 查看错误
+                            </button>
+                        </div>
+                        <div class="error-details" id="error-details"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="loader" id="loader"></div>
+            <p>.</p>
+        </div>
+
+        
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputText = document.getElementById('input-text');
+            const outputText = document.getElementById('output-text');
+            const translateBtn = document.getElementById('translate-btn');
+            const copyBtn = document.getElementById('copy-btn');
+            const swapBtn = document.getElementById('swap-languages');
+            const sourceLang = document.getElementById('source-lang');
+            const targetLang = document.getElementById('target-lang');
+            const charCount = document.getElementById('char-count');
+            const loader = document.getElementById('loader');
+            const apiKey = document.getElementById('api-key');
+            const apiHost = document.getElementById('api-host');
+            const modelId = document.getElementById('model-id');
+            const saveConfigBtn = document.getElementById('save-config');
+            const configStatus = document.getElementById('config-status');
+            const apiStatus = document.getElementById('api-status');
+            const errorDetails = document.getElementById('error-details');
+            const showErrorBtn = document.getElementById('show-error');
+            
+            // ----- 配置折叠相关元素 -----
+            const configPanel = document.getElementById('configPanel');
+            const toggleConfigBtn = document.getElementById('toggleConfigBtn');
+            const toggleBtnText = document.getElementById('toggleBtnText');
+            const toggleIcon = document.getElementById('toggleIcon');
+
+            // 自动翻译相关的变量
+            let autoTranslateTimeout = null;
+            let lastTranslatedText = '';
+            let isTranslating = false;
+            
+            // 从本地存储加载配置
+            function loadConfig() {
+                const savedConfig = localStorage.getItem('ai-translator-config');
+                if (savedConfig) {
+                    const config = JSON.parse(savedConfig);
+                    apiKey.value = config.apiKey || '';
+                    apiHost.value = config.apiHost || 'https://api.openai.com';
+                    modelId.value = config.modelId || 'gpt-3.5-turbo';
+                    
+                    // 更新API状态
+                    if (config.apiKey) {
+                        apiStatus.className = 'api-status connected';
+                        apiStatus.innerHTML = '<i class="fas fa-check-circle"></i> API已配置';
+                    }
+                }
+            }
+            
+            // 保存配置到本地存储
+            saveConfigBtn.addEventListener('click', function() {
+                const config = {
+                    apiKey: apiKey.value,
+                    apiHost: apiHost.value || 'https://api.openai.com',
+                    modelId: modelId.value || 'gpt-3.5-turbo'
+                };
+                
+                if (!config.apiKey) {
+                    configStatus.textContent = '请输入API密钥';
+                    configStatus.className = 'status error';
+                    return;
+                }
+                
+                localStorage.setItem('ai-translator-config', JSON.stringify(config));
+                
+                // 显示成功消息
+                configStatus.textContent = '配置已保存！';
+                configStatus.className = 'status success';
+                
+                // 更新API状态
+                apiStatus.className = 'api-status connected';
+                apiStatus.innerHTML = '<i class="fas fa-check-circle"></i> API已配置';
+                
+                // 3秒后隐藏消息
+                setTimeout(() => {
+                    configStatus.className = 'status';
+                    configStatus.textContent = '';
+                }, 3000);
+            });
+            
+            // 字符计数更新
+            inputText.addEventListener('input', function() {
+                const count = inputText.value.length;
+                charCount.textContent = count;
+                
+                if (count > 2000) {
+                    charCount.style.color = 'red';
+                } else {
+                    charCount.style.color = '#888';
+                }
+                
+                // 触发自动翻译
+                triggerAutoTranslate();
+            });
+            
+            // 显示/隐藏错误详情
+            showErrorBtn.addEventListener('click', function() {
+                errorDetails.style.display = errorDetails.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // 翻译按钮点击事件
+            translateBtn.addEventListener('click', function() {
+                performTranslation();
+            });
+            
+            // 自动翻译触发器
+            function triggerAutoTranslate() {
+                // 清除之前的定时器
+                if (autoTranslateTimeout) {
+                    clearTimeout(autoTranslateTimeout);
+                }
+                
+                // 如果没有文本，清空输出
+                if (inputText.value.trim() === '') {
+                    outputText.innerHTML = '<p style="color: #888;"></p>';
+                    showErrorBtn.style.display = 'none';
+                    errorDetails.style.display = 'none';
+                    return;
+                }
+                
+                // 如果文本长度超限，显示错误
+                if (inputText.value.length > 2000) {
+                    outputText.innerHTML = '<p style="color: red;">文本长度超过2000字符限制</p>';
+                    return;
+                }
+                
+                // 设置定时器，延迟500毫秒后触发翻译（防抖处理）
+                autoTranslateTimeout = setTimeout(() => {
+                    performTranslation();
+                }, 500);
+            }
+            
+            // 执行翻译的函数
+            function performTranslation() {
+                const text = inputText.value.trim();
+                
+                // 隐藏错误详情
+                errorDetails.style.display = 'none';
+                showErrorBtn.style.display = 'none';
+                
+                // 检查API配置
+                const savedConfig = localStorage.getItem('ai-translator-config');
+                if (!savedConfig) {
+                    outputText.innerHTML = '<p style="color: red;">请先配置API设置</p>';
+                    return;
+                }
+                
+                const config = JSON.parse(savedConfig);
+                if (!config.apiKey) {
+                    outputText.innerHTML = '<p style="color: red;">请先配置API密钥</p>';
+                    return;
+                }
+                
+                if (text === '') {
+                    outputText.innerHTML = '<p style="color: #888;"></p>';
+                    return;
+                }
+                
+                if (text.length > 2000) {
+                    outputText.innerHTML = '<p style="color: red;">文本长度超过2000字符限制</p>';
+                    return;
+                }
+                
+                // 如果文本没有变化，不重复翻译
+                if (text === lastTranslatedText && isTranslating) {
+                    return;
+                }
+                
+                lastTranslatedText = text;
+                isTranslating = true;
+                
+                // 显示加载动画
+                loader.style.display = 'block';
+                translateBtn.disabled = true;
+                
+                // 调用翻译函数
+                translateText(text, sourceLang.value, targetLang.value, config)
+                    .then(translatedText => {
+                        outputText.innerHTML = translatedText;
+                        loader.style.display = 'none';
+                        translateBtn.disabled = false;
+                        isTranslating = false;
+                    })
+                    .catch(error => {
+                        outputText.innerHTML = `<p style="color: red;">翻译出错: ${error.message}</p>`;
+                        errorDetails.textContent = error.stack || error.message;
+                        showErrorBtn.style.display = 'inline-block';
+                        loader.style.display = 'none';
+                        translateBtn.disabled = false;
+                        isTranslating = false;
+                    });
+            }
+            
+            // 复制译文功能
+            copyBtn.addEventListener('click', function() {
+                const textToCopy = outputText.innerText;
+                
+                if (textToCopy === '翻译结果将显示在这里...' || textToCopy.includes('翻译出错')) {
+                    return;
+                }
+                
+                navigator.clipboard.writeText(textToCopy)
+                    .then(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制!';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制译文';
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('复制失败:', err);
+                    });
+            });
+            
+            // 交换语言功能
+            swapBtn.addEventListener('click', function() {
+                const temp = sourceLang.value;
+                sourceLang.value = targetLang.value;
+                targetLang.value = temp;
+                
+                // 同时交换文本内容
+                const inputContent = inputText.value;
+                const outputContent = outputText.innerText;
+                
+                if (outputContent !== '翻译结果将显示在这里...' && !outputContent.includes('翻译出错')) {
+                    inputText.value = outputContent;
+                    // 触发自动翻译
+                    triggerAutoTranslate();
+                }
+            });
+            
+            // 语言选择变化时也触发翻译
+            sourceLang.addEventListener('change', function() {
+                if (inputText.value.trim() !== '') {
+                    triggerAutoTranslate();
+                }
+            });
+            
+            targetLang.addEventListener('change', function() {
+                if (inputText.value.trim() !== '') {
+                    triggerAutoTranslate();
+                }
+            });
+            
+            // 翻译函数 - 实际调用OpenAI API
+            async function translateText(text, sourceLang, targetLang, config) {
+                try {
+                    // 构建API端点URL
+                    const apiUrl = `${config.apiHost}/v1/chat/completions`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${config.apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: config.modelId || 'gpt-3.5-turbo',
+                            messages: [
+                                {
+                                    role: "system",
+                                    content: `你是一个专业的翻译助手，请将${sourceLang}文本准确翻译成${targetLang}。返回翻译结果，纠正英文语句中的错误，并再提供2个语义完全相同的英文例句。`
+                                },
+                                {
+                                    role: "user",
+                                    content: text
+                                }
+                            ],
+                            temperature: 0.3,
+                            max_tokens: 2000
+                        })
+                    });
+                    
+                    // 获取响应文本，以便更好地处理错误
+                    const responseText = await response.text();
+                    
+                    if (!response.ok) {
+                        // 尝试解析错误响应
+                        let errorMessage = `API请求失败: ${response.status} ${response.statusText}`;
+                        try {
+                            const errorData = JSON.parse(responseText);
+                            errorMessage = errorData.error?.message || errorMessage;
+                        } catch (e) {
+                            // 如果不是JSON，使用原始响应文本
+                            errorMessage = responseText || errorMessage;
+                        }
+                        throw new Error(errorMessage);
+                    }
+                    
+                    // 解析响应JSON
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (e) {
+                        throw new Error(`无效的JSON响应: ${responseText.substring(0, 100)}...`);
+                    }
+                    
+                    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                        throw new Error(`API响应格式无效: ${JSON.stringify(data)}`);
+                    }
+                    
+                    const translatedText = data.choices[0].message.content;
+                    
+                    if (!translatedText) {
+                        throw new Error("API返回了空翻译结果");
+                    }
+                    
+                    // 确保返回的是纯文本
+                    return translatedText.replace(/^["'](.*)["']$/, '$1');
+                } catch (error) {
+                    console.error('翻译错误:', error);
+                    throw new Error(`翻译失败: ${error.message}`);
+                }
+            }
+            
+            // 初始化加载配置
+            loadConfig();
+            
+            // 初始显示提示
+            outputText.innerHTML = '<p style="color: #888;"></p>';
+
+            // ---------- 折叠/展开配置面板功能 ----------
+            // 默认状态为折叠 (collapsed类已在HTML中添加)，按钮文字对应“显示配置”
+            let isConfigCollapsed = true;  // 默认隐藏
+
+            toggleConfigBtn.addEventListener('click', function() {
+                configPanel.classList.toggle('collapsed');
+                isConfigCollapsed = configPanel.classList.contains('collapsed');
+                
+                // 更新按钮文字和图标
+                if (isConfigCollapsed) {
+                    toggleBtnText.innerText = '显示配置';
+                    toggleIcon.className = 'fas fa-chevron-left';  // 左箭头表示折叠（当前隐藏，点击展开）
+                } else {
+                    toggleBtnText.innerText = '隐藏配置';
+                    toggleIcon.className = 'fas fa-chevron-right';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
