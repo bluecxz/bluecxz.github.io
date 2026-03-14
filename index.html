@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网站导航</title>
+  <!-- Font Awesome 6 (免费版) 用于图标 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: #f4f6fa;
+      display: flex;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+
+    .container {
+      max-width: 1280px;
+      width: 100%;
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+      padding: 32px 36px;
+    }
+
+    /* 头部：标题 + 分类标签栏 + 搜索框 */
+    .header-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: #0b1b33;
+      margin-bottom: 24px;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+    }
+    .header-title i {
+      color: #2a7de1;
+      font-size: 32px;
+      margin-right: 10px;
+    }
+
+    /* 导航行：分类标签 + 搜索框 */
+    .nav-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px 16px;
+      margin-bottom: 40px;
+    }
+
+    .category-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      list-style: none;
+    }
+
+    .tab-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #f0f3f8;
+      border-radius: 40px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #1f2a44;
+      transition: all 0.2s;
+      cursor: default;
+      border: 1px solid transparent;
+    }
+
+    .tab-item i {
+      font-size: 1.1em;
+      color: #3b4e6b;
+    }
+
+    /* “全部”标签用田字网格图标，并加一点底色区分 (模仿图片中的“田全部”) */
+    .tab-item.all-tab {
+      background: #e1e8f5;
+      border-color: #b7c9e6;
+    }
+    .tab-item.all-tab i {
+      color: #1d4ed8;
+    }
+
+    /* 搜索框 */
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      background: #f0f3f8;
+      border-radius: 40px;
+      padding: 4px 4px 4px 20px;
+      border: 1px solid #d9e0eb;
+    }
+    .search-wrapper i {
+      color: #6f7d98;
+      font-size: 18px;
+    }
+    .search-wrapper input {
+      border: none;
+      background: transparent;
+      padding: 10px 12px;
+      font-size: 16px;
+      min-width: 220px;
+      outline: none;
+      color: #1f2a44;
+    }
+    .search-wrapper input::placeholder {
+      color: #8b9ab5;
+      font-weight: 400;
+    }
+    .search-wrapper button {
+      background: #1d4ed8;
+      border: none;
+      color: white;
+      font-weight: 500;
+      padding: 8px 22px;
+      border-radius: 40px;
+      font-size: 15px;
+      cursor: default;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    /* 板块网格：三列两行，完全对应图片中的六个分类 */
+    .sections-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 26px;
+      margin-top: 10px;
+    }
+
+    /* 每个卡片 */
+    .category-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 22px 20px 18px;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.03);
+      border: 1px solid #edf2f9;
+      transition: transform 0.1s ease;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .card-header i {
+      font-size: 24px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eef4ff;
+      color: #1d4ed8;
+      border-radius: 12px;
+    }
+    .card-header h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #0f1c3d;
+      letter-spacing: -0.2px;
+    }
+
+    /* 网站链接网格 (两列) */
+    .sites-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 12px;
+      margin-bottom: 18px;
+    }
+
+    .site-link {
+      display: block;
+      background: #f7f9fd;
+      padding: 10px 8px;
+      border-radius: 30px;
+      text-decoration: none;
+      color: #1f2a44;
+      font-weight: 500;
+      font-size: 15px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .site-link:hover {
+      background: #e6edfb;
+      border-color: #b7c9e6;
+    }
+
+    /* 查看更多链接 */
+    .more-link {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #2a7de1;
+      text-decoration: none;
+      margin-top: 8px;
+      border-top: 1px dashed #dbe4f0;
+      padding-top: 14px;
+    }
+    .more-link i {
+      font-size: 13px;
+      transition: transform 0.1s;
+    }
+    .more-link:hover i {
+      transform: translateX(4px);
+    }
+
+    /* 让最后一个卡片和其他保持一致 */
+    .category-card:last-child {
+      margin-bottom: 0;
+    }
+
+    /* 一些小修饰：图标和文字精确还原 */
+    .fa-th, .fa-magnifying-glass, .fa-q {
+      /* 针对“田全部”的图标已经用了fa-th, 搜索引擎用fa-magnifying-glass */
+    }
+
+    /* 对于搜索引擎标签，如果希望出现Q的暗示，在标签里加个Q小标 (可选) */
+    .q-hint {
+      font-weight: 600;
+      margin-right: 2px;
+    }
+
+    /* 响应式：平板变成两列，手机一列 */
+    @media (max-width: 900px) {
+      .sections-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .container {
+        padding: 24px 20px;
+      }
+    }
+    @media (max-width: 580px) {
+      .sections-grid {
+        grid-template-columns: 1fr;
+      }
+      .nav-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-wrapper {
+        width: 100%;
+      }
+      .search-wrapper input {
+        flex: 1;
+      }
+    }
+
+    /* 完全保留图片中出现的所有网站名称，无多余无缺少 */
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 网站分类 大标题 (图片中的顶部文字) -->
+    <div class="header-title">
+      
+    </div>
+
+    <!-- 分类导航：田全部 + 各分类 + 搜索框（对应图片中的“Q”搜索） -->
+    <div class="nav-bar">
+      <ul class="category-tabs">
+        
+        <!-- 搜索引擎：加上一个Q小标记来对应“Q搜索引擎”，同时使用搜索图标，保留字母Q的视觉暗示 -->
+        <li class="tab-item"><i class="fas fa-magnifying-glass"></i> <span class="q-hint">Q</span>搜索引擎</li>
+        <!-- 社交媒体 -->
+        <li class="tab-item"><i class="fas fa-users"></i> 社交媒体</li>        
+        <!-- 购物网站 -->
+        <li class="tab-item"><i class="fas fa-cart-shopping"></i> 购物网站</li>
+        <!-- 教育资源 -->
+        <li class="tab-item"><i class="fas fa-graduation-cap"></i> 教育资源</li>
+        <!-- 实用工具 (保留在标签栏，与图片一致) -->
+        <li class="tab-item"><i class="fas fa-toolbox"></i> 实用工具</li>
+      </ul>
+
+      
+    </div>
+
+    <!-- 核心区域：六个分类卡片，与图片中出现的网站列表完全一致 -->
+    <div class="sections-grid">
+      
+      <!-- 1. 搜索引擎卡片 (谷歌, 必应, 百度, Yandex, DuckDuckGo) -->
+      <div class="category-card">
+        <div class="card-header">
+          <i class="fas fa-magnifying-glass"></i>
+          <h3>搜索引擎</h3>
+        </div>
+        <div class="sites-grid">
+          <a href="#" class="site-link">谷歌</a>
+          <a href="#" class="site-link">必应</a>
+          <a href="#" class="site-link">百度</a>
+          <a href="#" class="site-link">Yandex</a>
+          <a href="#" class="site-link">DuckDuckGo</a>
+          <!-- 搜索引擎只有5个，网格自动留空一格，保持美观 -->
+          <span></span>
+        </div>
+        <a href="#" class="more-link">查看更多 <i class="fas fa-arrow-right"></i></a>
+      </div>
+
+      <!-- 2. 社交媒体卡片 (Facebook, Twitter, Instagram, Linkedin, Pinterest, Reddit) -->
+      <div class="category-card">
+        <div class="card-header">
+          <i class="fas fa-users"></i>
+          <h3>工具</h3>
+        </div>
+        <div class="sites-grid">
+          <a href="fanyi/fy.html" class="site-link">fanyi</a>
+          <a href="JS混淆/JShx.html" class="site-link">JS混淆</a>
+          <a href="tiku/tiku.html" class="site-link">TiKu</a>
+          <a href="双色球/ssq.html" class="site-link">双色球</a>
+          <a href="#" class="site-link">Pinterest</a>
+          <a href="#" class="site-link">Reddit</a>
+        </div>
+        <a href="#" class="more-link">查看更多 <i class="fas fa-arrow-right"></i></a>
+      </div>
+
+      <!-- 3. 视频平台卡片 (YouTube, Netflix, Twitch, Vimeo, Dailymotion, Hulu) -->
+      <div class="category-card">
+        <div class="card-header">
+          <i class="fas fa-video"></i>
+          <h3>媒体</h3>
+        </div>
+        <div class="sites-grid">
+          <a href="m3u8/m.html" class="site-link">播放器</a>
+          <a href="yinyue/yy.html" class="site-link">音乐播放器</a>
+          <a href="#" class="site-link">Twitch</a>
+          <a href="#" class="site-link">Vimeo</a>
+          <a href="#" class="site-link">Dailymotion</a>
+          <a href="#" class="site-link">Hulu</a>
+        </div>
+        <a href="#" class="more-link">查看更多 <i class="fas fa-arrow-right"></i></a>
+      </div>
+
+      <!-- 4. 购物网站卡片 (亚马逊, eBay, 阿里巴巴, 沃尔玛, 淘宝, 京东) -->
+      <div class="category-card">
+        <div class="card-header">
+          <i class="fas fa-cart-shopping"></i>
+          <h3>购物网站</h3>
+        </div>
+        <div class="sites-grid">
+          <a href="#" class="site-link">亚马逊</a>
+          <a href="#" class="site-link">eBay</a>
+          <a href="#" class="site-link">阿里巴巴</a>
+          <a href="#" class="site-link">沃尔玛</a>
+          <a href="#" class="site-link">淘宝</a>
+          <a href="#" class="site-link">京东</a>
+        </div>
+        <a href="#" class="more-link">查看更多 <i class="fas fa-arrow-right"></i></a>
+      </div>
+
+      <!-- 5. 教育资源卡片 (维基百科, Coursera, edx, 可汗学院, Udemy, MOOC) -->
+      <div class="category-card">
+        <div class="card-header">
+          <i class="fas fa-graduation-cap"></i>
+          <h3>教育资源</h3>
+        </div>
+        <div class="sites-grid">
+          <a href="#" class="site-link">维基百科</a>
+          <a href="#" class="site-link">Coursera</a>
+          <a href="#" class="site-link">edx</a>
+          <a href="#" class="site-link">可汗学院</a>
+          <a href="#" class="site-link">Udemy</a>
+          <a href="#" class="site-link">MOOC</a>
+        </div>
+        <a href="#" class="more-link">查看更多 <i class="fas fa-arrow-right"></i></a>
+      </div>
+
+      <!-- 6. 新闻媒体卡片 (纽约时报, BBC新闻, CNN, 路透社, ABC新闻, NHK新闻) -->
+      <div class="category-card">
+        <div class="card-header">
+          <i class="fas fa-newspaper"></i>
+          <h3>新闻媒体</h3>
+        </div>
+        <div class="sites-grid">
+          <a href="#" class="site-link">纽约时报</a>
+          <a href="#" class="site-link">BBC新闻</a>
+          <a href="#" class="site-link">CNN</a>
+          <a href="#" class="site-link">路透社</a>
+          <a href="#" class="site-link">ABC新闻</a>
+          <a href="#" class="site-link">NHK新闻</a>
+        </div>
+        <a href="#" class="more-link">查看更多 <i class="fas fa-arrow-right"></i></a>
+      </div>
+      
+    </div>
+
+    <!-- 底部装饰 (无实际功能，仅保持图片中的“查看更多”都已在卡片中) -->
+    <div style="text-align: right; margin-top: 28px; font-size: 14px; color: #8ba0bc; border-top: 1px solid #eef2f6; padding-top: 20px;">
+      <a href="1.html" >.</a>
+    </div>
+    
+  </div>
+  
+ 
+</body>
+
+</html>
