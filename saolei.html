@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>经典扫雷</title>
+    <title>经典扫雷 · 触摸优化版</title>
     <style>
         * {
             user-select: none;
@@ -21,7 +21,7 @@
             justify-content: center;
             align-items: center;
             padding: 8px;
-            touch-action: pan-y pinch-zoom; /* 允许垂直滑动防止卡死 */
+            touch-action: pan-y pinch-zoom;
         }
         #Mclear {
             background: rgba(255, 255, 255, 0.08);
@@ -94,7 +94,7 @@
             position: relative;
             display: flex;
             justify-content: center;
-            touch-action: none; /* 画布内禁止页面滚动，我们用js控制 */
+            touch-action: none;
         }
         canvas {
             display: block;
@@ -227,13 +227,13 @@
     'use strict';
 
     // --- 配置常量 ---
-    const CELL_SIZE = 30;               // 固定逻辑像素，canvas实际尺寸不变，但屏幕用css缩放
+    const CELL_SIZE = 30;
     const SHADOW_PADDING = 16;
     const BORDER_COLOR = '#2d3e4f';
     const COVER_INNER = '#a3b9d1';
     const OPEN_INNER = '#f2f6fc';
     const MAX_TIME = 999;
-    const LONG_PRESS_DELAY = 350;        // 长按触发右键(插旗) 毫秒
+    const LONG_PRESS_DELAY = 350;
 
     // --- DOM ---
     const $ = id => document.getElementById(id);
@@ -258,10 +258,10 @@
     let timerInterval = null;
     let difficulty = '简单';
 
-    let cellCanvas = null;               // 离屏画布
-    let pressedCell = null;              // 当前按下的格子 {row, col, touchId}
+    let cellCanvas = null;
+    let pressedCell = null;
     let longPressTimer = null;
-    let isLongPressTriggered = false;    // 防止左键弹起时误操作
+    let isLongPressTriggered = false;
 
     // --- 辅助函数 ---
     function formatNumber(n) {
@@ -274,7 +274,7 @@
         timeDiv.innerText = formatNumber(elapsedSeconds);
     }
 
-    // --- 绘制原语 (与之前一致) ---
+    // --- 绘制原语 ---
     function fillCellBase(destCtx, col, row, innerColor) {
         const x = col * CELL_SIZE, y = row * CELL_SIZE;
         destCtx.fillStyle = BORDER_COLOR;
@@ -338,7 +338,6 @@
     function redrawScene() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (cellCanvas) ctx.drawImage(cellCanvas, 0, 0);
-        // 按下高亮 (仅当未触发长按且格子覆盖)
         if (pressedCell && gameActive && !isLongPressTriggered) {
             const { row, col } = pressedCell;
             if (map[row] && map[row][col] && map[row][col].covered) {
@@ -350,7 +349,7 @@
         }
     }
 
-    // --- 核心逻辑 (与之前相同，但需要导出) ---
+    // --- 核心逻辑 ---
     function generateMines(totalCells, mineNum) {
         const indices = Array.from({ length: totalCells }, (_, i) => i);
         for (let i = 0; i < mineNum; i++) {
@@ -541,9 +540,12 @@
         return { row, col };
     }
 
-    // --- 触摸事件处理 ---
+    // --- 触摸事件处理 (已修复: 浮层内不拦截) ---
     function handleTouchStart(e) {
-        e.preventDefault();  // 阻止页面滚动/缩放
+        // 如果触摸点在浮层上，直接放行，让click事件正常触发
+        if (e.target.closest('#hint')) return;
+
+        e.preventDefault(); // 阻止页面滚动
         if (!gameActive) return;
 
         const touch = e.touches[0];
@@ -554,19 +556,15 @@
         const { row, col } = cell;
         if (!map[row]?.[col]?.covered) return;
 
-        // 清除之前的按下
         if (pressedCell) {
-            // 如果已经有按下的，先取消
             if (longPressTimer) clearTimeout(longPressTimer);
         }
 
         pressedCell = { row, col, identifier: touch.identifier };
         isLongPressTriggered = false;
 
-        // 启动长按定时器 (右键插旗)
         longPressTimer = setTimeout(() => {
             if (!gameActive || !pressedCell) return;
-            // 长按触发时，检查格子是否仍然覆盖且未插旗/已插旗则切换
             const r = pressedCell.row, c = pressedCell.col;
             if (!map[r]?.[c]?.covered) return;
 
@@ -589,15 +587,17 @@
                 updateCounters();
             }
             redrawScene();
-            pressedCell = null;  // 长按后清除按下状态
+            pressedCell = null;
             longPressTimer = null;
         }, LONG_PRESS_DELAY);
 
-        redrawScene(); // 显示按下高亮
+        redrawScene();
     }
 
     function handleTouchEnd(e) {
+        if (e.target.closest('#hint')) return;
         e.preventDefault();
+
         if (!gameActive || !pressedCell) {
             pressedCell = null;
             if (longPressTimer) clearTimeout(longPressTimer);
@@ -605,11 +605,9 @@
             return;
         }
 
-        // 找到对应的touch
         const touch = e.changedTouches[0];
         if (!touch) return;
 
-        // 如果长按已经触发，忽略左键操作
         if (isLongPressTriggered) {
             pressedCell = null;
             if (longPressTimer) clearTimeout(longPressTimer);
@@ -617,7 +615,6 @@
             return;
         }
 
-        // 取消长按定时器
         if (longPressTimer) {
             clearTimeout(longPressTimer);
             longPressTimer = null;
@@ -626,7 +623,6 @@
         const start = pressedCell;
         pressedCell = null;
 
-        // 获取抬起位置
         const endCell = getCellFromClient(touch.clientX, touch.clientY);
         if (!endCell) {
             redrawScene();
@@ -646,7 +642,6 @@
             return;
         }
 
-        // 左键点击 (如果格子未插旗)
         if (cell.flagged) {
             redrawScene();
             return;
@@ -655,7 +650,6 @@
         const cellCtx = cellCanvas.getContext('2d');
 
         if (cell.mine) {
-            // 踩雷
             cell.covered = false;
             drawMine(cellCtx, sCol, sRow, true);
             for (let r = 0; r < rows; r++) {
@@ -681,6 +675,7 @@
     }
 
     function handleTouchCancel(e) {
+        if (e.target.closest('#hint')) return;
         e.preventDefault();
         if (longPressTimer) clearTimeout(longPressTimer);
         pressedCell = null;
@@ -689,14 +684,13 @@
     }
 
     function handleTouchMove(e) {
+        if (e.target.closest('#hint')) return;
         e.preventDefault();
-        // 如果移动出当前格子，取消高亮但保留press? 为了手感，移出取消press
         if (!gameActive || !pressedCell) return;
         const touch = e.touches[0];
         if (!touch) return;
         const cell = getCellFromClient(touch.clientX, touch.clientY);
         if (!cell || cell.row !== pressedCell.row || cell.col !== pressedCell.col) {
-            // 移出格子 → 取消按下 (不触发点击)
             if (longPressTimer) clearTimeout(longPressTimer);
             pressedCell = null;
             isLongPressTriggered = false;
@@ -704,9 +698,9 @@
         }
     }
 
-    // 鼠标事件保留作为兼容 (但移动端主要用触摸)
+    // --- 鼠标事件 (保留，移动端不会触发) ---
     function onMouseDown(e) {
-        if (e.pointerType === 'touch') return; // 避免重复
+        if (e.pointerType === 'touch') return;
         if (!gameActive) return;
         const cell = getCellFromClient(e.clientX, e.clientY);
         if (!cell) return;
@@ -735,7 +729,7 @@
         const cell = map[start.row]?.[start.col];
         if (!cell || !cell.covered) { redrawScene(); return; }
 
-        if (e.button === 2) { // 右键
+        if (e.button === 2) {
             const cellCtx = cellCanvas.getContext('2d');
             if (!cell.flagged && flaggedCount < mineCount) {
                 cell.flagged = true;
@@ -752,7 +746,7 @@
                 updateCounters();
             }
             redrawScene();
-        } else if (e.button === 0) { // 左键
+        } else if (e.button === 0) {
             if (cell.flagged) { redrawScene(); return; }
             const cellCtx = cellCanvas.getContext('2d');
             if (cell.mine) {
@@ -780,16 +774,14 @@
         e.preventDefault();
     }
 
-    // --- 初始化事件绑定 ---
+    // --- 事件绑定 ---
     function bindEvents() {
         const shadow = $('shadow');
-        // 触摸事件
         shadow.addEventListener('touchstart', handleTouchStart, { passive: false });
         shadow.addEventListener('touchend', handleTouchEnd, { passive: false });
         shadow.addEventListener('touchcancel', handleTouchCancel, { passive: false });
         shadow.addEventListener('touchmove', handleTouchMove, { passive: false });
 
-        // 鼠标事件 (保留)
         shadow.addEventListener('mousedown', onMouseDown);
         shadow.addEventListener('mouseup', onMouseUp);
         shadow.addEventListener('mouseleave', () => {
