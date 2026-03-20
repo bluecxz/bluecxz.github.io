@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>经典扫雷专业版2.0</title>
+    <title>经典扫雷 </title>
     <style>
- 
         * {
             user-select: none;
             box-sizing: border-box;
@@ -95,6 +94,7 @@
             border-radius: 20px;
             box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 20px 30px -12px black;
             background: #1e2b36;
+            cursor: default;
         }
         #hint {
             background: rgba(20, 30, 40, 0.75);
@@ -108,6 +108,7 @@
             overflow: hidden;
             transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid rgba(255,255,255,0.15);
+            z-index: 10;
         }
         .animati1 {
             opacity: 0;
@@ -187,7 +188,7 @@
 <div id="Mclear">
     <div class="title">
         <div id="time">000</div>
-        <div id="restart" title="新一局">&#8635;</div>
+        <div id="restart" title="新一局">↻</div>
         <div id="tabnum">000</div>
     </div>
     <div id="shadow">
@@ -197,34 +198,34 @@
             <div class="hbg">
                 <div id="load" style="display: none;">加载中...</div>
                 <div id="text" style="display: none;">
-                    <p>&#128165; 踩到炸弹啦 &#128165;<br>再试一次</p>
+                    <p>💥 踩到炸弹啦 💥<br>再试一次</p>
                     <span id="butt">再来一局</span>
                 </div>
                 <div id="Difficu">
                     <ul>
-                        <li><span onclick="window.Difficulty('简单')">&#127811; 简单</span></li>
-                        <li><span onclick="window.Difficulty('一般')">&#9881;&#65039; 一般</span></li>
-                        <li><span onclick="window.Difficulty('困难')">&#128128; 困难</span></li>
+                        <li><span data-diff="简单">🌳 简单</span></li>
+                        <li><span data-diff="一般">⚙️ 一般</span></li>
+                        <li><span data-diff="困难">💀 困难</span></li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
- 
+
 <script>
 (function() {
     'use strict';
- 
-    // 常量定义
+
+    // --- 配置常量 ---
     const CELL_SIZE = 30;
-    const SHADOW_PADDING = 16;      // #shadow的内边距
+    const SHADOW_PADDING = 16;      // 与CSS保持一致
     const BORDER_COLOR = '#2d3e4f';
     const COVER_INNER = '#a3b9d1';
     const OPEN_INNER = '#f2f6fc';
     const MAX_TIME = 999;
- 
-    // DOM 快捷获取
+
+    // --- DOM 元素 ---
     const $ = id => document.getElementById(id);
     const canvas = $('canvas');
     const ctx = canvas.getContext('2d');
@@ -235,28 +236,36 @@
     const difficuDiv = $('Difficu');
     const restartBtn = $('restart');
     const butt = $('butt');
- 
-    // 游戏状态变量
-    let gridCanvas = null;          // 网格离屏canvas（已无网格，仅作占位）
-    let cellCanvas = null;          // 方块离屏canvas
-    let map = [];                   // 二维数组，存储每个格子的对象
-    let stageWidth = 300;
-    let stageHeight = 400;
-    let difficulty = '简单';
+
+    // --- 游戏状态 ---
+    let map = [];                  // 二维数组: { mine, covered, flagged, num }
     let rows = 0, cols = 0;
-    let mineCount = 0;              // 总雷数
-    let flaggedCount = 0;           // 已插旗数
-    let correctFlagCount = 0;       // 标记正确的雷数
+    let mineCount = 0;
+    let flaggedCount = 0;
+    let correctFlagCount = 0;      // 旗子正确插在雷上的数量
     let elapsedSeconds = 0;
     let gameActive = false;
     let timerInterval = null;
-    let pendingCoord = null;        // 按下的格子坐标
- 
-    // 初始化显示
-    difficuDiv.style.display = 'block';
-    textDiv.style.display = 'none';
- 
-    // ----- 绘制函数（精确居中，无偏移）-----
+    let difficulty = '简单';
+
+    // 离屏画布 (仅存储格子绘制)
+    let cellCanvas = null;
+
+    // 当前按下的格子 (用于按下效果)
+    let pressedCell = null;
+
+    // --- 辅助函数 ---
+    function formatNumber(n) {
+        return Math.min(MAX_TIME, Math.max(0, n)).toString().padStart(3, '0');
+    }
+
+    function updateCounters() {
+        const remain = Math.max(0, mineCount - flaggedCount);
+        tabnumDiv.innerText = formatNumber(remain);
+        timeDiv.innerText = formatNumber(elapsedSeconds);
+    }
+
+    // --- 绘制原语 (直接操作离屏画布) ---
     function fillCellBase(destCtx, col, row, innerColor) {
         const x = col * CELL_SIZE, y = row * CELL_SIZE;
         destCtx.fillStyle = BORDER_COLOR;
@@ -264,15 +273,15 @@
         destCtx.fillStyle = innerColor;
         destCtx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
     }
- 
+
     function drawCovered(destCtx, col, row) {
         fillCellBase(destCtx, col, row, COVER_INNER);
     }
- 
+
     function drawOpenedBase(destCtx, col, row) {
         fillCellBase(destCtx, col, row, OPEN_INNER);
     }
- 
+
     function drawNumber(destCtx, col, row, num) {
         drawOpenedBase(destCtx, col, row);
         if (num > 0) {
@@ -286,11 +295,11 @@
             destCtx.fillText(num, x, y);
         }
     }
- 
+
     function drawEmpty(destCtx, col, row) {
         drawOpenedBase(destCtx, col, row);
     }
- 
+
     function drawFlag(destCtx, col, row) {
         drawCovered(destCtx, col, row);
         const x = col * CELL_SIZE + CELL_SIZE/2;
@@ -299,9 +308,9 @@
         destCtx.fillStyle = '#dc5f4c';
         destCtx.textAlign = 'center';
         destCtx.textBaseline = 'middle';
-        destCtx.fillText('&#128681;', x, y);
+        destCtx.fillText('🚩', x, y);   // 使用普通文本，不依赖HTML实体
     }
- 
+
     function drawMine(destCtx, col, row, isRed = false) {
         const x = col * CELL_SIZE, y = row * CELL_SIZE;
         destCtx.fillStyle = BORDER_COLOR;
@@ -314,97 +323,89 @@
         destCtx.fillStyle = '#2e2e2e';
         destCtx.textAlign = 'center';
         destCtx.textBaseline = 'middle';
-        destCtx.fillText('&#128163;', cx, cy);
+        destCtx.fillText('💣', cx, cy);
     }
- 
-    // 更新数字显示
-    function updateCounters() {
-        const remain = Math.max(0, mineCount - flaggedCount);
-        tabnumDiv.innerText = remain.toString().padStart(3, '0');
-        timeDiv.innerText = elapsedSeconds.toString().padStart(3, '0');
-    }
- 
-    // 重置游戏（不生成新地图，只清空状态）
-    function resetGame() {
-        gridCanvas = null;
-        cellCanvas = null;
-        map = [];
-        pendingCoord = null;
-        correctFlagCount = 0;
-        flaggedCount = 0;
-        mineCount = 0;
-        elapsedSeconds = 0;
-        gameActive = false;
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
+
+    // 刷新主画布 (从离屏cellCanvas复制)
+    function redrawScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (cellCanvas) {
+            ctx.drawImage(cellCanvas, 0, 0);
         }
-        updateCounters();
+        // 按下高亮（临时效果，不破坏cellCanvas）
+        if (pressedCell && gameActive) {
+            const { row, col } = pressedCell;
+            if (map[row] && map[row][col] && map[row][col].covered) {
+                ctx.globalAlpha = 0.25;
+                ctx.fillStyle = '#2f4f6f';
+                ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                ctx.globalAlpha = 1.0;
+            }
+        }
     }
- 
-    // 生成随机地雷（Fisher-Yates 洗牌）
+
+    // --- 游戏逻辑 ---
+    // 洗牌生成雷索引
     function generateMines(totalCells, mineNum) {
         const indices = Array.from({ length: totalCells }, (_, i) => i);
         for (let i = 0; i < mineNum; i++) {
             const j = i + Math.floor(Math.random() * (totalCells - i));
             [indices[i], indices[j]] = [indices[j], indices[i]];
         }
-        return indices.slice(0, mineNum).sort((a, b) => a - b);
+        return indices.slice(0, mineNum).sort((a,b) => a-b);
     }
- 
-    // 初始化地图
+
+    // 重置并初始化新地图 (根据当前difficulty)
     function initMap() {
-        // 根据难度确定行列和雷数
+        // 设置行列与雷数 (固定列数，行数自适应)
         switch (difficulty) {
             case '简单': cols = 10; mineCount = 10; break;
             case '一般': cols = 20; mineCount = 40; break;
             case '困难': cols = 30; mineCount = 120; break;
             default: cols = 10; mineCount = 10;
         }
-        const width = cols * CELL_SIZE;
-        // 高度根据视口自适应，但保证至少有一行，且为CELL_SIZE整数倍
-        const maxHeight = window.innerHeight - 200;
-        let height = (width > maxHeight) ? maxHeight - (maxHeight % CELL_SIZE) : width;
-        if (height < CELL_SIZE) height = CELL_SIZE;
-        rows = Math.floor(height / CELL_SIZE);
- 
-        stageWidth = width;
-        stageHeight = rows * CELL_SIZE;
-        canvas.width = stageWidth;
-        canvas.height = stageHeight;
-        $('Mclear').style.width = 'auto';
- 
-        // 创建网格画布（已无网格线，仅保留占位）
-        gridCanvas = document.createElement('canvas');
-        gridCanvas.width = stageWidth;
-        gridCanvas.height = stageHeight;
-        // 不绘制任何线条
- 
-        // 创建方块画布
+
+        // 计算行数：尽量让画布高度适中，不超过窗口，最小5行
+        const maxHeight = Math.min(600, window.innerHeight - 200);
+        let rawRows = Math.floor(maxHeight / CELL_SIZE);
+        rows = Math.max(5, Math.min(20, rawRows));  // 限制范围防止过于奇葩，且保证格子足够
+        // 对于困难，如果行数太少会放不下120雷，但120雷通常需要更多格子，我们增加行数
+        if (difficulty === '困难' && rows * cols < mineCount * 2) {
+            rows = Math.min(20, Math.ceil(mineCount * 2 / cols));
+        }
+        if (difficulty === '一般' && rows * cols < mineCount * 2) {
+            rows = Math.min(18, Math.ceil(mineCount * 1.8 / cols));
+        }
+
+        canvas.width = cols * CELL_SIZE;
+        canvas.height = rows * CELL_SIZE;
+
+        // 创建离屏画布
         cellCanvas = document.createElement('canvas');
-        cellCanvas.width = stageWidth;
-        cellCanvas.height = stageHeight;
+        cellCanvas.width = canvas.width;
+        cellCanvas.height = canvas.height;
         const cellCtx = cellCanvas.getContext('2d');
- 
-        // 生成雷索引
+
+        // 生成雷分布
         const totalCells = rows * cols;
-        const mineIndices = generateMines(totalCells, mineCount);
- 
-        // 构建地图数组
+        let mineIndices = [];
+        if (mineCount > totalCells) mineCount = Math.floor(totalCells * 0.2); // 保险
+        mineIndices = generateMines(totalCells, mineCount);
+
+        // 构建map
         map = Array.from({ length: rows }, (_, r) =>
             Array.from({ length: cols }, (_, c) => {
                 const idx = r * cols + c;
-                const isMine = mineIndices.includes(idx);
                 return {
-                    mine: isMine,
+                    mine: mineIndices.includes(idx),
                     covered: true,
                     flagged: false,
                     num: 0
                 };
             })
         );
- 
-        // 计算周围雷数
+
+        // 计算邻居雷数
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 if (map[r][c].mine) continue;
@@ -419,140 +420,37 @@
                 map[r][c].num = cnt;
             }
         }
- 
-        // 绘制所有格子为覆盖状态
+
+        // 全部画成覆盖
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 drawCovered(cellCtx, c, r);
             }
         }
- 
-        // 显示到主canvas
-        ctx.clearRect(0, 0, stageWidth, stageHeight);
-        ctx.drawImage(cellCanvas, 0, 0);
- 
+
+        flaggedCount = 0;
+        correctFlagCount = 0;
         gameActive = true;
+        pressedCell = null;
         updateCounters();
- 
-        // 启动计时器
+
+        // 计时器
         if (timerInterval) clearInterval(timerInterval);
         elapsedSeconds = 0;
         timerInterval = setInterval(() => {
             if (!gameActive) return;
             if (elapsedSeconds >= MAX_TIME) {
-                gameOver(false);
+                gameOver(false, 'timeout');
                 return;
             }
             elapsedSeconds++;
             updateCounters();
         }, 1000);
-    }
- 
-    // 刷新主画布（从离屏画布复制）
-    function redrawScene() {
-        ctx.clearRect(0, 0, stageWidth, stageHeight);
-        if (gridCanvas) ctx.drawImage(gridCanvas, 0, 0);
-        if (cellCanvas) ctx.drawImage(cellCanvas, 0, 0);
-    }
- 
-    // 获取鼠标在canvas上的格子坐标（返回 { row, col } 或 null）
-    function getCellFromEvent(e) {
-        const shadowRect = $('shadow').getBoundingClientRect();
-        // 计算相对于canvas的坐标（减去shadow内边距）
-        const canvasX = e.clientY - shadowRect.top - SHADOW_PADDING;
-        const canvasY = e.clientX - shadowRect.left - SHADOW_PADDING;
-        if (canvasX < 0 || canvasY < 0 || canvasX >= stageHeight || canvasY >= stageWidth) return null;
-        const row = Math.floor(canvasX / CELL_SIZE);
-        const col = Math.floor(canvasY / CELL_SIZE);
-        if (row < 0 || row >= rows || col < 0 || col >= cols) return null;
-        return { row, col };
-    }
- 
-    // 按下处理
-    function onMouseDown(e) {
-        if (!gameActive) return;
-        const cell = getCellFromEvent(e);
-        if (!cell) return;
-        const { row, col } = cell;
-        if (!map[row]?.[col]?.covered) return;
-        pendingCoord = { row, col };
-        // 显示按下效果
-        redrawScene();
-        ctx.globalAlpha = 0.2;
-        ctx.fillStyle = '#2f4f6f';
-        ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-        ctx.globalAlpha = 1.0;
-    }
- 
-    // 弹起处理
-    function onMouseUp(e) {
-        if (!gameActive || !pendingCoord) return;
-        const start = pendingCoord;
-        pendingCoord = null;
- 
-        const end = getCellFromEvent(e);
-        if (!end) {
-            redrawScene();
-            return;
-        }
- 
-        const { row: sRow, col: sCol } = start;
-        const { row: eRow, col: eCol } = end;
-        const cell = map[sRow]?.[sCol];
-        if (!cell || !cell.covered) return;
- 
-        const cellCtx = cellCanvas.getContext('2d');
- 
-        // 左键
-        if (e.button === 0) {
-            if (sRow === eRow && sCol === eCol && !cell.flagged) {
-                if (cell.mine) {
-                    // 踩雷：显示所有雷
-                    cell.covered = false;
-                    drawMine(cellCtx, sCol, sRow, true);
-                    for (let r = 0; r < rows; r++) {
-                        for (let c = 0; c < cols; c++) {
-                            if (map[r][c].mine && !(r === sRow && c === sCol)) {
-                                map[r][c].covered = false;
-                                drawMine(cellCtx, c, r, false);
-                            }
-                        }
-                    }
-                    gameOver(false);
-                } else {
-                    if (cell.num === 0) {
-                        expandEmpty(sRow, sCol);
-                    } else {
-                        cell.covered = false;
-                        drawNumber(cellCtx, sCol, sRow, cell.num);
-                    }
-                }
-            }
-        }
-        // 右键（插旗/拔旗）
-        else if (e.button === 2) {
-            if (sRow === eRow && sCol === eCol) {
-                if (!cell.flagged && flaggedCount < mineCount) {
-                    cell.flagged = true;
-                    flaggedCount++;
-                    if (cell.mine) correctFlagCount++;
-                    drawFlag(cellCtx, sCol, sRow);
-                    updateCounters();
-                    if (correctFlagCount === mineCount) gameOver(true);
-                } else if (cell.flagged) {
-                    cell.flagged = false;
-                    flaggedCount--;
-                    if (cell.mine) correctFlagCount--;
-                    drawCovered(cellCtx, sCol, sRow);
-                    updateCounters();
-                }
-            }
-        }
- 
+
         redrawScene();
     }
- 
-    // 展开空白区域（广度优先）
+
+    // 展开空白 (BFS)
     function expandEmpty(startRow, startCol) {
         const cellCtx = cellCanvas.getContext('2d');
         const queue = [{ row: startRow, col: startCol }];
@@ -560,15 +458,16 @@
             const { row, col } = queue.shift();
             const cell = map[row]?.[col];
             if (!cell || !cell.covered || cell.flagged || cell.mine) continue;
- 
+
             cell.covered = false;
             if (cell.num === 0) {
                 drawEmpty(cellCtx, col, row);
             } else {
                 drawNumber(cellCtx, col, row, cell.num);
-                continue;
+                continue;   // 数字格子不继续扩散
             }
- 
+
+            // 检查邻居
             for (let dr = -1; dr <= 1; dr++) {
                 for (let dc = -1; dc <= 1; dc++) {
                     if (dr === 0 && dc === 0) continue;
@@ -587,59 +486,220 @@
             }
         }
     }
- 
-    // 游戏结束
-    function gameOver(isWin) {
+
+    // 游戏结束 (win = true 胜利)
+    function gameOver(win) {
+        if (!gameActive) return;
         gameActive = false;
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
- 
+
+        // 如果是踩雷，显示所有雷 (但不改变胜利时界面)
+        if (!win) {
+            const cellCtx = cellCanvas.getContext('2d');
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (map[r][c].mine) {
+                        map[r][c].covered = false;  // 强制揭开
+                        drawMine(cellCtx, c, r, false);
+                    }
+                }
+            }
+            redrawScene();
+        }
+
+        // 显示浮层
         const msg = textDiv.querySelector('p');
-        if (isWin) {
-            msg.innerHTML = `&#127881; 胜利！ &#127881;<br>用时 ${elapsedSeconds} 秒`;
+        if (win) {
+            msg.innerHTML = `🏆 胜利！ 🏆<br>用时 ${elapsedSeconds} 秒`;
             butt.innerText = '再玩一局';
         } else {
-            msg.innerHTML = '&#128165; 踩到炸弹啦 &#128165;<br>再来一次';
+            msg.innerHTML = '💥 踩到炸弹啦 💥<br>再来一次';
             butt.innerText = '重新开始';
         }
         textDiv.style.display = 'block';
         difficuDiv.style.display = 'none';
         hintDiv.className = 'animati2';
     }
- 
-    // 重新开始（显示难度选择）
-    function showDifficulty() {
+
+    // 重新开始 (显示难度选择)
+    function showDifficultyMenu() {
         hintDiv.className = 'animati2';
         textDiv.style.display = 'none';
         difficuDiv.style.display = 'block';
         gameActive = false;
+        pressedCell = null;
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
+        // 清空画布，显示空白或保留上次？为了美观保留上次但会被新选择覆盖，没问题
     }
- 
-    // 暴露给全局的难度选择函数
-    window.Difficulty = function(diff) {
-        difficulty = diff;
-        resetGame();
-        hintDiv.className = 'animati1';
-        initMap();
-    };
- 
-    // 事件绑定
+
+    // --- 事件处理 ---
+    function getCellFromEvent(e) {
+        const shadowRect = $('shadow').getBoundingClientRect();
+        // 计算相对于canvas左上角的坐标 (canvas位于shadow内边距内部)
+        const offsetX = e.clientX - shadowRect.left - SHADOW_PADDING;
+        const offsetY = e.clientY - shadowRect.top - SHADOW_PADDING;
+        if (offsetX < 0 || offsetY < 0 || offsetX >= canvas.width || offsetY >= canvas.height) return null;
+        const col = Math.floor(offsetX / CELL_SIZE);
+        const row = Math.floor(offsetY / CELL_SIZE);
+        if (row < 0 || row >= rows || col < 0 || col >= cols) return null;
+        return { row, col };
+    }
+
+    function onMouseDown(e) {
+        if (!gameActive) return;
+        const cell = getCellFromEvent(e);
+        if (!cell) return;
+        const { row, col } = cell;
+        if (!map[row]?.[col]?.covered) return;
+        pressedCell = { row, col };
+        redrawScene();  // 显示高亮
+        e.preventDefault();
+    }
+
+    function onMouseUp(e) {
+        if (!gameActive || !pressedCell) {
+            pressedCell = null;
+            redrawScene();
+            return;
+        }
+
+        const start = pressedCell;
+        pressedCell = null;
+
+        const end = getCellFromEvent(e);
+        if (!end) {
+            redrawScene();
+            return;
+        }
+
+        const { row: sRow, col: sCol } = start;
+        const { row: eRow, col: eCol } = end;
+        if (sRow !== eRow || sCol !== eCol) {
+            redrawScene();
+            return;
+        }
+
+        const cell = map[sRow]?.[sCol];
+        if (!cell || !cell.covered) {
+            redrawScene();
+            return;
+        }
+
+        const cellCtx = cellCanvas.getContext('2d');
+
+        // 左键 (button === 0)
+        if (e.button === 0) {
+            if (cell.flagged) {
+                redrawScene();
+                return; // 有旗不能点开
+            }
+            if (cell.mine) {
+                // 踩雷
+                cell.covered = false;
+                drawMine(cellCtx, sCol, sRow, true);
+                // 揭开所有雷
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (map[r][c].mine && !(r === sRow && c === sCol)) {
+                            map[r][c].covered = false;
+                            drawMine(cellCtx, c, r, false);
+                        }
+                    }
+                }
+                redrawScene();
+                gameOver(false);
+                return;
+            } else {
+                if (cell.num === 0) {
+                    expandEmpty(sRow, sCol);
+                } else {
+                    cell.covered = false;
+                    drawNumber(cellCtx, sCol, sRow, cell.num);
+                }
+            }
+        }
+        // 右键 (button === 2)
+        else if (e.button === 2) {
+            if (!cell.flagged && flaggedCount < mineCount) {
+                cell.flagged = true;
+                flaggedCount++;
+                if (cell.mine) correctFlagCount++;
+                drawFlag(cellCtx, sCol, sRow);
+                updateCounters();
+                // 胜利条件：所有雷被正确标记
+                if (correctFlagCount === mineCount) {
+                    gameOver(true);
+                }
+            } else if (cell.flagged) {
+                cell.flagged = false;
+                flaggedCount--;
+                if (cell.mine) correctFlagCount--;
+                drawCovered(cellCtx, sCol, sRow);
+                updateCounters();
+            }
+        }
+
+        redrawScene();
+        e.preventDefault();
+    }
+
+    // --- 初始化与绑定 ---
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('selectstart', e => e.preventDefault());
+
     document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mouseup', onMouseUp);
-    restartBtn.addEventListener('click', showDifficulty);
+    // 防止鼠标移出canvas导致按着不松开
+    document.addEventListener('mouseleave', () => {
+        if (pressedCell) {
+            pressedCell = null;
+            redrawScene();
+        }
+    });
+
+    restartBtn.addEventListener('click', showDifficultyMenu);
+
     butt.addEventListener('click', function() {
         textDiv.style.display = 'none';
         difficuDiv.style.display = 'block';
         hintDiv.className = 'animati2';
         gameActive = false;
+        pressedCell = null;
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    });
+
+    // 难度选择 (使用事件委托)
+    difficuDiv.addEventListener('click', (e) => {
+        const span = e.target.closest('span');
+        if (!span) return;
+        const diff = span.getAttribute('data-diff');
+        if (!diff) return;
+        difficulty = diff;
+        hintDiv.className = 'animati1';
+        // 重置所有状态并生成新地图
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+        gameActive = false;
+        initMap();
+    });
+
+    // 默认启动时显示难度选择，但不生成地图（等用户点击）
+    // 但为了不显示空白，预置一个简单地图，或留空让用户选择。我们先让用户选择：默认浮层显示
+    // 可选生成一个默认“简单”地图，但为了体验，主动生成一个简单
+    window.addEventListener('load', () => {
+        // 预置简单地图，使用户不用点就能玩
+        difficulty = '简单';
+        initMap();
+        hintDiv.className = 'animati1'; // 隐藏浮层
     });
 })();
 </script>
