@@ -2,16 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>经典扫雷 · 触摸优化版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经典扫雷 </title>
     <style>
         * {
             user-select: none;
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
         }
         body {
             background: linear-gradient(145deg, #1f2c3a 0%, #15232e 100%);
@@ -20,20 +18,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 8px;
-            touch-action: pan-y pinch-zoom;
+            padding: 16px;
         }
         #Mclear {
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             border-radius: 36px;
-            padding: 20px 16px;
+            padding: 24px 20px;
             box-shadow: 0 25px 40px -10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
             border: 1px solid rgba(255,255,255,0.06);
             display: inline-block;
-            width: fit-content;
-            max-width: 100vw;
         }
         .title {
             display: flex;
@@ -43,37 +38,36 @@
             backdrop-filter: blur(8px);
             border-radius: 60px;
             padding: 6px 12px 6px 20px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 8px 12px -8px rgba(0,0,0,0.4);
-            gap: 10px;
         }
         #time, #tabnum {
             background: rgba(0, 0, 0, 0.25);
             color: #b7e4fa;
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
             font-weight: 500;
-            font-size: min(26px, 6vw);
-            padding: 4px 10px;
+            font-size: 26px;
+            padding: 4px 14px;
             border-radius: 40px;
             letter-spacing: 2px;
             text-shadow: 0 0 6px #2ad4ff;
             box-shadow: inset 0 4px 6px rgba(0,0,0,0.4), 0 2px 0 rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
-            min-width: 75px;
+            min-width: 85px;
             text-align: center;
             backdrop-filter: blur(4px);
         }
         #restart {
-            width: min(54px, 12vw);
-            height: min(54px, 12vw);
+            width: 54px;
+            height: 54px;
             background: rgba(230, 245, 255, 0.15);
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: min(32px, 7vw);
+            font-size: 32px;
             font-weight: 300;
             color: #ddf0ff;
             box-shadow: 0 6px 0 #0e1a24, 0 8px 16px rgba(0,0,0,0.5), inset 0 2px 4px #b0daff;
@@ -94,19 +88,13 @@
             position: relative;
             display: flex;
             justify-content: center;
-            touch-action: none;
         }
         canvas {
             display: block;
             border-radius: 20px;
             box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 20px 30px -12px black;
             background: #1e2b36;
-            width: 100%;
-            height: auto;
-            max-width: 100%;
-            object-fit: contain;
-            touch-action: none;
-            pointer-events: auto;
+            cursor: default;
         }
         #hint {
             background: rgba(20, 30, 40, 0.75);
@@ -121,9 +109,6 @@
             transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid rgba(255,255,255,0.15);
             z-index: 10;
-            width: fit-content;
-            min-width: 260px;
-            max-width: 85vw;
         }
         .animati1 {
             opacity: 0;
@@ -137,26 +122,32 @@
         }
         .hbg {
             background: transparent;
-            padding: 28px 20px;
+            padding: 32px 36px;
             text-align: center;
+            min-width: 280px;
+        }
+        #load {
+            font-size: 24px;
+            color: #b0e0ff;
+            padding: 20px;
         }
         #text p {
-            font-size: min(26px, 6vw);
+            font-size: 26px;
             color: #f5c6a0;
-            margin: 12px 0;
+            margin: 16px 0 12px;
             text-shadow: 0 2px 6px #ffb56b;
             line-height: 1.4;
         }
         #butt {
             background: linear-gradient(145deg, #2e4357, #1b2a38);
             display: inline-block;
-            padding: 12px 30px;
+            padding: 14px 36px;
             border-radius: 60px;
-            font-size: min(22px, 5.5vw);
+            font-size: 22px;
             font-weight: 500;
             color: #e2f0fa;
             cursor: pointer;
-            margin-top: 16px;
+            margin-top: 20px;
             box-shadow: 0 8px 0 #0d1a22, 0 8px 18px rgba(0,0,0,0.4);
             transition: 0.08s linear;
             border: 1px solid rgba(255,255,255,0.08);
@@ -167,19 +158,19 @@
         }
         #Difficu ul {
             padding: 0;
-            margin: 10px 0;
+            margin: 15px 0 5px;
         }
         #Difficu li {
             list-style: none;
-            margin: 14px 0;
+            margin: 18px 0;
         }
         #Difficu span {
-            font-size: min(28px, 7vw);
+            font-size: 28px;
             font-weight: 450;
             color: #d7edff;
             cursor: pointer;
             background: rgba(25, 40, 55, 0.7);
-            padding: 12px 35px;
+            padding: 14px 45px;
             border-radius: 60px;
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.1);
@@ -228,14 +219,13 @@
 
     // --- 配置常量 ---
     const CELL_SIZE = 30;
-    const SHADOW_PADDING = 16;
+    const SHADOW_PADDING = 16;      // 与CSS保持一致
     const BORDER_COLOR = '#2d3e4f';
     const COVER_INNER = '#a3b9d1';
     const OPEN_INNER = '#f2f6fc';
     const MAX_TIME = 999;
-    const LONG_PRESS_DELAY = 350;
 
-    // --- DOM ---
+    // --- DOM 元素 ---
     const $ = id => document.getElementById(id);
     const canvas = $('canvas');
     const ctx = canvas.getContext('2d');
@@ -248,20 +238,21 @@
     const butt = $('butt');
 
     // --- 游戏状态 ---
-    let map = [];
+    let map = [];                  // 二维数组: { mine, covered, flagged, num }
     let rows = 0, cols = 0;
     let mineCount = 0;
     let flaggedCount = 0;
-    let correctFlagCount = 0;
+    let correctFlagCount = 0;      // 旗子正确插在雷上的数量
     let elapsedSeconds = 0;
     let gameActive = false;
     let timerInterval = null;
     let difficulty = '简单';
 
+    // 离屏画布 (仅存储格子绘制)
     let cellCanvas = null;
+
+    // 当前按下的格子 (用于按下效果)
     let pressedCell = null;
-    let longPressTimer = null;
-    let isLongPressTriggered = false;
 
     // --- 辅助函数 ---
     function formatNumber(n) {
@@ -274,7 +265,7 @@
         timeDiv.innerText = formatNumber(elapsedSeconds);
     }
 
-    // --- 绘制原语 ---
+    // --- 绘制原语 (直接操作离屏画布) ---
     function fillCellBase(destCtx, col, row, innerColor) {
         const x = col * CELL_SIZE, y = row * CELL_SIZE;
         destCtx.fillStyle = BORDER_COLOR;
@@ -317,7 +308,7 @@
         destCtx.fillStyle = '#dc5f4c';
         destCtx.textAlign = 'center';
         destCtx.textBaseline = 'middle';
-        destCtx.fillText('🚩', x, y);
+        destCtx.fillText('🚩', x, y);   // 使用普通文本，不依赖HTML实体
     }
 
     function drawMine(destCtx, col, row, isRed = false) {
@@ -335,10 +326,14 @@
         destCtx.fillText('💣', cx, cy);
     }
 
+    // 刷新主画布 (从离屏cellCanvas复制)
     function redrawScene() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (cellCanvas) ctx.drawImage(cellCanvas, 0, 0);
-        if (pressedCell && gameActive && !isLongPressTriggered) {
+        if (cellCanvas) {
+            ctx.drawImage(cellCanvas, 0, 0);
+        }
+        // 按下高亮（临时效果，不破坏cellCanvas）
+        if (pressedCell && gameActive) {
             const { row, col } = pressedCell;
             if (map[row] && map[row][col] && map[row][col].covered) {
                 ctx.globalAlpha = 0.25;
@@ -349,7 +344,8 @@
         }
     }
 
-    // --- 核心逻辑 ---
+    // --- 游戏逻辑 ---
+    // 洗牌生成雷索引
     function generateMines(totalCells, mineNum) {
         const indices = Array.from({ length: totalCells }, (_, i) => i);
         for (let i = 0; i < mineNum; i++) {
@@ -359,7 +355,9 @@
         return indices.slice(0, mineNum).sort((a,b) => a-b);
     }
 
+    // 重置并初始化新地图 (根据当前difficulty)
     function initMap() {
+        // 设置行列与雷数 (固定列数，行数自适应)
         switch (difficulty) {
             case '简单': cols = 10; mineCount = 10; break;
             case '一般': cols = 20; mineCount = 40; break;
@@ -367,9 +365,11 @@
             default: cols = 10; mineCount = 10;
         }
 
+        // 计算行数：尽量让画布高度适中，不超过窗口，最小5行
         const maxHeight = Math.min(600, window.innerHeight - 200);
         let rawRows = Math.floor(maxHeight / CELL_SIZE);
-        rows = Math.max(5, Math.min(20, rawRows));
+        rows = Math.max(5, Math.min(20, rawRows));  // 限制范围防止过于奇葩，且保证格子足够
+        // 对于困难，如果行数太少会放不下120雷，但120雷通常需要更多格子，我们增加行数
         if (difficulty === '困难' && rows * cols < mineCount * 2) {
             rows = Math.min(20, Math.ceil(mineCount * 2 / cols));
         }
@@ -380,15 +380,19 @@
         canvas.width = cols * CELL_SIZE;
         canvas.height = rows * CELL_SIZE;
 
+        // 创建离屏画布
         cellCanvas = document.createElement('canvas');
         cellCanvas.width = canvas.width;
         cellCanvas.height = canvas.height;
         const cellCtx = cellCanvas.getContext('2d');
 
+        // 生成雷分布
         const totalCells = rows * cols;
-        if (mineCount > totalCells) mineCount = Math.floor(totalCells * 0.2);
-        const mineIndices = generateMines(totalCells, mineCount);
+        let mineIndices = [];
+        if (mineCount > totalCells) mineCount = Math.floor(totalCells * 0.2); // 保险
+        mineIndices = generateMines(totalCells, mineCount);
 
+        // 构建map
         map = Array.from({ length: rows }, (_, r) =>
             Array.from({ length: cols }, (_, c) => {
                 const idx = r * cols + c;
@@ -401,6 +405,7 @@
             })
         );
 
+        // 计算邻居雷数
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 if (map[r][c].mine) continue;
@@ -416,6 +421,7 @@
             }
         }
 
+        // 全部画成覆盖
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 drawCovered(cellCtx, c, r);
@@ -426,16 +432,15 @@
         correctFlagCount = 0;
         gameActive = true;
         pressedCell = null;
-        isLongPressTriggered = false;
-        if (longPressTimer) clearTimeout(longPressTimer);
         updateCounters();
 
+        // 计时器
         if (timerInterval) clearInterval(timerInterval);
         elapsedSeconds = 0;
         timerInterval = setInterval(() => {
             if (!gameActive) return;
             if (elapsedSeconds >= MAX_TIME) {
-                gameOver(false);
+                gameOver(false, 'timeout');
                 return;
             }
             elapsedSeconds++;
@@ -445,6 +450,7 @@
         redrawScene();
     }
 
+    // 展开空白 (BFS)
     function expandEmpty(startRow, startCol) {
         const cellCtx = cellCanvas.getContext('2d');
         const queue = [{ row: startRow, col: startCol }];
@@ -458,9 +464,10 @@
                 drawEmpty(cellCtx, col, row);
             } else {
                 drawNumber(cellCtx, col, row, cell.num);
-                continue;
+                continue;   // 数字格子不继续扩散
             }
 
+            // 检查邻居
             for (let dr = -1; dr <= 1; dr++) {
                 for (let dc = -1; dc <= 1; dc++) {
                     if (dr === 0 && dc === 0) continue;
@@ -480,6 +487,7 @@
         }
     }
 
+    // 游戏结束 (win = true 胜利)
     function gameOver(win) {
         if (!gameActive) return;
         gameActive = false;
@@ -488,12 +496,13 @@
             timerInterval = null;
         }
 
+        // 如果是踩雷，显示所有雷 (但不改变胜利时界面)
         if (!win) {
             const cellCtx = cellCanvas.getContext('2d');
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     if (map[r][c].mine) {
-                        map[r][c].covered = false;
+                        map[r][c].covered = false;  // 强制揭开
                         drawMine(cellCtx, c, r, false);
                     }
                 }
@@ -501,6 +510,7 @@
             redrawScene();
         }
 
+        // 显示浮层
         const msg = textDiv.querySelector('p');
         if (win) {
             msg.innerHTML = `🏆 胜利！ 🏆<br>用时 ${elapsedSeconds} 秒`;
@@ -512,27 +522,28 @@
         textDiv.style.display = 'block';
         difficuDiv.style.display = 'none';
         hintDiv.className = 'animati2';
-
-        pressedCell = null;
-        if (longPressTimer) clearTimeout(longPressTimer);
     }
 
+    // 重新开始 (显示难度选择)
     function showDifficultyMenu() {
         hintDiv.className = 'animati2';
         textDiv.style.display = 'none';
         difficuDiv.style.display = 'block';
         gameActive = false;
         pressedCell = null;
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = null;
-        if (longPressTimer) clearTimeout(longPressTimer);
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        // 清空画布，显示空白或保留上次？为了美观保留上次但会被新选择覆盖，没问题
     }
 
-    // --- 触摸/鼠标统一坐标获取 ---
-    function getCellFromClient(clientX, clientY) {
+    // --- 事件处理 ---
+    function getCellFromEvent(e) {
         const shadowRect = $('shadow').getBoundingClientRect();
-        const offsetX = clientX - shadowRect.left - SHADOW_PADDING;
-        const offsetY = clientY - shadowRect.top - SHADOW_PADDING;
+        // 计算相对于canvas左上角的坐标 (canvas位于shadow内边距内部)
+        const offsetX = e.clientX - shadowRect.left - SHADOW_PADDING;
+        const offsetY = e.clientY - shadowRect.top - SHADOW_PADDING;
         if (offsetX < 0 || offsetY < 0 || offsetX >= canvas.width || offsetY >= canvas.height) return null;
         const col = Math.floor(offsetX / CELL_SIZE);
         const row = Math.floor(offsetY / CELL_SIZE);
@@ -540,97 +551,35 @@
         return { row, col };
     }
 
-    // --- 触摸事件处理 (已修复: 浮层内不拦截) ---
-    function handleTouchStart(e) {
-        // 如果触摸点在浮层上，直接放行，让click事件正常触发
-        if (e.target.closest('#hint')) return;
-
-        e.preventDefault(); // 阻止页面滚动
+    function onMouseDown(e) {
         if (!gameActive) return;
-
-        const touch = e.touches[0];
-        if (!touch) return;
-        const cell = getCellFromClient(touch.clientX, touch.clientY);
+        const cell = getCellFromEvent(e);
         if (!cell) return;
-
         const { row, col } = cell;
         if (!map[row]?.[col]?.covered) return;
-
-        if (pressedCell) {
-            if (longPressTimer) clearTimeout(longPressTimer);
-        }
-
-        pressedCell = { row, col, identifier: touch.identifier };
-        isLongPressTriggered = false;
-
-        longPressTimer = setTimeout(() => {
-            if (!gameActive || !pressedCell) return;
-            const r = pressedCell.row, c = pressedCell.col;
-            if (!map[r]?.[c]?.covered) return;
-
-            isLongPressTriggered = true;
-            const cellCtx = cellCanvas.getContext('2d');
-            const cell = map[r][c];
-
-            if (!cell.flagged && flaggedCount < mineCount) {
-                cell.flagged = true;
-                flaggedCount++;
-                if (cell.mine) correctFlagCount++;
-                drawFlag(cellCtx, c, r);
-                updateCounters();
-                if (correctFlagCount === mineCount) gameOver(true);
-            } else if (cell.flagged) {
-                cell.flagged = false;
-                flaggedCount--;
-                if (cell.mine) correctFlagCount--;
-                drawCovered(cellCtx, c, r);
-                updateCounters();
-            }
-            redrawScene();
-            pressedCell = null;
-            longPressTimer = null;
-        }, LONG_PRESS_DELAY);
-
-        redrawScene();
+        pressedCell = { row, col };
+        redrawScene();  // 显示高亮
+        e.preventDefault();
     }
 
-    function handleTouchEnd(e) {
-        if (e.target.closest('#hint')) return;
-        e.preventDefault();
-
+    function onMouseUp(e) {
         if (!gameActive || !pressedCell) {
             pressedCell = null;
-            if (longPressTimer) clearTimeout(longPressTimer);
             redrawScene();
             return;
-        }
-
-        const touch = e.changedTouches[0];
-        if (!touch) return;
-
-        if (isLongPressTriggered) {
-            pressedCell = null;
-            if (longPressTimer) clearTimeout(longPressTimer);
-            redrawScene();
-            return;
-        }
-
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
         }
 
         const start = pressedCell;
         pressedCell = null;
 
-        const endCell = getCellFromClient(touch.clientX, touch.clientY);
-        if (!endCell) {
+        const end = getCellFromEvent(e);
+        if (!end) {
             redrawScene();
             return;
         }
 
         const { row: sRow, col: sCol } = start;
-        const { row: eRow, col: eCol } = endCell;
+        const { row: eRow, col: eCol } = end;
         if (sRow !== eRow || sCol !== eCol) {
             redrawScene();
             return;
@@ -642,119 +591,22 @@
             return;
         }
 
-        if (cell.flagged) {
-            redrawScene();
-            return;
-        }
-
         const cellCtx = cellCanvas.getContext('2d');
 
-        if (cell.mine) {
-            cell.covered = false;
-            drawMine(cellCtx, sCol, sRow, true);
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    if (map[r][c].mine && !(r === sRow && c === sCol)) {
-                        map[r][c].covered = false;
-                        drawMine(cellCtx, c, r, false);
-                    }
-                }
+        // 左键 (button === 0)
+        if (e.button === 0) {
+            if (cell.flagged) {
+                redrawScene();
+                return; // 有旗不能点开
             }
-            redrawScene();
-            gameOver(false);
-            return;
-        } else {
-            if (cell.num === 0) {
-                expandEmpty(sRow, sCol);
-            } else {
-                cell.covered = false;
-                drawNumber(cellCtx, sCol, sRow, cell.num);
-            }
-        }
-        redrawScene();
-    }
-
-    function handleTouchCancel(e) {
-        if (e.target.closest('#hint')) return;
-        e.preventDefault();
-        if (longPressTimer) clearTimeout(longPressTimer);
-        pressedCell = null;
-        isLongPressTriggered = false;
-        redrawScene();
-    }
-
-    function handleTouchMove(e) {
-        if (e.target.closest('#hint')) return;
-        e.preventDefault();
-        if (!gameActive || !pressedCell) return;
-        const touch = e.touches[0];
-        if (!touch) return;
-        const cell = getCellFromClient(touch.clientX, touch.clientY);
-        if (!cell || cell.row !== pressedCell.row || cell.col !== pressedCell.col) {
-            if (longPressTimer) clearTimeout(longPressTimer);
-            pressedCell = null;
-            isLongPressTriggered = false;
-            redrawScene();
-        }
-    }
-
-    // --- 鼠标事件 (保留，移动端不会触发) ---
-    function onMouseDown(e) {
-        if (e.pointerType === 'touch') return;
-        if (!gameActive) return;
-        const cell = getCellFromClient(e.clientX, e.clientY);
-        if (!cell) return;
-        if (!map[cell.row]?.[cell.col]?.covered) return;
-        pressedCell = { row: cell.row, col: cell.col };
-        isLongPressTriggered = false;
-        redrawScene();
-        e.preventDefault();
-    }
-
-    function onMouseUp(e) {
-        if (e.pointerType === 'touch') return;
-        if (!gameActive || !pressedCell) {
-            pressedCell = null;
-            redrawScene();
-            return;
-        }
-
-        const start = pressedCell;
-        pressedCell = null;
-
-        const end = getCellFromClient(e.clientX, e.clientY);
-        if (!end) { redrawScene(); return; }
-        if (start.row !== end.row || start.col !== end.col) { redrawScene(); return; }
-
-        const cell = map[start.row]?.[start.col];
-        if (!cell || !cell.covered) { redrawScene(); return; }
-
-        if (e.button === 2) {
-            const cellCtx = cellCanvas.getContext('2d');
-            if (!cell.flagged && flaggedCount < mineCount) {
-                cell.flagged = true;
-                flaggedCount++;
-                if (cell.mine) correctFlagCount++;
-                drawFlag(cellCtx, start.col, start.row);
-                updateCounters();
-                if (correctFlagCount === mineCount) gameOver(true);
-            } else if (cell.flagged) {
-                cell.flagged = false;
-                flaggedCount--;
-                if (cell.mine) correctFlagCount--;
-                drawCovered(cellCtx, start.col, start.row);
-                updateCounters();
-            }
-            redrawScene();
-        } else if (e.button === 0) {
-            if (cell.flagged) { redrawScene(); return; }
-            const cellCtx = cellCanvas.getContext('2d');
             if (cell.mine) {
+                // 踩雷
                 cell.covered = false;
-                drawMine(cellCtx, start.col, start.row, true);
+                drawMine(cellCtx, sCol, sRow, true);
+                // 揭开所有雷
                 for (let r = 0; r < rows; r++) {
                     for (let c = 0; c < cols; c++) {
-                        if (map[r][c].mine && !(r === start.row && c === start.col)) {
+                        if (map[r][c].mine && !(r === sRow && c === sCol)) {
                             map[r][c].covered = false;
                             drawMine(cellCtx, c, r, false);
                         }
@@ -762,52 +614,70 @@
                 }
                 redrawScene();
                 gameOver(false);
+                return;
             } else {
-                if (cell.num === 0) expandEmpty(start.row, start.col);
-                else {
+                if (cell.num === 0) {
+                    expandEmpty(sRow, sCol);
+                } else {
                     cell.covered = false;
-                    drawNumber(cellCtx, start.col, start.row, cell.num);
+                    drawNumber(cellCtx, sCol, sRow, cell.num);
                 }
-                redrawScene();
             }
         }
+        // 右键 (button === 2)
+        else if (e.button === 2) {
+            if (!cell.flagged && flaggedCount < mineCount) {
+                cell.flagged = true;
+                flaggedCount++;
+                if (cell.mine) correctFlagCount++;
+                drawFlag(cellCtx, sCol, sRow);
+                updateCounters();
+                // 胜利条件：所有雷被正确标记
+                if (correctFlagCount === mineCount) {
+                    gameOver(true);
+                }
+            } else if (cell.flagged) {
+                cell.flagged = false;
+                flaggedCount--;
+                if (cell.mine) correctFlagCount--;
+                drawCovered(cellCtx, sCol, sRow);
+                updateCounters();
+            }
+        }
+
+        redrawScene();
         e.preventDefault();
     }
 
-    // --- 事件绑定 ---
-    function bindEvents() {
-        const shadow = $('shadow');
-        shadow.addEventListener('touchstart', handleTouchStart, { passive: false });
-        shadow.addEventListener('touchend', handleTouchEnd, { passive: false });
-        shadow.addEventListener('touchcancel', handleTouchCancel, { passive: false });
-        shadow.addEventListener('touchmove', handleTouchMove, { passive: false });
+    // --- 初始化与绑定 ---
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
 
-        shadow.addEventListener('mousedown', onMouseDown);
-        shadow.addEventListener('mouseup', onMouseUp);
-        shadow.addEventListener('mouseleave', () => {
-            if (pressedCell) {
-                if (longPressTimer) clearTimeout(longPressTimer);
-                pressedCell = null;
-                isLongPressTriggered = false;
-                redrawScene();
-            }
-        });
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('selectstart', e => e.preventDefault());
-    }
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mouseup', onMouseUp);
+    // 防止鼠标移出canvas导致按着不松开
+    document.addEventListener('mouseleave', () => {
+        if (pressedCell) {
+            pressedCell = null;
+            redrawScene();
+        }
+    });
 
-    // 启动
     restartBtn.addEventListener('click', showDifficultyMenu);
+
     butt.addEventListener('click', function() {
         textDiv.style.display = 'none';
         difficuDiv.style.display = 'block';
         hintDiv.className = 'animati2';
         gameActive = false;
-        if (timerInterval) clearInterval(timerInterval);
-        if (longPressTimer) clearTimeout(longPressTimer);
         pressedCell = null;
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
     });
 
+    // 难度选择 (使用事件委托)
     difficuDiv.addEventListener('click', (e) => {
         const span = e.target.closest('span');
         if (!span) return;
@@ -815,16 +685,21 @@
         if (!diff) return;
         difficulty = diff;
         hintDiv.className = 'animati1';
+        // 重置所有状态并生成新地图
         if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
         gameActive = false;
         initMap();
     });
 
+    // 默认启动时显示难度选择，但不生成地图（等用户点击）
+    // 但为了不显示空白，预置一个简单地图，或留空让用户选择。我们先让用户选择：默认浮层显示
+    // 可选生成一个默认“简单”地图，但为了体验，主动生成一个简单
     window.addEventListener('load', () => {
+        // 预置简单地图，使用户不用点就能玩
         difficulty = '简单';
         initMap();
-        hintDiv.className = 'animati1';
-        bindEvents();
+        hintDiv.className = 'animati1'; // 隐藏浮层
     });
 })();
 </script>
