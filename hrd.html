@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>数字华容道</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            color: #1e3a8a;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgb(30 58 138);
+            max-width: 520px;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #1e40af, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.05rem;
+            color: #64748b;
+            margin-bottom: 18px;
+        }
+        
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 22px;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-label {
+            font-weight: 700;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        
+        .value {
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #1e40af;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background: #1e3a8a;
+            padding: 8px;
+            border-radius: 16px;
+            margin-bottom: 22px;
+            box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.2);
+            max-width: 100%;
+            aspect-ratio: 1 / 1;
+        }
+        
+        .tile {
+            width: 100%;
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #3b82f6, #1e40af);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 6px 14px rgba(30, 58, 138, 0.3);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .tile:hover {
+            transform: scale(1.06);
+            box-shadow: 0 10px 18px rgba(30, 58, 138, 0.4);
+        }
+        
+        .tile:active {
+            transform: scale(0.95);
+        }
+        
+        .tile.empty {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: none;
+            cursor: default;
+        }
+        
+        .tile.empty:hover,
+        .tile.empty:active {
+            transform: none;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 14px 26px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 54px;
+            flex: 1;
+            max-width: 160px;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover,
+        .btn-primary:active {
+            background: #1e40af;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+        
+        .btn-secondary:hover,
+        .btn-secondary:active {
+            background: #475569;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            color: #1e3a8a;
+            padding: 35px 25px;
+            border-radius: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0);
+        }
+        
+        .modal h2 {
+            font-size: 1.9rem;
+            margin-bottom: 12px;
+        }
+        
+        .modal p {
+            font-size: 1.2rem;
+            margin-bottom: 22px;
+            color: #64748b;
+        }
+        
+        .win-stats {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 1.1rem;
+            text-align: left;
+        }
+        
+        .footer {
+            margin-top: 22px;
+            font-size: 0.85rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0.75); }
+            60% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        
+        .win-tile {
+            animation: pop 0.5s ease forwards;
+        }
+        
+        /* ====================== 移动设备优化 ====================== */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+            
+            .game-container {
+                padding: 16px;
+                border-radius: 16px;
+                box-shadow: 0 15px 35px -8px rgb(30 58 138);
+            }
+            
+            h1 {
+                font-size: 1.85rem;
+            }
+            
+            .subtitle {
+                font-size: 0.98rem;
+                margin-bottom: 14px;
+            }
+            
+            .info-bar {
+                padding: 10px 16px;
+                margin-bottom: 18px;
+                font-size: 1rem;
+                border-radius: 10px;
+            }
+            
+            .value {
+                font-size: 1.3rem;
+            }
+            
+            .grid {
+                padding: 6px;
+                gap: 6px;
+                border-radius: 14px;
+            }
+            
+            .tile {
+                font-size: 1.85rem;
+                border-radius: 10px;
+                box-shadow: 0 4px 10px rgba(30, 58, 138, 0.25);
+            }
+            
+            .tile:hover {
+                transform: scale(1.04);
+            }
+            
+            button {
+                padding: 15px 20px;
+                font-size: 1.05rem;
+                min-height: 52px;
+                flex: 1;
+                max-width: none;
+                border-radius: 14px;
+            }
+            
+            .controls {
+                gap: 10px;
+                margin-top: 4px;
+            }
+            
+            .modal-content {
+                padding: 30px 20px;
+                max-width: 92%;
+                border-radius: 18px;
+            }
+            
+            .modal h2 {
+                font-size: 1.75rem;
+            }
+            
+            .footer {
+                font-size: 0.8rem;
+                margin-top: 18px;
+            }
+        }
+        
+        /* 超小屏幕额外优化（iPhone SE 等） */
+        @media (max-width: 360px) {
+            .tile {
+                font-size: 1.65rem;
+            }
+            
+            h1 {
+                font-size: 1.7rem;
+            }
+            
+            .grid {
+                gap: 5px;
+                padding: 5px;
+            }
+        }
+        
+        /* 横屏优化 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .game-container {
+                padding: 12px;
+                max-width: 480px;
+            }
+            
+            .grid {
+                margin-bottom: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>数字华龙道</h1>
+        <p class="subtitle">经典滑动拼图 · 触屏优化版</p>
+        
+        <div class="info-bar">
+            <div class="info-item">
+                <span class="info-label">步数</span>
+                <span class="value" id="moves">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">时间</span>
+                <span class="value" id="time">00:00</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">难度</span>
+                <span class="value">4×4</span>
+            </div>
+        </div>
+        
+        <div id="grid" class="grid"></div>
+        
+        <div class="controls">
+            <button onclick="newGame()" class="btn-primary">
+                <span>🎲</span> 新游戏
+            </button>
+            <button onclick="resetGame()" class="btn-secondary">
+                <span>🔄</span> 重置
+            </button>
+            <button onclick="showHelp()" class="btn-secondary">
+                <span>❔</span> 规则
+            </button>
+        </div>
+        
+        <div class="footer">
+            滑动数字方块 → 让1-15按顺序排列<br>
+            空白格在右下角即胜利！已完美适配手机触屏
+        </div>
+    </div>
+    
+    <!-- 胜利弹窗 -->
+    <div id="winModal" class="modal">
+        <div class="modal-content">
+            <h2>🎉 恭喜通关！</h2>
+            <p>你成功完成了数字华龙道！</p>
+            
+            <div class="win-stats">
+                <div>步数：<strong id="winMoves">0</strong></div>
+                <div>时间：<strong id="winTime">00:00</strong></div>
+                <div style="margin-top:10px; font-size:1rem;">太强了！继续挑战更快记录吧！</div>
+            </div>
+            
+            <button onclick="newGameFromWin()" class="btn-primary" style="width:100%; padding:16px; font-size:1.15rem;">
+                再来一局
+            </button>
+            
+            <button onclick="closeModal()" style="margin-top:15px; background:none; border:2px solid #64748b; color:#64748b; width:100%; padding:12px;">
+                关闭
+            </button>
+        </div>
+    </div>
+    
+    <!-- 帮助弹窗 -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <h2>游戏规则</h2>
+            <p style="text-align:left; line-height:1.7;">
+                1. 4×4棋盘上有15个数字方块和1个空格<br>
+                2. 点击或滑动与空格相邻的数字方块<br>
+                3. 目标：数字1→15从小到大排列，空格在右下角<br>
+                4. 每一步计入步数，时间自动记录<br>
+                5. 已保证生成的局面100%可解<br><br>
+                <strong>手机专属：</strong> 支持手指滑动操作，横竖屏均完美适配！
+            </p>
+            <button onclick="closeHelp()" class="btn-primary" style="width:100%; padding:16px; font-size:1.15rem;">
+                我知道了，开始挑战！
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏核心变量
+        let board = [];
+        let emptyIndex = 15;
+        let moves = 0;
+        let seconds = 0;
+        let timerInterval = null;
+        let isPlaying = false;
+        const SIZE = 4;
+        
+        // DOM 元素
+        const gridEl = document.getElementById('grid');
+        const movesEl = document.getElementById('moves');
+        const timeEl = document.getElementById('time');
+        const winModal = document.getElementById('winModal');
+        const helpModal = document.getElementById('helpModal');
+        const winMovesEl = document.getElementById('winMoves');
+        const winTimeEl = document.getElementById('winTime');
+        
+        // 创建棋盘
+        function createGrid() {
+            gridEl.innerHTML = '';
+            for (let i = 0; i < SIZE * SIZE; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.index = i;
+                tile.addEventListener('click', handleTileClick);
+                tile.addEventListener('touchstart', handleTouchStart, { passive: true });
+                gridEl.appendChild(tile);
+            }
+        }
+        
+        // 渲染棋盘
+        function renderBoard() {
+            const tiles = gridEl.querySelectorAll('.tile');
+            tiles.forEach((tile, i) => {
+                const num = board[i];
+                if (num === 0) {
+                    tile.classList.add('empty');
+                    tile.textContent = '';
+                } else {
+                    tile.classList.remove('empty');
+                    tile.textContent = num;
+                    if (isSolved() && num === i + 1) {
+                        tile.classList.add('win-tile');
+                    } else {
+                        tile.classList.remove('win-tile');
+                    }
+                }
+            });
+        }
+        
+        // 获取可移动方向
+        function getMovableDirections() {
+            const row = Math.floor(emptyIndex / SIZE);
+            const col = emptyIndex % SIZE;
+            const directions = [];
+            if (row > 0) directions.push(emptyIndex - SIZE);
+            if (row < SIZE - 1) directions.push(emptyIndex + SIZE);
+            if (col > 0) directions.push(emptyIndex - 1);
+            if (col < SIZE - 1) directions.push(emptyIndex + 1);
+            return directions;
+        }
+        
+        // 点击处理
+        function handleTileClick(e) {
+            if (!isPlaying) return;
+            const index = parseInt(e.currentTarget.dataset.index);
+            if (getMovableDirections().includes(index)) {
+                performMove(index);
+            }
+        }
+        
+        // 触屏滑动处理（优化版）
+        function handleTouchStart(e) {
+            if (!isPlaying) return;
+            const startX = e.changedTouches[0].screenX;
+            const startY = e.changedTouches[0].screenY;
+            const startIndex = parseInt(e.currentTarget.dataset.index);
+            
+            const tileEl = e.currentTarget;
+            
+            const touchEndHandler = function(ev) {
+                tileEl.removeEventListener('touchend', touchEndHandler);
+                
+                const endX = ev.changedTouches[0].screenX;
+                const endY = ev.changedTouches[0].screenY;
+                
+                const deltaX = endX - startX;
+                const deltaY = endY - startY;
+                
+                let targetIndex = startIndex;
+                
+                // 优先判断主方向滑动（防误触）
+                if (Math.abs(deltaX) > Math.abs(deltaY) + 10) {
+                    if (deltaX > 35 && (startIndex % SIZE) < SIZE - 1) targetIndex = startIndex + 1;
+                    else if (deltaX < -35 && (startIndex % SIZE) > 0) targetIndex = startIndex - 1;
+                } else if (Math.abs(deltaY) > Math.abs(deltaX) + 10) {
+                    if (deltaY > 35 && Math.floor(startIndex / SIZE) < SIZE - 1) targetIndex = startIndex + SIZE;
+                    else if (deltaY < -35 && Math.floor(startIndex / SIZE) > 0) targetIndex = startIndex - SIZE;
+                }
+                
+                if (targetIndex !== startIndex && getMovableDirections().includes(targetIndex)) {
+                    performMove(targetIndex);
+                }
+            };
+            
+            tileEl.addEventListener('touchend', touchEndHandler, { passive: true });
+        }
+        
+        // 执行移动（统一逻辑）
+        function performMove(targetIndex) {
+            [board[targetIndex], board[emptyIndex]] = [board[emptyIndex], board[targetIndex]];
+            emptyIndex = targetIndex;
+            moves++;
+            movesEl.textContent = moves;
+            renderBoard();
+            checkWin();
+        }
+        
+        // 打乱（保证可解）
+        function shuffleBoard() {
+            board = Array.from({length: SIZE*SIZE}, (_, i) => i + 1);
+            board[SIZE*SIZE - 1] = 0;
+            emptyIndex = SIZE*SIZE - 1;
+            
+            const shuffleCount = 900 + Math.random() * 300 | 0;
+            for (let i = 0; i < shuffleCount; i++) {
+                const movable = getMovableDirections();
+                const randomTarget = movable[Math.floor(Math.random() * movable.length)];
+                [board[randomTarget], board[emptyIndex]] = [board[emptyIndex], board[randomTarget]];
+                emptyIndex = randomTarget;
+            }
+        }
+        
+        // 是否已完成
+        function isSolved() {
+            for (let i = 0; i < SIZE * SIZE - 1; i++) {
+                if (board[i] !== i + 1) return false;
+            }
+            return board[SIZE * SIZE - 1] === 0;
+        }
+        
+        // 检查胜利
+        function checkWin() {
+            if (isSolved()) {
+                isPlaying = false;
+                clearInterval(timerInterval);
+                
+                winMovesEl.textContent = moves;
+                winTimeEl.textContent = formatTime(seconds);
+                
+                setTimeout(() => {
+                    renderBoard();
+                    winModal.style.display = 'flex';
+                }, 280);
+            }
+        }
+        
+        // 计时器
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            seconds = 0;
+            timeEl.textContent = '00:00';
+            timerInterval = setInterval(() => {
+                seconds++;
+                timeEl.textContent = formatTime(seconds);
+            }, 1000);
+        }
+        
+        function formatTime(s) {
+            const m = Math.floor(s / 60);
+            const sec = s % 60;
+            return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+        
+        // 新游戏
+        function newGame() {
+            winModal.style.display = 'none';
+            helpModal.style.display = 'none';
+            
+            shuffleBoard();
+            moves = 0;
+            movesEl.textContent = '0';
+            isPlaying = true;
+            
+            renderBoard();
+            startTimer();
+        }
+        
+        function newGameFromWin() {
+            winModal.style.display = 'none';
+            newGame();
+        }
+        
+        // 重置
+        function resetGame() {
+            if (!confirm('确定要重置当前局面吗？')) return;
+            shuffleBoard();
+            moves = 0;
+            movesEl.textContent = '0';
+            renderBoard();
+            clearInterval(timerInterval);
+            startTimer();
+        }
+        
+        // 帮助
+        function showHelp() {
+            helpModal.style.display = 'flex';
+        }
+        
+        function closeHelp() {
+            helpModal.style.display = 'none';
+        }
+        
+        function closeModal() {
+            winModal.style.display = 'none';
+        }
+        
+        // 初始化
+        function initGame() {
+            createGrid();
+            newGame();
+            
+            // 键盘支持（PC/平板）
+            document.addEventListener('keydown', (e) => {
+                if (!isPlaying) return;
+                let target = emptyIndex;
+                switch (e.key) {
+                    case 'ArrowUp':    target -= SIZE; break;
+                    case 'ArrowDown':  target += SIZE; break;
+                    case 'ArrowLeft':  target -= 1; break;
+                    case 'ArrowRight': target += 1; break;
+                    default: return;
+                }
+                if (target >= 0 && target < SIZE*SIZE && getMovableDirections().includes(target)) {
+                    performMove(target);
+                }
+            });
+            
+            console.log('%c✅ 数字华龙道移动优化版已启动！完美适配手机触屏～', 'color:#3b82f6; font-size:13px; font-weight:bold;');
+        }
+        
+        window.onload = initGame;
+    </script>
+</body>
+</html>
