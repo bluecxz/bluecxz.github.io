@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>灵动双屏·代码预览器 | 拖放HTML文件实时预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 全屏布局，底部栏固定 */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: #1e1f2c;
+            font-family: 'Segoe UI', 'Fira Code', 'Cascadia Code', monospace, system-ui;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 主分屏容器，占满剩余空间 */
+        .split-container {
+            display: flex;
+            width: 100%;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ========= 左侧代码区 ========= */
+        .code-panel {
+            width: 50%;                /* 默认 1/2 分屏 */
+            background: #0a0c15;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+            transition: width 0.2s ease;  /* 切换模式时平滑过渡 */
+            overflow: auto;
+        }
+
+        /* 编辑器区域 */
+        .editor-area {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+        }
+        textarea {
+            width: 100%;
+            height: 100%;
+            background: #0a0c15;
+            color: #e2e8f0;
+            border: none;
+            padding: 20px 18px;
+            font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.55;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            tab-size: 4;
+            overflow: auto;
+            caret-color: #60a5fa;
+        }
+        textarea:focus {
+            background: #0f111a;
+            box-shadow: inset 0 0 0 1px #334155;
+        }
+        textarea::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #1e1f2c;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 6px;
+        }
+
+        /* ========= 视觉分隔条（仅装饰，不可拖动） ========= */
+        .resize-handle {
+            width: 2px;
+            background: #3b4252;
+            flex-shrink: 0;
+            transition: background 0.1s;
+        }
+
+        /* ========= 右侧预览区 ========= */
+        .preview-panel {
+            flex: 1;                /* 自动填充剩余空间 */
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .iframe-wrapper {
+            flex: 1;
+            background: white;
+            position: relative;
+            overflow: auto;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        /* 拖拽高亮动画（文件拖放） */
+        .code-panel.drag-over {
+            background: #11131f;
+            box-shadow: inset 0 0 0 3px #60a5fa, 0 0 0 2px rgba(96,165,250,0.5);
+            transition: all 0.1s ease;
+        }
+        .code-panel.drag-over .editor-area {
+            background: rgba(96,165,250,0.05);
+        }
+
+        /* ========= 底部简洁按钮栏 ========= */
+        .bottom-bar {
+            flex-shrink: 0;
+            background: rgba(15, 20, 30, 0.85);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid #2d3748;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 8px 16px;
+            z-index: 20;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            background: transparent;
+            border: 1px solid #4b5563;
+            color: #e2e8f0;
+            font-size: 0.75rem;
+            font-family: inherit;
+            padding: 5px 14px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .mode-btn:hover {
+            background: #2d3748;
+            border-color: #60a5fa;
+            color: white;
+        }
+        .mode-btn:active {
+            transform: scale(0.96);
+        }
+        .mode-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        /* 响应式微调 */
+        @media (max-width: 640px) {
+            .mode-btn {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+            }
+            textarea {
+                padding: 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 主分屏区域 -->
+<div class="split-container">
+    <!-- 左侧代码面板（支持拖拽文件） -->
+    <div class="code-panel" id="codePanel">
+        <div class="editor-area">
+            <textarea id="codeEditor" spellcheck="false" placeholder="✍️ 编写 HTML 代码，或直接拖入 .html 文件 ..."></textarea>
+        </div>
+    </div>
+
+    <!-- 视觉分隔条（仅装饰，不可拖拽） -->
+    <div class="resize-handle"></div>
+
+    <!-- 右侧预览面板 -->
+    <div class="preview-panel">
+        <div class="iframe-wrapper">
+            <iframe id="previewFrame" title="代码预览窗口" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
+        </div>
+    </div>
+</div>
+
+<!-- 底部简洁按钮栏：四种分屏模式 -->
+<div class="bottom-bar">
+    <button class="mode-btn" data-mode="code-full">代码全屏</button>
+    <button class="mode-btn" data-mode="half">1/2 分屏</button>
+    <button class="mode-btn" data-mode="fifth">1/5 分屏</button>
+    <button class="mode-btn" data-mode="preview-full">预览全屏</button>
+</div>
+
+<script>
+    (function() {
+        // ---------- DOM 元素 ----------
+        const codePanel = document.getElementById('codePanel');
+        const previewPanel = document.querySelector('.preview-panel');
+        const resizeHandle = document.querySelector('.resize-handle');
+        const editorTextarea = document.getElementById('codeEditor');
+        const previewIframe = document.getElementById('previewFrame');
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        
+        // 初始默认示例代码 (一个漂亮的现代HTML演示)
+        const DEFAULT_HTML = `<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态预览 | 灵动双屏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7ff 0%, #e9eef5 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .card {
+            max-width: 700px;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
+            padding: 2rem 2rem 2.5rem;
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: all 0.3s;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(120deg, #1e293b, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+        .badge {
+            background: #3b82f620;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #1e40af;
+            font-weight: 500;
+        }
+        p {
+            color: #334155;
+            line-height: 1.6;
+            margin: 1rem 0;
+        }
+        button {
+            background: #0f172a;
+            border: none;
+            color: white;
+            padding: 0.7rem 1.8rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 1rem;
+            font-weight: 500;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background: #3b82f6;
+            transform: scale(1.02);
+        }
+        .feature-grid {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0 1rem;
+            flex-wrap: wrap;
+        }
+        .feature {
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+        }
+        footer {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="badge">✨ 双屏即时预览器</div>
+        <h1>拖放 · 编码 · 预览</h1>
+        <p>左侧编辑任意 HTML/CSS/JS，右侧实时呈现效果。<br>
+        📁 将 <strong>.html</strong> 文件直接拖入左侧代码区，自动加载并预览。<br>
+        🖱️ 点击底部按钮，自由切换四种分屏模式。</p>
+        <div class="feature-grid">
+            <span class="feature">🎨 动态分屏</span>
+            <span class="feature">⚡ 实时渲染</span>
+            <span class="feature">📂 拖拽加载</span>
+        </div>
+        <button id="demoBtn">✨ 试试点击反馈</button>
+        <footer>极速开发 · 灵感呈现</footer>
+    </div>
+    <script>
+        document.getElementById('demoBtn')?.addEventListener('click', () => {
+            alert('🎉 预览区交互完美运行！你可以自由编写任意HTML结构～');
+        });
+    <\/script>
+</body>
+</html>`;
+        
+        // ---------- 预览更新函数 ----------
+        function updatePreview() {
+            const code = editorTextarea.value;
+            if (!previewIframe) return;
+            
+            const iframeDoc = previewIframe.contentWindow?.document;
+            if (!iframeDoc) {
+                previewIframe.srcdoc = "<html><body>预览加载中...</body></html>";
+                setTimeout(() => {
+                    const newDoc = previewIframe.contentWindow?.document;
+                    if (newDoc) {
+                        newDoc.open();
+                        newDoc.write(code);
+                        newDoc.close();
+                    }
+                }, 20);
+                return;
+            }
+            
+            iframeDoc.open();
+            iframeDoc.write(code);
+            iframeDoc.close();
+        }
+        
+        // 防抖优化
+        let previewTimer = null;
+        function debouncedUpdatePreview() {
+            if (previewTimer) clearTimeout(previewTimer);
+            previewTimer = setTimeout(() => {
+                updatePreview();
+                previewTimer = null;
+            }, 8);
+        }
+        
+        // 编辑器输入监听
+        editorTextarea.addEventListener('input', () => {
+            debouncedUpdatePreview();
+        });
+        
+        // 初始化默认内容
+        function initDefaultContent() {
+            editorTextarea.value = DEFAULT_HTML;
+            updatePreview();
+        }
+        initDefaultContent();
+        
+        // ---------- 拖放文件功能 (支持 .html / .htm) ----------
+        const dropZone = codePanel;
+        
+        window.addEventListener('dragover', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => e.preventDefault());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (!files || files.length === 0) return;
+            
+            const file = files[0];
+            const fileName = file.name.toLowerCase();
+            const isHtmlFile = fileName.endsWith('.html') || fileName.endsWith('.htm') || file.type === 'text/html';
+            
+            if (!isHtmlFile) {
+                alert('📛 请拖放 .html 或 .htm 文件到代码栏。\n当前文件类型: ' + (file.type || '未知'));
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                editorTextarea.value = ev.target.result;
+                updatePreview();
+            };
+            reader.onerror = () => alert('❌ 文件读取失败，请重试');
+            reader.readAsText(file, 'UTF-8');
+        });
+        
+        // ---------- 四种分屏模式控制 ----------
+        function setSplitMode(mode) {
+            // 清除所有按钮激活样式
+            modeBtns.forEach(btn => btn.classList.remove('active'));
+            
+            // 根据模式设置面板显示及宽度
+            switch (mode) {
+                case 'code-full':
+                    // 代码全屏：隐藏右侧预览区和分隔条，左侧占满全部宽度
+                    codePanel.style.display = 'flex';
+                    previewPanel.style.display = 'none';
+                    resizeHandle.style.display = 'none';
+                    // 关键修复：设置宽度为100%，确保左侧全屏显示代码
+                    codePanel.style.width = '100%';
+                    break;
+                case 'preview-full':
+                    // 预览全屏：隐藏左侧代码区和分隔条，右侧自动撑满
+                    codePanel.style.display = 'none';
+                    previewPanel.style.display = 'flex';
+                    resizeHandle.style.display = 'none';
+                    break;
+                case 'half':
+                    // 1/2 分屏：两侧都显示，分隔条显示，左侧宽度 50%
+                    codePanel.style.display = 'flex';
+                    previewPanel.style.display = 'flex';
+                    resizeHandle.style.display = 'block';
+                    codePanel.style.width = '50%';
+                    break;
+                case 'fifth':
+                    // 1/5 分屏：两侧都显示，分隔条显示，左侧宽度 20%
+                    codePanel.style.display = 'flex';
+                    previewPanel.style.display = 'flex';
+                    resizeHandle.style.display = 'block';
+                    codePanel.style.width = '20%';
+                    break;
+                default:
+                    return;
+            }
+            
+            // 高亮当前按钮
+            const activeBtn = Array.from(modeBtns).find(btn => btn.getAttribute('data-mode') === mode);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+        
+        // 绑定按钮事件
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = btn.getAttribute('data-mode');
+                setSplitMode(mode);
+            });
+        });
+        
+        // 初始设置为 1/2 分屏
+        setSplitMode('half');
+        
+        // 编辑器失去焦点时确保同步（冗余保护）
+        editorTextarea.addEventListener('blur', () => {
+            if (previewTimer) clearTimeout(previewTimer);
+            updatePreview();
+        });
+        
+        // 确保iframe初始加载正确
+        previewIframe.addEventListener('load', () => {
+            const iframeDoc = previewIframe.contentWindow?.document;
+            if (iframeDoc && (iframeDoc.body?.innerHTML.trim() === '' || iframeDoc.body?.innerText === '预览加载中...')) {
+                updatePreview();
+            }
+        });
+        
+        // 阻止预览区拖放干扰
+        if (previewPanel) {
+            previewPanel.addEventListener('dragover', (e) => e.preventDefault());
+            previewPanel.addEventListener('drop', (e) => e.preventDefault());
+        }
+        
+        console.log('✅ 双屏预览器已启动 | 支持四种分屏模式：代码全屏 / 1/2分屏 / 1/5分屏 / 预览全屏');
+    })();
+</script>
+</body>
+</html>
