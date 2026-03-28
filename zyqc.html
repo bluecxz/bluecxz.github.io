@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>代码注释去除器 | 多语言支持 | 简洁工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f1f5f9;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 2rem 1.5rem;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e9eef3;
+            background: #fefefe;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e293b, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            color: #475569;
+            margin-top: 0.4rem;
+            font-size: 0.95rem;
+        }
+
+        .toolbar {
+            padding: 1.25rem 2rem;
+            background: #fafcff;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 1rem;
+            border-bottom: 1px solid #eef2f8;
+        }
+
+        .lang-selector {
+            flex: 2;
+            min-width: 180px;
+        }
+
+        .lang-selector label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #5b6e8c;
+            margin-bottom: 0.3rem;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            background: white;
+            border: 1px solid #cfdee9;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #0f172a;
+            cursor: pointer;
+            outline: none;
+        }
+
+        select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+        }
+
+        .file-zone {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .file-label {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 0.55rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .file-label:hover {
+            background: #e6edf4;
+            border-color: #b9cadb;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .btn {
+            border: none;
+            background: #eef2ff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1e40af;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e6edf4;
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 0;
+        }
+
+        .code-area {
+            flex: 1;
+            min-width: 280px;
+            border-right: 1px solid #eef2f8;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-area {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .area-header {
+            padding: 0.9rem 1.5rem;
+            background: #f9fbfe;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2c3e66;
+            border-bottom: 1px solid #eef2f8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 55vh;
+            min-height: 380px;
+            padding: 1.2rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            border: none;
+            resize: vertical;
+            background: #ffffff;
+            outline: none;
+            color: #0a0c10;
+            tab-size: 4;
+        }
+
+        textarea:focus {
+            background: #fefefe;
+        }
+
+        .copy-badge {
+            background: #eef2ff;
+            padding: 0.25rem 0.7rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .copy-badge:hover {
+            background: #d9e4ff;
+        }
+
+        .status-msg {
+            font-size: 0.7rem;
+            padding: 0.5rem 1.5rem;
+            background: #f8fafc;
+            color: #2d6a4f;
+            border-top: 1px solid #eef2f8;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #6c86a3;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 780px) {
+            body {
+                padding: 1rem;
+            }
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn-group {
+                margin-left: 0;
+                justify-content: flex-start;
+            }
+            .code-area {
+                border-right: none;
+                border-bottom: 1px solid #eef2f8;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>✂️ 注释剥离器 · Code Comment Remover</h1>
+            <p>智能移除 C / C++ / Java / JavaScript / Python / HTML / SQL / CSS 等注释 | 保留字符串及转义内容</p>
+        </div>
+        <div class="toolbar">
+            <div class="lang-selector">
+                <label>📌 编程语言</label>
+                <select id="languageSelect">
+                    <option value="c_like">🔹 C / C++ / Java / JS / C# / Go (//  /* */)</option>
+                    <option value="python">🐍 Python (# 以及保留三引号字符串)</option>
+                    <option value="html">🌐 HTML / XML (<!-- ... -->)</option>
+                    <option value="sql">🗄️ SQL (--  /* */)</option>
+                    <option value="css">🎨 CSS (/* ... */)</option>
+                </select>
+            </div>
+            <div class="file-zone">
+                <label class="file-label" for="fileUpload">
+                    📂 上传文件
+                </label>
+                <input type="file" id="fileUpload" accept=".txt,.c,.cpp,.java,.js,.py,.html,.xml,.sql,.css,.go,.cs,.rb,.sh">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" id="removeBtn">✨ 去除注释</button>
+                <button class="btn btn-secondary" id="clearBtn">🗑️ 清空</button>
+                <button class="btn btn-secondary" id="copyResultBtn">📋 复制结果</button>
+            </div>
+        </div>
+
+        <div class="editor-panel">
+            <div class="code-area">
+                <div class="area-header">
+                    <span>📝 输入代码</span>
+                    <span class="copy-badge" id="pasteExampleBtn">📋 粘贴示例</span>
+                </div>
+                <textarea id="inputCode" placeholder="// 在此粘贴或上传代码&#10;/* 多行注释将会被移除 */&#10;function hello() {&#10;    // 单行注释测试&#10;    let msg = &quot;字符串内的 // 不会被移除&quot;;&#10;    return msg;&#10;}"></textarea>
+            </div>
+            <div class="result-area">
+                <div class="area-header">
+                    <span>✅ 纯净代码 (注释已移除)</span>
+                    <span class="copy-badge" id="copyResultIcon">📄 复制</span>
+                </div>
+                <textarea id="outputCode" readonly placeholder="点击【去除注释】后显示结果……" style="background:#fefdf7;"></textarea>
+            </div>
+        </div>
+        <div class="status-msg" id="statusMsg">
+            <span>⚡ 就绪 | 支持字符串识别、转义处理</span>
+        </div>
+    </div>
+    <footer>
+        ✨ 精准移除注释，自动保留字符串、字符及转义内容。支持 C系 / Python / HTML / SQL / CSS。
+    </footer>
+</div>
+
+<script>
+    // ---------- 修复版注释移除引擎 (解决字符串转义、行注释边界等问题) ----------
+    /**
+     * 根据语言规则移除注释
+     * @param {string} code 源代码
+     * @param {object} rules 规则集
+     * @returns {string} 移除注释后的代码
+     */
+    function removeCommentsWithRules(code, rules) {
+        if (!code) return "";
+        const len = code.length;
+        let result = [];
+        let i = 0;
+
+        // 状态
+        let inString = false;          // 是否在字符串内
+        let stringDelim = null;        // 当前字符串界定符 (如 '"', "'", '"""', "'''")
+        let isTripleString = false;     // 是否为三引号字符串
+        let inBlockComment = false;
+        let inLineComment = false;
+
+        // 预处理字符串规则：按界定符长度降序排序，确保三引号优先于普通引号
+        const sortedStrings = rules.strings ? [...rules.strings].sort((a, b) => b.start.length - a.start.length) : [];
+
+        // 辅助函数：检查是否以指定前缀开头
+        function startsWithAt(pos, prefix) {
+            if (pos + prefix.length > len) return false;
+            for (let j = 0; j < prefix.length; j++) {
+                if (code[pos + j] !== prefix[j]) return false;
+            }
+            return true;
+        }
+
+        while (i < len) {
+            const ch = code[i];
+
+            // 1. 处理行注释 (吞掉直到换行，保留换行符)
+            if (inLineComment) {
+                // 遇到 \r\n 或 \n 或 \r 即结束行注释，保留换行符
+                if (ch === '\n') {
+                    inLineComment = false;
+                    result.push('\n');
+                    i++;
+                    continue;
+                } else if (ch === '\r') {
+                    inLineComment = false;
+                    result.push('\r');
+                    i++;
+                    // 如果后面紧跟 \n，也要保留它（Windows换行符）
+                    if (i < len && code[i] === '\n') {
+                        result.push('\n');
+                        i++;
+                    }
+                    continue;
+                } else {
+                    i++; // 忽略注释内容
+                    continue;
+                }
+            }
+
+            // 2. 处理块注释 (吞掉直到结束符)
+            if (inBlockComment) {
+                const blockEnd = rules.blockComments?.[0]?.end;
+                if (blockEnd && startsWithAt(i, blockEnd)) {
+                    inBlockComment = false;
+                    i += blockEnd.length;
+                    continue;
+                } else {
+                    i++;
+                    continue;
+                }
+            }
+
+            // 3. 处理字符串状态 (最优先，防止字符串内误识别注释)
+            if (inString && stringDelim) {
+                const escapeChar = rules.escapeChar || '\\';
+                // 处理转义字符 (防误判字符串结束符)
+                if (escapeChar && ch === escapeChar && i + 1 < len) {
+                    // 保留转义符和下一个字符，并跳过两个位置 (下一个字符无论是什么都作为普通字符)
+                    result.push(ch + code[i + 1]);
+                    i += 2;
+                    continue;
+                }
+
+                // 三引号字符串结束判断
+                if (isTripleString) {
+                    if (startsWithAt(i, stringDelim)) {
+                        result.push(stringDelim);
+                        i += stringDelim.length;
+                        inString = false;
+                        stringDelim = null;
+                        isTripleString = false;
+                        continue;
+                    } else {
+                        result.push(ch);
+                        i++;
+                        continue;
+                    }
+                } 
+                // 普通单/双引号字符串
+                else {
+                    if (ch === stringDelim) {
+                        // SQL 双写转义 (连续两个单引号代表一个单引号，不结束字符串)
+                        const doubleEscape = rules.doubleQuoteEscape || false;
+                        if (doubleEscape && stringDelim === "'" && i + 1 < len && code[i + 1] === "'") {
+                            result.push("''");
+                            i += 2;
+                            continue;
+                        }
+                        result.push(ch);
+                        inString = false;
+                        stringDelim = null;
+                        i++;
+                        continue;
+                    } else {
+                        result.push(ch);
+                        i++;
+                        continue;
+                    }
+                }
+            }
+
+            // 4. 检测块注释开始 (不在字符串、不在注释中)
+            if (!inLineComment && !inBlockComment && rules.blockComments && rules.blockComments.length > 0) {
+                const blockStart = rules.blockComments[0].start;
+                if (blockStart && startsWithAt(i, blockStart)) {
+                    inBlockComment = true;
+                    i += blockStart.length;
+                    continue;
+                }
+            }
+
+            // 5. 检测单行注释开始
+            if (!inString && !inBlockComment && !inLineComment && rules.lineComments) {
+                let matchedLine = null;
+                for (const lcRule of rules.lineComments) {
+                    const startStr = lcRule.start;
+                    if (startsWithAt(i, startStr)) {
+                        // 如果需要后面空白 (SQL -- 风格)
+                        if (lcRule.requireWhitespaceAfter) {
+                            const nextIdx = i + startStr.length;
+                            if (nextIdx < len) {
+                                const nextChar = code[nextIdx];
+                                if (nextChar === ' ' || nextChar === '\t' || nextChar === '\n' || nextChar === '\r') {
+                                    matchedLine = lcRule;
+                                    break;
+                                } else {
+                                    continue;
+                                }
+                            } else {
+                                matchedLine = lcRule;
+                                break;
+                            }
+                        } else {
+                            matchedLine = lcRule;
+                            break;
+                        }
+                    }
+                }
+                if (matchedLine) {
+                    inLineComment = true;
+                    i += matchedLine.start.length;
+                    continue;
+                }
+            }
+
+            // 6. 检测字符串开始 (使用排序后的规则，优先匹配更长界定符，修复三引号问题)
+            if (!inString && !inBlockComment && !inLineComment && sortedStrings.length) {
+                let foundString = false;
+                for (const strRule of sortedStrings) {
+                    const startDelim = strRule.start;
+                    if (startsWithAt(i, startDelim)) {
+                        if (strRule.triple) {
+                            inString = true;
+                            stringDelim = startDelim;
+                            isTripleString = true;
+                            result.push(startDelim);
+                            i += startDelim.length;
+                            foundString = true;
+                            break;
+                        } else {
+                            inString = true;
+                            stringDelim = startDelim;
+                            isTripleString = false;
+                            result.push(startDelim);
+                            i += startDelim.length;
+                            foundString = true;
+                            break;
+                        }
+                    }
+                }
+                if (foundString) continue;
+            }
+
+            // 7. 普通字符直接复制
+            result.push(ch);
+            i++;
+        }
+
+        return result.join('');
+    }
+
+    // ---------- 语言规则定义 (保持不变) ----------
+    const RULES = {
+        c_like: {
+            lineComments: [{ start: "//", requireWhitespaceAfter: false }],
+            blockComments: [{ start: "/*", end: "*/" }],
+            strings: [
+                { start: '"', end: '"', triple: false },
+                { start: "'", end: "'", triple: false },
+                { start: "`", end: "`", triple: false }
+            ],
+            escapeChar: '\\',
+            doubleQuoteEscape: false
+        },
+        python: {
+            lineComments: [{ start: "#", requireWhitespaceAfter: false }],
+            blockComments: [],
+            strings: [
+                { start: '"""', end: '"""', triple: true },
+                { start: "'''", end: "'''", triple: true },
+                { start: '"', end: '"', triple: false },
+                { start: "'", end: "'", triple: false }
+            ],
+            escapeChar: '\\',
+            doubleQuoteEscape: false
+        },
+        html: {
+            lineComments: [],
+            blockComments: [{ start: "<!--", end: "-->" }],
+            strings: [
+                { start: '"', end: '"', triple: false },
+                { start: "'", end: "'", triple: false }
+            ],
+            escapeChar: '\\',
+            doubleQuoteEscape: false
+        },
+        sql: {
+            lineComments: [{ start: "--", requireWhitespaceAfter: true }],
+            blockComments: [{ start: "/*", end: "*/" }],
+            strings: [
+                { start: "'", end: "'", triple: false },
+                { start: '"', end: '"', triple: false }
+            ],
+            escapeChar: '\\',
+            doubleQuoteEscape: true
+        },
+        css: {
+            lineComments: [],
+            blockComments: [{ start: "/*", end: "*/" }],
+            strings: [
+                { start: '"', end: '"', triple: false },
+                { start: "'", end: "'", triple: false }
+            ],
+            escapeChar: '\\',
+            doubleQuoteEscape: false
+        }
+    };
+
+    function getCurrentRules() {
+        const lang = document.getElementById('languageSelect').value;
+        return RULES[lang] || RULES.c_like;
+    }
+
+    function removeComments(code, langId) {
+        if (!code.trim()) return "";
+        let rules = RULES[langId];
+        if (!rules) rules = RULES.c_like;
+        return removeCommentsWithRules(code, rules);
+    }
+
+    // ---------- UI 绑定 (完全保持原样) ----------
+    const inputTextarea = document.getElementById('inputCode');
+    const outputTextarea = document.getElementById('outputCode');
+    const removeBtn = document.getElementById('removeBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyResultBtn = document.getElementById('copyResultBtn');
+    const copyResultIcon = document.getElementById('copyResultIcon');
+    const fileUpload = document.getElementById('fileUpload');
+    const languageSelect = document.getElementById('languageSelect');
+    const pasteExampleBtn = document.getElementById('pasteExampleBtn');
+
+    function setStatus(message, isError = false) {
+        const statusDiv = document.getElementById('statusMsg');
+        if (statusDiv) {
+            statusDiv.innerHTML = `<span>${isError ? '⚠️ ' : '✨ '}${message}</span>`;
+            setTimeout(() => {
+                if (document.getElementById('statusMsg') === statusDiv && !isError) {
+                    statusDiv.innerHTML = `<span>⚡ 就绪 | 支持字符串识别、转义处理</span>`;
+                }
+            }, 2800);
+        }
+    }
+
+    function performRemove() {
+        const code = inputTextarea.value;
+        if (!code.trim()) {
+            outputTextarea.value = "";
+            setStatus("没有代码内容，请先输入或上传文件", false);
+            return;
+        }
+        const lang = languageSelect.value;
+        try {
+            const cleaned = removeComments(code, lang);
+            outputTextarea.value = cleaned;
+            setStatus(`✅ 注释已移除 (语言: ${languageSelect.options[languageSelect.selectedIndex]?.text?.split('(')[0] || lang})`);
+        } catch (err) {
+            console.error(err);
+            outputTextarea.value = "// 处理出错，请检查代码格式\n" + code;
+            setStatus("移除注释时发生错误，请检查代码是否包含特殊字符", true);
+        }
+    }
+
+    function clearAll() {
+        inputTextarea.value = "";
+        outputTextarea.value = "";
+        setStatus("已清空所有内容", false);
+    }
+
+    async function copyResult() {
+        const result = outputTextarea.value;
+        if (!result) {
+            setStatus("没有结果可复制", true);
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(result);
+            setStatus("✅ 结果已复制到剪贴板");
+        } catch (err) {
+            outputTextarea.select();
+            document.execCommand('copy');
+            setStatus("📋 已复制 (传统方式)");
+        }
+    }
+
+    function handleFileUpload(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const content = e.target.result;
+            inputTextarea.value = content;
+            setStatus(`已加载文件: ${file.name} (${(content.length/1024).toFixed(1)} KB)`);
+        };
+        reader.onerror = function() {
+            setStatus("文件读取失败", true);
+        };
+        reader.readAsText(file, "UTF-8");
+    }
+
+    function loadExample() {
+        const exampleCode = `/**
+ * 多行注释示例 (文档块将会被移除)
+ * 作者: 注释剥离器
+ */
+#include <stdio.h>
+
+int main() {
+    // 这是一个单行注释，下一行会正常执行
+    printf("Hello, /* 这不是注释，在字符串内 */ world!\\n");
+    /* 多行注释
+       跨越两行 */
+    int a = 42; // 尾部注释
+    // 字符串内的 // 不应被移除
+    const char* str = "https://example.com // 这不是注释";
+    /* 嵌套注释? 标准不支持但我们的状态机会安全忽略 */
+    return 0;
+}
+
+# Python 示例：三引号字符串现在会被正确保留
+def example():
+    \"\"\"这是一个文档字符串（三引号），应保留原样\"\"\"
+    s = '''这里面的 # 不是注释，它是字符串内容'''
+    # 真正的注释会被移除
+    return s`;
+        inputTextarea.value = exampleCode;
+        setStatus("已载入包含C/Python的示例（含三引号字符串修复验证）");
+    }
+
+    fileUpload.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleFileUpload(e.target.files[0]);
+        }
+    });
+
+    removeBtn.addEventListener('click', performRemove);
+    clearBtn.addEventListener('click', clearAll);
+    copyResultBtn.addEventListener('click', copyResult);
+    copyResultIcon.addEventListener('click', copyResult);
+    pasteExampleBtn.addEventListener('click', loadExample);
+    
+    languageSelect.addEventListener('change', () => {
+        setStatus(`语言切换至 ${languageSelect.options[languageSelect.selectedIndex]?.text?.split('(')[0] || "C风格"} ，点击去除注释`, false);
+    });
+
+    // 初始示例
+    inputTextarea.value = `// 示例: 单击“去除注释”测试
+/* 多行注释将被移除 */
+function demo() {
+    let greeting = "Hello /* 保留注释外观 */ world";
+    // 单行注释移除
+    return greeting;  // 尾部注释也会清除
+}`;
+    setTimeout(() => {
+        if (inputTextarea.value.trim() && !outputTextarea.value) {
+            performRemove();
+        }
+    }, 100);
+</script>
+</body>
+</html>
