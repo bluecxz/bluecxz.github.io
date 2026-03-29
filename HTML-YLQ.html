@@ -40,10 +40,11 @@
             box-shadow: 2px 0 8px rgba(0,0,0,0.2);
             position: relative;
             z-index: 1;
-            transition: width 0.2s ease;
+            transition: width 0.2s ease;  /* 切换模式时平滑过渡 */
             overflow: auto;
         }
 
+        /* 编辑器区域 (相对定位容器，用于行号绝对定位) */
         .editor-area {
             flex: 1;
             position: relative;
@@ -51,16 +52,16 @@
             background: #0a0c15;
         }
 
-        /* 行号容器 */
+        /* ---------- 行号容器 (绝对定位，覆盖左侧) ---------- */
         .line-numbers-container {
             position: absolute;
             top: 0;
             left: 0;
-            width: 56px;
+            width: 56px;            /* 足够显示4位行号 + 内边距 */
             height: 100%;
             background: #0a0c15;
             overflow: hidden;
-            pointer-events: none;
+            pointer-events: none;    /* 让鼠标穿透，不影响编辑 */
             z-index: 10;
             font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
             font-size: 14px;
@@ -73,12 +74,12 @@
             display: flex;
             flex-direction: column;
             text-align: right;
-            padding: 20px 8px 20px 0;
+            padding: 20px 8px 20px 0;   /* 上下内边距与textarea的padding同步 */
             color: #6c7c9e;
             background: #0a0c15;
             font-feature-settings: "tnum";
             font-variant-numeric: tabular-nums;
-            transition: transform 0s linear;
+            transition: transform 0s linear; /* 滚动偏移由js控制 */
             will-change: transform;
             width: 100%;
             box-sizing: border-box;
@@ -90,25 +91,16 @@
             line-height: 1.55;
             min-height: 1.55em;
             padding-right: 4px;
-            transition: background 0.2s, color 0.2s;
         }
 
-        /* 高亮行号的样式 */
-        .line-numbers-list div.highlight-line {
-            background: #fbbf24;
-            color: #0f172a;
-            font-weight: bold;
-            border-radius: 4px 0 0 4px;
-            box-shadow: -2px 0 0 #f59e0b;
-        }
-
+        /* 编辑器文本域 */
         textarea {
             width: 100%;
             height: 100%;
             background: #0a0c15;
             color: #e2e8f0;
             border: none;
-            padding: 20px 18px 20px 68px;
+            padding: 20px 18px 20px 68px;   /* 左侧留出空间给行号 (行号容器宽56px + 额外间隙) */
             font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
             font-size: 14px;
             line-height: 1.55;
@@ -139,6 +131,7 @@
             border-radius: 6px;
         }
 
+        /* ========= 视觉分隔条（仅装饰，不可拖动） ========= */
         .resize-handle {
             width: 2px;
             background: #3b4252;
@@ -146,8 +139,9 @@
             transition: background 0.1s;
         }
 
+        /* ========= 右侧预览区 ========= */
         .preview-panel {
-            flex: 1;
+            flex: 1;                /* 自动填充剩余空间 */
             background: #f8fafc;
             display: flex;
             flex-direction: column;
@@ -167,6 +161,7 @@
             background: white;
         }
 
+        /* 拖拽高亮动画（文件拖放） */
         .code-panel.drag-over {
             background: #11131f;
             box-shadow: inset 0 0 0 3px #60a5fa, 0 0 0 2px rgba(96,165,250,0.5);
@@ -176,6 +171,7 @@
             background: rgba(96,165,250,0.05);
         }
 
+        /* ========= 底部简洁按钮栏 ========= */
         .bottom-bar {
             flex-shrink: 0;
             background: rgba(15, 20, 30, 0.85);
@@ -215,25 +211,7 @@
             color: white;
         }
 
-        /* 提示小浮层 */
-        .inspector-toast {
-            position: fixed;
-            bottom: 70px;
-            right: 20px;
-            background: #1e293b;
-            color: #facc15;
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-family: monospace;
-            z-index: 100;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-
+        /* 响应式微调 */
         @media (max-width: 640px) {
             .mode-btn {
                 padding: 4px 10px;
@@ -257,16 +235,23 @@
 </head>
 <body>
 
+<!-- 主分屏区域 -->
 <div class="split-container">
+    <!-- 左侧代码面板（支持拖拽文件） -->
     <div class="code-panel" id="codePanel">
         <div class="editor-area" id="editorArea">
+            <!-- 行号容器（动态更新） -->
             <div class="line-numbers-container" id="lineNumbersContainer">
                 <div class="line-numbers-list" id="lineNumbersList"></div>
             </div>
             <textarea id="codeEditor" spellcheck="false" placeholder="✍️ 编写 HTML 代码，或直接拖入 .html 文件 ..."></textarea>
         </div>
     </div>
+
+    <!-- 视觉分隔条（仅装饰，不可拖拽） -->
     <div class="resize-handle"></div>
+
+    <!-- 右侧预览面板 -->
     <div class="preview-panel">
         <div class="iframe-wrapper">
             <iframe id="previewFrame" title="代码预览窗口" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
@@ -274,14 +259,13 @@
     </div>
 </div>
 
+<!-- 底部简洁按钮栏：四种分屏模式 -->
 <div class="bottom-bar">
     <button class="mode-btn" data-mode="code-full">代码全屏</button>
     <button class="mode-btn" data-mode="half">1/2 分屏</button>
     <button class="mode-btn" data-mode="fifth">1/5 分屏</button>
     <button class="mode-btn" data-mode="preview-full">预览全屏</button>
 </div>
-
-<div id="inspectorToast" class="inspector-toast">🔍 已定位到代码行</div>
 
 <script>
     (function() {
@@ -293,25 +277,14 @@
         const previewIframe = document.getElementById('previewFrame');
         const modeBtns = document.querySelectorAll('.mode-btn');
         const lineNumbersList = document.getElementById('lineNumbersList');
-        const toastEl = document.getElementById('inspectorToast');
         
-        // 显示短暂提示
-        function showToast(msg) {
-            if (!toastEl) return;
-            toastEl.textContent = msg || '🔍 已定位到代码行';
-            toastEl.style.opacity = '1';
-            setTimeout(() => {
-                toastEl.style.opacity = '0';
-            }, 1500);
-        }
-        
-        // 默认示例代码 (包含一些带 id/class 的元素便于测试定位)
+        // 初始默认示例代码 (一个漂亮的现代HTML演示)
         const DEFAULT_HTML = `<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>动态预览 | 灵动双屏·元素探查</title>
+    <title>动态预览 | 灵动双屏</title>
     <style>
         * {
             margin: 0;
@@ -396,101 +369,94 @@
             font-size: 0.7rem;
             color: #94a3b8;
         }
-        .demo-highlight {
-            transition: 0.1s;
-        }
-        .demo-highlight:active {
-            background: #facc15;
-        }
     </style>
 </head>
 <body>
-    <div class="card" id="mainCard">
-        <div class="badge" id="featureBadge">✨ 双屏即时预览器 · 点击元素定位源码行</div>
-        <h1 class="title" id="mainTitle">拖放 · 编码 · 探查</h1>
-        <p class="desc-text">左侧编辑任意 HTML/CSS/JS，右侧实时呈现效果。<br>
+    <div class="card">
+        <div class="badge">✨ 双屏即时预览器 · 带行号</div>
+        <h1>拖放 · 编码 · 预览</h1>
+        <p>左侧编辑任意 HTML/CSS/JS，右侧实时呈现效果。<br>
         📁 将 <strong>.html</strong> 文件直接拖入左侧代码区，自动加载并预览。<br>
         🖱️ 点击底部按钮，自由切换四种分屏模式。<br>
-        🔍 <strong style="color:#f97316;">新增功能：在预览区点击任意元素，左侧自动高亮对应代码行！</strong></p>
-        <div class="feature-grid" id="featureGrid">
+        🔢 左侧编辑器自带行号，滚动同步，清晰定位代码。</p>
+        <div class="feature-grid">
             <span class="feature">🎨 动态分屏</span>
             <span class="feature">⚡ 实时渲染</span>
             <span class="feature">📂 拖拽加载</span>
             <span class="feature">🔢 行号增强</span>
-            <span class="feature">📍 元素定位</span>
         </div>
         <button id="demoBtn">✨ 试试点击反馈</button>
-        <footer>点击任意元素 → 定位代码行</footer>
+        <footer>极速开发 · 灵感呈现</footer>
     </div>
     <script>
         document.getElementById('demoBtn')?.addEventListener('click', () => {
-            alert('🎉 预览区交互完美运行！现在点击任意文字或卡片区域，左侧编辑器会高亮对应HTML行号～');
+            alert('🎉 预览区交互完美运行！你可以自由编写任意HTML结构～');
         });
-        // 可选：为卡片添加点击时的控制台提示（仅演示）
-        console.log('探查器已激活：点击任意元素，父页面将定位源码行');
     <\/script>
 </body>
 </html>`;
         
-        // ---------- 行号管理模块 ----------
+        // ---------- 行号管理模块 (不干扰任何原有功能) ----------
+        // 更新行号显示：根据textarea的换行符生成行号
         function updateLineNumbers() {
             if (!editorTextarea || !lineNumbersList) return;
             const code = editorTextarea.value;
+            // 根据换行符分割行数 (保留所有空行)
             const lines = code.split('\n');
             const totalLines = lines.length;
+            
+            // 构建行号HTML (性能优化：使用DocumentFragment或字符串拼接)
             let htmlFragment = '';
             for (let i = 1; i <= totalLines; i++) {
-                htmlFragment += `<div data-line="${i}">${i}</div>`;
+                htmlFragment += `<div>${i}</div>`;
             }
             lineNumbersList.innerHTML = htmlFragment;
+            
+            // 确保行号容器与textarea行高完全一致 (行高已在CSS统一)
+            // 同步滚动偏移
             syncLineNumbersScroll();
         }
         
+        // 同步行号滚动偏移: 根据textarea的scrollTop移动行号列表
         function syncLineNumbersScroll() {
             if (!editorTextarea || !lineNumbersList) return;
             const scrollTop = editorTextarea.scrollTop;
+            // 使用 transform 让行号列表跟随滚动，达到视觉上滚动同步的效果
             lineNumbersList.style.transform = `translateY(-${scrollTop}px)`;
         }
         
+        // 刷新行号 (内容改变时调用，并且保持滚动偏移同步)
         function refreshLineNumbers() {
             updateLineNumbers();
+            // 内容变动后textarea滚动位置可能未变，但行号偏移需重新同步
             syncLineNumbersScroll();
         }
         
-        // 高亮指定行号 (并滚动到可视区域)
-        let currentHighlightTimer = null;
-        function highlightCodeLine(lineNumber) {
-            if (!lineNumbersList) return;
-            // 清除之前高亮
-            const prevHighlights = lineNumbersList.querySelectorAll('.highlight-line');
-            prevHighlights.forEach(el => el.classList.remove('highlight-line'));
-            if (!lineNumber) return;
-            
-            const targetLineDiv = lineNumbersList.querySelector(`div[data-line="${lineNumber}"]`);
-            if (targetLineDiv) {
-                targetLineDiv.classList.add('highlight-line');
-                // 滚动 textarea 使得该行可见
-                const lineHeight = parseFloat(getComputedStyle(editorTextarea).lineHeight);
-                const paddingTop = parseFloat(getComputedStyle(editorTextarea).paddingTop);
-                // 估算该行顶部偏移 (行高 * (行号-1))
-                const targetScroll = (lineNumber - 1) * lineHeight - paddingTop;
-                if (!isNaN(targetScroll) && targetScroll >= 0) {
-                    editorTextarea.scrollTop = Math.max(0, targetScroll);
-                }
-                syncLineNumbersScroll(); // 滚动后立即同步行号偏移
-                // 显示短暂提示
-                showToast(`📍 定位到第 ${lineNumber} 行`);
-                // 3秒后移除高亮
-                if (currentHighlightTimer) clearTimeout(currentHighlightTimer);
-                currentHighlightTimer = setTimeout(() => {
-                    if (targetLineDiv) targetLineDiv.classList.remove('highlight-line');
-                }, 2500);
-            } else {
-                showToast(`⚠️ 未找到第 ${lineNumber} 行`);
+        // 监听textarea滚动事件，同步行号偏移
+        function bindScrollSync() {
+            if (editorTextarea) {
+                editorTextarea.addEventListener('scroll', () => {
+                    syncLineNumbersScroll();
+                });
             }
         }
         
-        // ---------- 预览更新 + 注入元素探查器 ----------
+        // 监听窗口尺寸变化时，行号容器的高度可能改变，重新刷新偏移，保证不错位 (无需重新生成行号)
+        function handleResizeSync() {
+            if (editorTextarea && lineNumbersList) {
+                syncLineNumbersScroll();
+            }
+        }
+        
+        // 当分屏模式切换导致布局/字体变化时，再次刷新行号确保准确 (行高、内边距不变但为了绝对位置稳健)
+        function reAlignLineNumbers() {
+            // 重新生成行号 (确保行号数量匹配最新内容)
+            updateLineNumbers();
+            // 同步滚动偏移量
+            syncLineNumbersScroll();
+        }
+        
+        // ---------- 原有预览更新函数 (保持不变) ----------
         function updatePreview() {
             const code = editorTextarea.value;
             if (!previewIframe) return;
@@ -504,7 +470,6 @@
                         newDoc.open();
                         newDoc.write(code);
                         newDoc.close();
-                        injectInspectorIntoIframe(); // 注入监听
                     }
                 }, 20);
                 return;
@@ -513,183 +478,9 @@
             iframeDoc.open();
             iframeDoc.write(code);
             iframeDoc.close();
-            // 等待 DOM 加载完毕后注入探查脚本
-            if (previewIframe.contentWindow) {
-                // 确保内容加载完成再注入
-                if (previewIframe.contentWindow.document.readyState === 'complete') {
-                    injectInspectorIntoIframe();
-                } else {
-                    previewIframe.addEventListener('load', function onLoad() {
-                        injectInspectorIntoIframe();
-                        previewIframe.removeEventListener('load', onLoad);
-                    });
-                }
-            } else {
-                // fallback
-                setTimeout(() => injectInspectorIntoIframe(), 50);
-            }
         }
         
-        // 向 iframe 注入元素点击探查器 (通过 postMessage 通信)
-        let inspectorInjected = false;
-        function injectInspectorIntoIframe() {
-            if (!previewIframe || !previewIframe.contentWindow) return;
-            try {
-                // 避免重复注入，但每次更新 iframe 后需要重新注入
-                const doc = previewIframe.contentWindow.document;
-                if (!doc) return;
-                // 检查是否已经注入过标识，防止多次监听
-                if (doc.body && doc.body.getAttribute('data-inspector-ready') === 'true') {
-                    return;
-                }
-                // 注入脚本
-                const script = doc.createElement('script');
-                script.textContent = `
-                    (function() {
-                        if (window.__inspectorActive) return;
-                        window.__inspectorActive = true;
-                        // 监听点击事件
-                        document.addEventListener('click', function(e) {
-                            var target = e.target;
-                            if (!target) return;
-                            // 收集元素关键信息 (tagName, id, classList)
-                            var info = {
-                                tagName: target.tagName ? target.tagName.toLowerCase() : '',
-                                id: target.id || '',
-                                classList: target.className ? target.className.split(/\\s+/) : []
-                            };
-                            // 额外收集可能的内联样式特征 (不必要)
-                            // 尝试获取 data-* 属性 或者 父级上下文? 简单但足够
-                            // 生成唯一的选择器提示: 优先 id, 其次 tag + 部分 class
-                            if (info.id) {
-                                info.selectorHint = '#' + info.id;
-                            } else if (info.classList.length > 0) {
-                                info.selectorHint = info.tagName + '.' + info.classList.join('.');
-                            } else {
-                                info.selectorHint = info.tagName;
-                            }
-                            // 发送给父窗口
-                            window.parent.postMessage({
-                                type: 'INSPECT_ELEMENT',
-                                elementInfo: info,
-                                outerHTML: target.outerHTML.substring(0, 300) // 截取部分用于匹配
-                            }, '*');
-                            // 可选视觉反馈 (闪一下)
-                            target.style.transition = 'background 0.1s';
-                            var originalBg = target.style.backgroundColor;
-                            target.style.backgroundColor = '#facc1550';
-                            setTimeout(function() {
-                                target.style.backgroundColor = originalBg;
-                            }, 200);
-                            e.stopPropagation();
-                        });
-                        document.body && document.body.setAttribute('data-inspector-ready', 'true');
-                        console.log('✅ 元素探查器已注入，点击任意元素将定位左侧源码行');
-                    })();
-                `;
-                doc.body?.appendChild(script);
-                // 如果 body 尚未准备好，等待 DOMContentLoaded
-                if (!doc.body) {
-                    doc.addEventListener('DOMContentLoaded', () => {
-                        const s = doc.createElement('script');
-                        s.textContent = script.textContent;
-                        doc.body.appendChild(s);
-                    });
-                }
-            } catch (err) {
-                console.warn('注入探查器失败（跨域限制忽略）', err);
-            }
-        }
-        
-        // 处理来自 iframe 的消息：定位代码行
-        function onMessageFromIframe(event) {
-            if (!event.data || event.data.type !== 'INSPECT_ELEMENT') return;
-            const elementInfo = event.data.elementInfo;
-            const outerHTMLSnippet = event.data.outerHTML;
-            if (!elementInfo) return;
-            
-            const code = editorTextarea.value;
-            if (!code.trim()) return;
-            
-            // 在代码中查找最佳匹配行
-            let foundLine = findBestMatchLine(code, elementInfo, outerHTMLSnippet);
-            if (foundLine !== null) {
-                highlightCodeLine(foundLine);
-            } else {
-                showToast('❓ 未能定位到源码行 (可能由JS动态生成)');
-            }
-        }
-        
-        // 根据元素信息在源代码中查找匹配行号
-        function findBestMatchLine(code, elementInfo, outerSnippet) {
-            const lines = code.split('\n');
-            const tag = elementInfo.tagName;
-            const id = elementInfo.id;
-            const classList = elementInfo.classList;
-            
-            // 策略 1: 优先精确匹配 id (最可靠)
-            if (id) {
-                const idPattern = new RegExp(`<${tag}[^>]*\\bid\\s*=\\s*["']${escapeRegex(id)}["'][^>]*>`, 'i');
-                for (let i = 0; i < lines.length; i++) {
-                    if (idPattern.test(lines[i])) {
-                        return i + 1; // 行号从1开始
-                    }
-                }
-                // 更宽松: 只匹配 id 属性值
-                const looseIdPattern = new RegExp(`\\bid\\s*=\\s*["']${escapeRegex(id)}["']`, 'i');
-                for (let i = 0; i < lines.length; i++) {
-                    if (looseIdPattern.test(lines[i]) && lines[i].includes(`<${tag}`)) {
-                        return i + 1;
-                    }
-                }
-            }
-            
-            // 策略 2: 利用 class 组合 (匹配 tag + class)
-            if (classList && classList.length > 0) {
-                // 构建 class 匹配正则 (顺序可能不同，但至少包含所有class)
-                const classPattern = classList.map(cls => `(?=[^>]*\\bclass\\s*=\\s*["'][^"']*\\b${escapeRegex(cls)}\\b)`).join('');
-                const regex = new RegExp(`<${tag}[^>]*${classPattern}[^>]*>`, 'i');
-                for (let i = 0; i < lines.length; i++) {
-                    if (regex.test(lines[i])) {
-                        return i + 1;
-                    }
-                }
-                // 降级: 仅匹配任意一个 class
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    if (line.includes(`<${tag}`) && classList.some(cls => line.includes(`class="`) && line.includes(cls))) {
-                        return i + 1;
-                    }
-                }
-            }
-            
-            // 策略 3: 使用 outerHTML 片段的前40个字符匹配
-            if (outerSnippet && outerSnippet.length > 15) {
-                const snippetClean = outerSnippet.substring(0, 80).replace(/\s+/g, ' ').trim();
-                for (let i = 0; i < lines.length; i++) {
-                    const lineClean = lines[i].replace(/\s+/g, ' ').trim();
-                    if (lineClean.includes(snippetClean.substring(0, 40))) {
-                        return i + 1;
-                    }
-                }
-            }
-            
-            // 策略 4: 纯标签名匹配 (取第一个出现的对应标签)
-            if (tag) {
-                for (let i = 0; i < lines.length; i++) {
-                    if (lines[i].match(new RegExp(`<${tag}\\b`, 'i'))) {
-                        return i + 1;
-                    }
-                }
-            }
-            return null;
-        }
-        
-        function escapeRegex(str) {
-            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        }
-        
-        // 编辑器内容变化时的处理
+        // 防抖优化
         let previewTimer = null;
         function debouncedUpdatePreview() {
             if (previewTimer) clearTimeout(previewTimer);
@@ -699,82 +490,128 @@
             }, 8);
         }
         
+        // 编辑器内容变化时的统一处理：更新预览 + 刷新行号
         function onEditorContentChange() {
             debouncedUpdatePreview();
-            refreshLineNumbers();
+            refreshLineNumbers();   // 内容改变后同步行号数量与滚动偏移
         }
         
-        // ---------- 文件拖放 ----------
+        // 初始化编辑器内容与事件
+        function initEditor() {
+            editorTextarea.value = DEFAULT_HTML;
+            updatePreview();
+            refreshLineNumbers();    // 生成初始行号
+        }
+        
+        // 监听编辑器输入
+        editorTextarea.addEventListener('input', () => {
+            onEditorContentChange();
+        });
+        
+        // 失去焦点时确保预览与行号完整同步
+        editorTextarea.addEventListener('blur', () => {
+            if (previewTimer) clearTimeout(previewTimer);
+            updatePreview();
+            syncLineNumbersScroll();
+        });
+        
+        // ---------- 拖放文件功能 (保持原有逻辑，同时更新行号) ----------
         const dropZone = codePanel;
+        
         window.addEventListener('dragover', (e) => e.preventDefault());
         window.addEventListener('drop', (e) => e.preventDefault());
         
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             dropZone.classList.add('drag-over');
         });
+        
         dropZone.addEventListener('dragleave', (e) => {
             e.preventDefault();
             dropZone.classList.remove('drag-over');
         });
+        
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             dropZone.classList.remove('drag-over');
+            
             const files = e.dataTransfer.files;
             if (!files || files.length === 0) return;
+            
             const file = files[0];
             const fileName = file.name.toLowerCase();
             const isHtmlFile = fileName.endsWith('.html') || fileName.endsWith('.htm') || file.type === 'text/html';
+            
             if (!isHtmlFile) {
-                alert('📛 请拖放 .html 或 .htm 文件到代码栏。');
+                alert('📛 请拖放 .html 或 .htm 文件到代码栏。\n当前文件类型: ' + (file.type || '未知'));
                 return;
             }
+            
             const reader = new FileReader();
             reader.onload = (ev) => {
                 editorTextarea.value = ev.target.result;
+                // 更新预览 + 行号
                 updatePreview();
                 refreshLineNumbers();
             };
+            reader.onerror = () => alert('❌ 文件读取失败，请重试');
             reader.readAsText(file, 'UTF-8');
         });
         
-        // ---------- 分屏模式 (保留原逻辑) ----------
+        // ---------- 四种分屏模式控制 (保留原逻辑，增加行号重新对齐) ----------
         function setSplitMode(mode) {
+            // 清除所有按钮激活样式
             modeBtns.forEach(btn => btn.classList.remove('active'));
+            
+            // 根据模式设置面板显示及宽度
             switch (mode) {
                 case 'code-full':
+                    // 代码全屏：隐藏右侧预览区和分隔条，左侧占满全部宽度
                     codePanel.style.display = 'flex';
                     previewPanel.style.display = 'none';
                     resizeHandle.style.display = 'none';
                     codePanel.style.width = '100%';
                     break;
                 case 'preview-full':
+                    // 预览全屏：隐藏左侧代码区和分隔条，右侧自动撑满
                     codePanel.style.display = 'none';
                     previewPanel.style.display = 'flex';
                     resizeHandle.style.display = 'none';
                     break;
                 case 'half':
+                    // 1/2 分屏：两侧都显示，分隔条显示，左侧宽度 50%
                     codePanel.style.display = 'flex';
                     previewPanel.style.display = 'flex';
                     resizeHandle.style.display = 'block';
                     codePanel.style.width = '50%';
                     break;
                 case 'fifth':
+                    // 1/5 分屏：两侧都显示，分隔条显示，左侧宽度 20%
                     codePanel.style.display = 'flex';
                     previewPanel.style.display = 'flex';
                     resizeHandle.style.display = 'block';
                     codePanel.style.width = '20%';
                     break;
-                default: return;
+                default:
+                    return;
             }
+            
+            // 高亮当前按钮
             const activeBtn = Array.from(modeBtns).find(btn => btn.getAttribute('data-mode') === mode);
             if (activeBtn) activeBtn.classList.add('active');
+            
+            // 分屏切换后，由于布局改变，textarea尺寸可能变化，但行号偏移需重新同步 (行号数量不变，偏移量保持scrollTop)
+            // 微小延迟确保布局稳定后再同步
             setTimeout(() => {
                 syncLineNumbersScroll();
-                refreshLineNumbers();
+                // 某些极端情况高度变化引起滚动条位移偏移，再次刷新保证完美
+                reAlignLineNumbers();
             }, 30);
         }
         
+        // 绑定按钮事件
         modeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const mode = btn.getAttribute('data-mode');
@@ -782,26 +619,55 @@
             });
         });
         
-        // ---------- 初始化 ----------
-        function init() {
-            editorTextarea.value = DEFAULT_HTML;
-            updatePreview();
-            refreshLineNumbers();
-            editorTextarea.addEventListener('input', onEditorContentChange);
-            editorTextarea.addEventListener('scroll', syncLineNumbersScroll);
-            editorTextarea.addEventListener('blur', () => {
-                if (previewTimer) clearTimeout(previewTimer);
+        // 初始设置为 1/2 分屏
+        setSplitMode('half');
+        
+        // 确保iframe加载完毕后有可能第一次内容未正确显示，强制刷新预览和行号
+        previewIframe.addEventListener('load', () => {
+            const iframeDoc = previewIframe.contentWindow?.document;
+            if (iframeDoc && (iframeDoc.body?.innerHTML.trim() === '' || iframeDoc.body?.innerText === '预览加载中...')) {
                 updatePreview();
-            });
-            window.addEventListener('message', onMessageFromIframe);
-            setSplitMode('half');
-            previewIframe.addEventListener('load', () => {
-                injectInspectorIntoIframe();
-            });
+            }
+        });
+        
+        // 阻止预览区拖放干扰
+        if (previewPanel) {
+            previewPanel.addEventListener('dragover', (e) => e.preventDefault());
+            previewPanel.addEventListener('drop', (e) => e.preventDefault());
         }
         
-        init();
-        console.log('✅ 增强预览器已启动 | 点击预览区元素自动定位源码行 + 高亮行号');
+        // 监听窗口resize重新对齐行号 (滚动同步偏移)
+        window.addEventListener('resize', () => {
+            handleResizeSync();
+            // 重新微调行号容器内容确保无偏差 (行数不会变，但布局可能引起错位)
+            setTimeout(() => {
+                syncLineNumbersScroll();
+            }, 50);
+        });
+        
+        // 由于textarea滚动条出现与否可能改变容器内边距，当内容高度变化时再次同步
+        // 使用MutationObserver监视textarea属性？但简单使用滚动事件已够, 但保证每帧同步优化
+        // 附加：切换分屏时也重新计算偏移，上面已做。
+        
+        // 同时监听字体加载或者任何导致行高变化的情况，手动调用同步（一般不会）
+        // 当textarea获得焦点滚动位置改变时已经通过scroll事件同步。
+        
+        // 启动滚动同步绑定
+        bindScrollSync();
+        
+        // 最后初始化编辑器内容 (会生成行号)
+        initEditor();
+        
+        // 额外保险：在分屏动画结束后再次同步（避免transition影响）
+        setTimeout(() => {
+            syncLineNumbersScroll();
+        }, 100);
+        
+        // 每次预览更新时，保留行号的滚动偏移同步 (其实input事件已做，再巩固一下)
+        const originalUpdatePreview = updatePreview;
+        window.updatePreview = originalUpdatePreview; // 无关
+        
+        console.log('✅ 双屏预览器已启动 | 支持四种分屏模式 + 代码行号实时同步');
     })();
 </script>
 </body>
