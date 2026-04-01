@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>翻译</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background: #f1f5f9;
+            overflow: hidden;
+        }
+
+        
+        .main-layout {
+            flex: 1;
+            display: flex;
+            min-height: 0;   
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        
+        .config-panel {
+            width: 300px;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 18px;
+            overflow-y: auto;
+            transition: width 0.2s ease, padding 0.2s ease, opacity 0.15s;
+            flex-shrink: 0;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+            z-index: 2;
+        }
+
+        .config-panel.collapsed {
+            width: 0;
+            padding: 0;
+            border-right: none;
+            opacity: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        
+        .translation-core {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        
+        .split-view {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            min-height: 0;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        
+        .original-area, .translated-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2px 5px;
+            min-width: 0;
+            background: #fff;
+            position: relative;
+        }
+
+        .original-area {
+            border-right: 1px solid #eef2f6;
+        }
+
+        
+        .text-input, .text-output {
+            flex: 1;
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 18px 20px;
+            font-size: 16px;
+            line-height: 1.55;
+            font-family: inherit;
+            resize: none;
+            background: #fefefe;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .text-output {
+            background: #fafcff;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        
+        .bottom-bar-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1px;
+            padding: 0 2px;
+            flex-shrink: 0;
+        }
+
+        .char-counter {
+            font-size: 10px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 30px;
+        }
+
+        .copy-btn-wrapper {
+            margin-left: auto;
+        }
+
+        .copy-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 40px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .copy-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        
+        .global-toolbar {
+            background: #ffffff;
+            border-top: 1px solid #e2edf2;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            z-index: 3;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.02);
+        }
+
+        .toolbar-left {
+            display: flex;
+            min-width: 120px;
+        }
+
+        .toolbar-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .toolbar-right {
+            display: flex;
+            justify-content: flex-end;
+            min-width: 200px;
+        }
+
+        
+        .btn {
+            border: none;
+            background: #f1f5f9;
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #1e293b;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 2px 5px rgba(59,130,246,0.2);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+        }
+
+        
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 4px 12px;
+            border-radius: 60px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .lang-select {
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 30px;
+            outline: none;
+            color: #0f172a;
+        }
+
+        .swap-icon {
+            background: #eef2ff;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #3b82f6;
+        }
+
+        .swap-icon:hover {
+            background: #d9e6ff;
+            transform: rotate(180deg);
+        }
+
+        
+        .config-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #0f172a;
+        }
+
+        .config-group {
+            margin-bottom: 18px;
+        }
+
+        .config-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #334155;
+        }
+
+        .config-group input, .config-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        .config-group textarea {
+            resize: vertical;
+            font-family: 'Segoe UI', system-ui;
+            min-height: 80px;
+        }
+
+        .save-config {
+            background: #0f172a;
+            color: white;
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 40px;
+            font-weight: 600;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+
+        .import-config-area {
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 18px;
+        }
+
+        .api-status {
+            margin-top: 18px;
+            padding: 10px;
+            border-radius: 40px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .status {
+            margin-top: 12px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        
+        .loader-mini {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        
+        .error-details {
+            background: #fee2e2;
+            font-size: 12px;
+            padding: 8px;
+            border-radius: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        
+        @media (max-width: 650px) {
+            .split-view {
+                flex-direction: column;
+            }
+            .original-area, .translated-area {
+                border-right: none;
+                border-bottom: 1px solid #eef2f6;
+                padding: 5px;
+            }
+            .original-area {
+                flex: 1;      
+                order: 2;
+                min-height: 33%;
+            }
+            .translated-area {
+                order: 1;
+                flex: 2;
+                min-height: 0;
+            }
+            
+            .original-area {
+                flex: 1;
+            }
+            .translated-area {
+                flex: 2;
+            }
+            .global-toolbar {
+                padding: 5px 5px;
+                gap: 5px;
+            }
+            .btn {
+                padding: 5px 5px;
+                font-size: 12px;
+            }
+            .lang-switcher {
+                gap: 6px;
+                padding: 2px 8px;
+            }
+            .lang-select {
+                font-size: 12px;
+                padding: 4px 6px;
+            }
+            .swap-icon {
+                width: 26px;
+                height: 26px;
+            }
+            .toolbar-left, .toolbar-right {
+                min-width: auto;
+            }
+        }
+
+        
+        .old-label, .label {
+            display: none;
+        }
+
+        
+        .text-output::-webkit-scrollbar {
+            width: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    
+    <div class="main-layout">
+        
+        <div class="config-panel collapsed" id="configPanel">
+            <div class="config-title">
+                <i class="fas fa-microchip"></i> 翻译引配置
+            </div>
+            <div class="config-group">
+                <label><i class="fas fa-key"></i> api</label>
+                <input type="password" id="api-key" placeholder="sk-xxxxxxxxxxxxx">
+            </div>
+            <div class="config-group">
+                <label><i class="fas fa-server"></i> host</label>
+                <input type="text" id="api-host" placeholder="https://api.openai.com" value="https://api.openai.com">
+            </div>
+            <div class="config-group">
+                <label><i class="fas fa-cube"></i> model</label>
+                <input type="text" id="model-id" placeholder="gpt-3.5-turbo" value="gpt-3.5-turbo">
+            </div>
+            <div class="config-group">
+                <label><i class="fas fa-comment-dots"></i>  Prompt</label>
+                <textarea id="custom-prompt" rows="3" placeholder="非必要，留空"></textarea>
+                
+            </div>
+            <button class="save-config" id="save-config"><i class="fas fa-save"></i> 保存配置</button>
+            
+            <div class="import-config-area">
+                <button class="save-config import-config-btn" id="import-config-btn" style="background:#334155;"><i class="fas fa-upload"></i> 导入JSON配置</button>
+                <input type="file" id="import-file-input" accept=".json" style="display:none;">
+                
+            </div>
+            <div class="api-status disconnected" id="api-status">
+                <i class="fas fa-times-circle"></i> API未配置
+            </div>
+            <div class="status" id="config-status"></div>
+            <div class="auto-translate-notice" style="margin-top: 20px; font-size:12px; background:#eef2ff; border-radius:20px; padding:8px; text-align:center;">
+                <i class="fas fa-bolt"></i> 
+            </div>
+        </div>
+
+        <!-- 右侧翻译核心区域 -->
+        <div class="translation-core">
+            <!-- 左右分屏区域（宽屏50/50，手机上下自适应） -->
+            <div class="split-view">
+                <!-- 原文区域（左侧/手机下占1/3底部） -->
+                <div class="original-area">
+                    <textarea id="input-text" class="text-input" placeholder="输入待翻译文本..."></textarea>
+                    <div class="bottom-bar-area">
+                        <span class="char-counter"><span id="char-count">0</span> / 2000</span>
+                        <!-- 左侧不需要复制按钮，复制只在译文区 -->
+                    </div>
+                </div>
+                <!-- 译文区域（右侧/手机占2/3上部） -->
+                <div class="translated-area">
+                    <div id="output-text" class="text-output"></div>
+                    <div class="bottom-bar-area">
+                        <div></div>
+                        <div class="copy-btn-wrapper">
+                            <button id="copy-btn" class="copy-btn"><i class="fas fa-copy"></i> 复制译文</button>
+                        </div>
+                    </div>
+                    <div class="error-details" id="error-details"></div>
+                    <button id="show-error" class="copy-btn" style="display: none; margin-top: 8px; font-size:12px;"><i class="fas fa-bug"></i> 查看错误详情</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部按钮栏（显示配置 | 翻译 | 多语言切换组件） -->
+    <div class="global-toolbar">
+        <div class="toolbar-left">
+            <button id="toggleConfigBtn" class="btn btn-outline"><i class="fas fa-sliders-h"></i> 显示配置</button>
+        </div>
+        <div class="toolbar-center">
+            <button id="translate-btn" class="btn btn-primary"><i class="fas fa-language"></i> 翻译</button>
+        </div>
+        <div class="toolbar-right">
+            <div class="lang-switcher">
+                <select id="source-lang" class="lang-select">
+                    <option value="英语">英语</option><option value="中文">中文</option><option value="日语">日语</option>
+                    <option value="韩语">韩语</option><option value="法语">法语</option><option value="德语">德语</option>
+                    <option value="西班牙语">西班牙语</option><option value="俄语">俄语</option><option value="阿拉伯语">阿拉伯语</option>
+                </select>
+                <div id="swap-languages" class="swap-icon"><i class="fas fa-exchange-alt"></i></div>
+                <select id="target-lang" class="lang-select">
+                    <option value="中文" selected>中文</option><option value="英语">英语</option><option value="日语">日语</option>
+                    <option value="韩语">韩语</option><option value="法语">法语</option><option value="德语">德语</option>
+                    <option value="西班牙语">西班牙语</option><option value="俄语">俄语</option><option value="阿拉伯语">阿拉伯语</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div id="loader" style="display: none; position: fixed; bottom: 80px; right: 20px; background: white; border-radius: 30px; padding: 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size:12px;"><span class="loader-mini"></span> 翻译中...</div>
+</div>
+
+<script>
+    (function(){
+        
+        const inputText = document.getElementById('input-text');
+        const outputTextDiv = document.getElementById('output-text');
+        const translateBtn = document.getElementById('translate-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const swapBtn = document.getElementById('swap-languages');
+        const sourceLang = document.getElementById('source-lang');
+        const targetLang = document.getElementById('target-lang');
+        const charCountSpan = document.getElementById('char-count');
+        const loader = document.getElementById('loader');
+        const apiKeyInput = document.getElementById('api-key');
+        const apiHostInput = document.getElementById('api-host');
+        const modelIdInput = document.getElementById('model-id');
+        const customPromptInput = document.getElementById('custom-prompt');
+        const saveConfigBtn = document.getElementById('save-config');
+        const configStatusDiv = document.getElementById('config-status');
+        const apiStatusDiv = document.getElementById('api-status');
+        const errorDetailsDiv = document.getElementById('error-details');
+        const showErrorBtn = document.getElementById('show-error');
+        const importConfigBtn = document.getElementById('import-config-btn');
+        const importFileInput = document.getElementById('import-file-input');
+        const configPanel = document.getElementById('configPanel');
+        const toggleConfigBtn = document.getElementById('toggleConfigBtn');
+        const toggleIconSpan = null; 
+        let isConfigCollapsed = true;
+
+        
+        let autoTranslateTimeout = null;
+        let lastTranslatedText = '';
+        let isTranslating = false;
+
+        
+        function getConfigFromStorage() {
+            const saved = localStorage.getItem('ai-translator-config');
+            if(saved) {
+                try{
+                    return JSON.parse(saved);
+                }catch(e){ return null;}
+            }
+            return null;
+        }
+
+        function saveFullConfigToLocal(apiKeyVal, apiHostVal, modelIdVal, customPromptVal) {
+            const config = {
+                apiKey: (apiKeyVal || '').trim(),
+                apiHost: (apiHostVal || '').trim() || 'https://api.openai.com',
+                modelId: (modelIdVal || '').trim() || 'gpt-3.5-turbo',
+                customPrompt: (customPromptVal || '').trim()
+            };
+            localStorage.setItem('ai-translator-config', JSON.stringify(config));
+            return config;
+        }
+
+        function applyAndSaveConfig(apiKeyVal, apiHostVal, modelIdVal, customPromptVal) {
+            if(!apiKeyVal || !apiKeyVal.trim()) return false;
+            const finalApiHost = (apiHostVal || '').trim() || 'https://api.openai.com';
+            const finalModel = (modelIdVal || '').trim() || 'gpt-3.5-turbo';
+            const finalPrompt = (customPromptVal || '').trim();
+            apiKeyInput.value = apiKeyVal.trim();
+            apiHostInput.value = finalApiHost;
+            modelIdInput.value = finalModel;
+            customPromptInput.value = finalPrompt;
+            saveFullConfigToLocal(apiKeyVal.trim(), finalApiHost, finalModel, finalPrompt);
+            apiStatusDiv.className = 'api-status connected';
+            apiStatusDiv.innerHTML = '<i class="fas fa-check-circle"></i> API已配置';
+            return true;
+        }
+
+        function loadConfigToUI() {
+            const cfg = getConfigFromStorage();
+            if(cfg) {
+                apiKeyInput.value = cfg.apiKey || '';
+                apiHostInput.value = cfg.apiHost || 'https://api.openai.com';
+                modelIdInput.value = cfg.modelId || 'gpt-3.5-turbo';
+                customPromptInput.value = cfg.customPrompt || '';
+                if(cfg.apiKey) {
+                    apiStatusDiv.className = 'api-status connected';
+                    apiStatusDiv.innerHTML = '<i class="fas fa-check-circle"></i> API已配置';
+                } else {
+                    apiStatusDiv.className = 'api-status disconnected';
+                    apiStatusDiv.innerHTML = '<i class="fas fa-times-circle"></i> API未配置';
+                }
+            } else {
+                apiStatusDiv.className = 'api-status disconnected';
+                apiStatusDiv.innerHTML = '<i class="fas fa-times-circle"></i> API未配置';
+            }
+        }
+
+        
+        saveConfigBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if(!key) {
+                configStatusDiv.textContent = '请输入API密钥';
+                configStatusDiv.className = 'status error';
+                setTimeout(()=>{configStatusDiv.className='status'; configStatusDiv.textContent='';},3000);
+                return;
+            }
+            const success = applyAndSaveConfig(key, apiHostInput.value, modelIdInput.value, customPromptInput.value);
+            if(success){
+                configStatusDiv.textContent = '✅ 配置已保存 (含提示词)';
+                configStatusDiv.className = 'status success';
+                setTimeout(()=>{configStatusDiv.className='status'; configStatusDiv.textContent='';},3000);
+            } else {
+                configStatusDiv.textContent = '保存失败';
+                configStatusDiv.className = 'status error';
+            }
+        });
+
+        
+        importConfigBtn.addEventListener('click', ()=> importFileInput.click());
+        importFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const json = JSON.parse(ev.target.result);
+                    const newKey = json.apiKey ? String(json.apiKey).trim() : null;
+                    if(!newKey) throw new Error('缺少有效的 apiKey');
+                    const newHost = json.apiHost ? String(json.apiHost).trim() : null;
+                    const newModel = json.modelId ? String(json.modelId).trim() : null;
+                    const newPrompt = json.customPrompt ? String(json.customPrompt).trim() : '';
+                    const finalHost = newHost || (apiHostInput.value.trim() || 'https://api.openai.com');
+                    const finalModel = newModel || (modelIdInput.value.trim() || 'gpt-3.5-turbo');
+                    applyAndSaveConfig(newKey, finalHost, finalModel, newPrompt);
+                    configStatusDiv.textContent = '✅ 配置导入并保存成功 (含提示词)';
+                    configStatusDiv.className = 'status success';
+                    setTimeout(()=>{configStatusDiv.className='status'; configStatusDiv.textContent='';},3500);
+                } catch(err) {
+                    configStatusDiv.textContent = `❌ 导入失败: ${err.message}`;
+                    configStatusDiv.className = 'status error';
+                } finally {
+                    importFileInput.value = '';
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        });
+
+        
+        inputText.addEventListener('input', function() {
+            const cnt = inputText.value.length;
+            charCountSpan.textContent = cnt;
+            if(cnt > 2000) charCountSpan.style.color = 'red';
+            else charCountSpan.style.color = '#64748b';
+            triggerAutoTranslate();
+        });
+
+        function triggerAutoTranslate() {
+            if(autoTranslateTimeout) clearTimeout(autoTranslateTimeout);
+            if(inputText.value.trim() === '') {
+                outputTextDiv.innerHTML = '';
+                showErrorBtn.style.display = 'none';
+                errorDetailsDiv.style.display = 'none';
+                return;
+            }
+            if(inputText.value.length > 2000) {
+                outputTextDiv.innerHTML = '<p style="color: red;">文本超过2000字符限制</p>';
+                return;
+            }
+            autoTranslateTimeout = setTimeout(() => performTranslation(), 500);
+        }
+
+        
+        async function performTranslation() {
+            const text = inputText.value.trim();
+            errorDetailsDiv.style.display = 'none';
+            showErrorBtn.style.display = 'none';
+            const config = getConfigFromStorage();
+            if(!config || !config.apiKey) {
+                outputTextDiv.innerHTML = '<p style="color: #ef4444;">⚙️ 请先配置API密钥 (点击左侧显示配置)</p>';
+                return;
+            }
+            if(text === '') { outputTextDiv.innerHTML = ''; return; }
+            if(text.length > 2000) { outputTextDiv.innerHTML = '<p style="color: red;">超出字符限制</p>'; return; }
+            if(text === lastTranslatedText && isTranslating) return;
+            lastTranslatedText = text;
+            isTranslating = true;
+            loader.style.display = 'flex';
+            translateBtn.disabled = true;
+            try {
+                const translated = await translateTextWithGPT(text, sourceLang.value, targetLang.value, config);
+                outputTextDiv.innerHTML = translated;
+                loader.style.display = 'none';
+                translateBtn.disabled = false;
+                isTranslating = false;
+            } catch(err) {
+                outputTextDiv.innerHTML = `<p style="color: red;">翻译出错: ${err.message}</p>`;
+                errorDetailsDiv.textContent = err.stack || err.message;
+                showErrorBtn.style.display = 'inline-block';
+                loader.style.display = 'none';
+                translateBtn.disabled = false;
+                isTranslating = false;
+            }
+        }
+
+        async function translateTextWithGPT(text, source, target, config) {
+            const apiUrl = `${config.apiHost}/v1/chat/completions`;
+            
+            let systemPrompt = config.customPrompt && config.customPrompt.trim() !== '' 
+                ? config.customPrompt.trim() 
+                : `你是一个专业的翻译助手，请将${source}文本准确翻译成${target}。要求：1.只返回翻译结果不做其他解释，显示在第一行。2.如果有必要就纠正英文语句中的错误，空一行然后显示在“纠正为：XXX”。3.再提供2个语义完全相同的英文例句，空一行然后显示在“例句为：1.XXX”`;
+            
+            if(!config.customPrompt || config.customPrompt.trim() === ''){
+                systemPrompt = systemPrompt.replace('${source}', source).replace('${target}', target);
+            }
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${config.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: config.modelId,
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: text }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 2000
+                })
+            });
+            const respText = await response.text();
+            if(!response.ok){
+                let msg = `HTTP ${response.status}`;
+                try{
+                    const errData = JSON.parse(respText);
+                    msg = errData.error?.message || msg;
+                }catch(e){}
+                throw new Error(msg);
+            }
+            const data = JSON.parse(respText);
+            if(!data.choices || !data.choices[0]?.message?.content) throw new Error("API返回异常");
+            return data.choices[0].message.content;
+        }
+
+        translateBtn.addEventListener('click', () => performTranslation());
+        copyBtn.addEventListener('click', () => {
+            const content = outputTextDiv.innerText;
+            if(!content || content.includes('翻译出错') || content === '') return;
+            navigator.clipboard.writeText(content).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制!';
+                setTimeout(() => { copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制译文'; }, 1800);
+            }).catch(()=>alert('复制失败'));
+        });
+        swapBtn.addEventListener('click', () => {
+            const tempSrc = sourceLang.value;
+            sourceLang.value = targetLang.value;
+            targetLang.value = tempSrc;
+            const inputVal = inputText.value;
+            const outVal = outputTextDiv.innerText;
+            if(outVal && !outVal.includes('翻译出错') && outVal.trim() !== '' && !outVal.includes('请先配置')){
+                inputText.value = outVal;
+                triggerAutoTranslate();
+            } else if(inputVal.trim() !== ''){
+                triggerAutoTranslate();
+            }
+        });
+        sourceLang.addEventListener('change', () => { if(inputText.value.trim()) triggerAutoTranslate(); });
+        targetLang.addEventListener('change', () => { if(inputText.value.trim()) triggerAutoTranslate(); });
+        showErrorBtn.addEventListener('click', () => {
+            errorDetailsDiv.style.display = errorDetailsDiv.style.display === 'none' ? 'block' : 'none';
+        });
+
+        
+        function updateToggleUI() {
+            if(isConfigCollapsed){
+                toggleConfigBtn.innerHTML = '<i class="fas fa-sliders-h"></i> 显示配置';
+            } else {
+                toggleConfigBtn.innerHTML = '<i class="fas fa-times"></i> 隐藏配置';
+            }
+        }
+        toggleConfigBtn.addEventListener('click', () => {
+            configPanel.classList.toggle('collapsed');
+            isConfigCollapsed = configPanel.classList.contains('collapsed');
+            updateToggleUI();
+        });
+        updateToggleUI();
+        loadConfigToUI();
+        outputTextDiv.innerHTML = '';
+        
+        inputText.placeholder = ".";
+    })();
+</script>
+</body>
+</html>
