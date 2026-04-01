@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文本对比工具</title>
+    <title>文本对比</title>
     <style>
         * {
             margin: 0;
@@ -19,57 +19,10 @@
             overflow: hidden;
         }
         
-        /* 极简头部 */
-        
-        
-        .title {
-            font-size: 1px;
-            font-weight: 500;
-            color: #ccc;
-        }
-        
-        .controls {
-            
-            gap: 1px;
-        }
-        
-        .btn {
-            background: #333;
-            color: #ccc;
-            border: none;
-            border-radius: 1px;
-            padding: 1px 1px;
-            font-size: 1px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .btn:hover {
-            background: #444;
-        }
-        
-        .btn-primary {
-            background: #2a6fd6;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #3578e0;
-        }
-        
-        .btn-reset {
-            background: #c0392b;
-            color: white;
-        }
-        
-        .btn-reset:hover {
-            background: #d9534f;
-        }
-        
         /* 主对比区域 */
         .comparison-container {
             display: flex;
-            height: calc(100vh - 48px);
+            height: calc(100vh - 20px);
             width: 100vw;
         }
         
@@ -99,6 +52,12 @@
         .file-name {
             font-weight: 500;
             color: #ccc;
+            max-width: 70%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            direction: rtl;
+            text-align: left;
         }
         
         .drop-area {
@@ -145,7 +104,7 @@
         }
         
         .line-numbers {
-            width: 60px;
+            width: 25px;
             background: #151515;
             color: #666;
             text-align: right;
@@ -197,98 +156,6 @@
             border-left: 3px solid #bb8009;
         }
         
-        /* 统计信息 - 修改为显示差异行号 */
-        .stats {
-            position: fixed;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 16px;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 8px;
-            padding: 12px 16px;
-            border: 1px solid #333;
-            z-index: 100;
-            max-width: 90vw;
-        }
-        
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            min-width: 180px;
-            max-width: 300px;
-        }
-        
-        .stat-title {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #2a6fd6;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .stat-title:before {
-            content: "📌";
-            font-size: 12px;
-        }
-        
-        .stat-content {
-            font-size: 13px;
-            line-height: 1.4;
-            max-height: 80px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-        
-        .stat-content::-webkit-scrollbar {
-            width: 4px;
-        }
-        
-        .stat-content::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .stat-content::-webkit-scrollbar-thumb {
-            background: #444;
-            border-radius: 2px;
-        }
-        
-        /* 差异行号样式 */
-        .line-number-item {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 2px 6px;
-            margin: 2px 4px 2px 0;
-            border-radius: 3px;
-            font-size: 11px;
-            font-family: 'Monaco', 'Consolas', monospace;
-        }
-        
-        .line-number-item.added {
-            background: rgba(46, 160, 67, 0.2);
-            color: #2ea043;
-        }
-        
-        .line-number-item.removed {
-            background: rgba(248, 81, 73, 0.2);
-            color: #f85149;
-        }
-        
-        .line-number-item.changed {
-            background: rgba(187, 128, 9, 0.2);
-            color: #bb8009;
-        }
-        
-        .no-differences {
-            color: #666;
-            font-style: italic;
-            font-size: 12px;
-        }
-        
         /* 响应式调整 */
         @media (max-width: 1024px) {
             .comparison-container {
@@ -300,22 +167,9 @@
                 border-right: none;
                 border-bottom: 1px solid #333;
             }
-            
-            .stats {
-                bottom: 8px;
-                padding: 8px 12px;
-                flex-direction: column;
-                gap: 12px;
-                max-width: 95vw;
-            }
-            
-            .stat-item {
-                min-width: 0;
-                max-width: 100%;
-            }
         }
         
-        /* 隐藏滚动条但保持功能 */
+        /* 滚动条美工 */
         .text-container::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -328,10 +182,6 @@
         .text-container::-webkit-scrollbar-thumb {
             background: #444;
             border-radius: 4px;
-        }
-        
-        .text-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
         }
         
         /* 文件选择提示 */
@@ -361,28 +211,56 @@
             opacity: 0.5;
         }
         
-        /* 高亮当前行 */
-        .highlighted-line {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        /* 简洁的分隔线 */
         .separator {
             width: 1px;
             background: #333;
             height: 100%;
             flex-shrink: 0;
         }
+        
+        /* 滚动条差异标记容器 */
+        .scroll-marks-container {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+            background: transparent;
+        }
+        
+        .diff-scroll-mark {
+            position: absolute;
+            left: 0;
+            width: 5px;
+            height: 1px;
+            border-radius: 2px;
+            transition: opacity 0.1s;
+        }
+        
+        .diff-scroll-mark.added {
+            background: #2ea043;
+            box-shadow: 0 0 2px #2ea043;
+        }
+        
+        .diff-scroll-mark.removed {
+            background: #f85149;
+            box-shadow: 0 0 2px #f85149;
+        }
+        
+        .diff-scroll-mark.changed {
+            background: #bb8009;
+            box-shadow: 0 0 2px #bb8009;
+        }
+        
+        .btn, button {
+            background: transparent;
+            border: none;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">文本对比工具</div>
-        <div class="controls">
-            
-        </div>
-    </div>
-    
     <div class="comparison-container">
         <!-- 左侧文件面板 -->
         <div class="file-panel">
@@ -403,6 +281,8 @@
                     <div class="line-numbers" id="leftLineNumbers"></div>
                     <div class="text-content" id="leftTextContent"></div>
                 </div>
+                <!-- 滚动条差异标记容器 -->
+                <div id="leftScrollMarks" class="scroll-marks-container"></div>
             </div>
         </div>
         
@@ -427,35 +307,25 @@
                     <div class="line-numbers" id="rightLineNumbers"></div>
                     <div class="text-content" id="rightTextContent"></div>
                 </div>
+                <!-- 滚动条差异标记容器 -->
+                <div id="rightScrollMarks" class="scroll-marks-container"></div>
             </div>
         </div>
         
-        <!-- 文件输入 -->
+        <!-- 隐藏的文件输入（保留原始机制但不干扰体验） -->
         <input type="file" id="leftFileInput" accept=".txt,.json,.xml,.html,.css,.js,.md,.log,.csv,.java,.py,.php,.rb,.go" style="display: none;">
         <input type="file" id="rightFileInput" accept=".txt,.json,.xml,.html,.css,.js,.md,.log,.csv,.java,.py,.php,.rb,.go" style="display: none;">
     </div>
-    
-    <!-- 统计信息 - 修改为显示差异行号 -->
-    <div class="stats">
-        <div class="stat-item">
-            <div class="stat-title">差异行号 (原文件)</div>
-            <div class="stat-content" id="leftDiffLines">无差异</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-title">差异行号 (对比文件)</div>
-            <div class="stat-content" id="rightDiffLines">无差异</div>
-        </div>
-    </div>
 
     <script>
-        // 状态管理
+        // ---------- 状态管理 ----------
         const state = {
-            left: { content: '', fileName: '', lines: [] },
-            right: { content: '', fileName: '', lines: [] },
-            diffResult: null
+            left: { content: '', fileName: '', filePath: '', lines: [] },
+            right: { content: '', fileName: '', filePath: '', lines: [] },
+            diffResult: null   // 存储最新对比结果
         };
         
-        // DOM元素
+        // DOM 元素
         const leftDropArea = document.getElementById('leftDropArea');
         const rightDropArea = document.getElementById('rightDropArea');
         const leftDropOverlay = document.getElementById('leftDropOverlay');
@@ -470,145 +340,95 @@
         const rightLineNumbers = document.getElementById('rightLineNumbers');
         const leftTextContent = document.getElementById('leftTextContent');
         const rightTextContent = document.getElementById('rightTextContent');
-        const compareBtn = document.getElementById('compareBtn');
-        const exampleBtn = document.getElementById('exampleBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const leftDiffLines = document.getElementById('leftDiffLines');
-        const rightDiffLines = document.getElementById('rightDiffLines');
+        const leftTextContainer = document.getElementById('leftTextContainer');
+        const rightTextContainer = document.getElementById('rightTextContainer');
         
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            // 设置拖放事件
-            setupDropEvents(leftDropArea, leftDropOverlay, leftFileInput, 'left');
-            setupDropEvents(rightDropArea, rightDropOverlay, rightFileInput, 'right');
-            
-            // 注意：已移除点击打开文件选择的功能
-            
-            // 按钮事件
-            compareBtn.addEventListener('click', compareTexts);
-            exampleBtn.addEventListener('click', loadExample);
-            resetBtn.addEventListener('click', resetAll);
-            
-            // 文件选择事件（仅用于文件输入框，如果用户通过其他方式选择文件）
-            leftFileInput.addEventListener('change', (e) => handleFileSelect(e, 'left'));
-            rightFileInput.addEventListener('change', (e) => handleFileSelect(e, 'right'));
-            
-            // 同步滚动
-            setupSyncScroll();
-        });
+        // 滚动标记容器
+        const leftScrollMarks = document.getElementById('leftScrollMarks');
+        const rightScrollMarks = document.getElementById('rightScrollMarks');
         
-        // 设置拖放事件
-        function setupDropEvents(dropArea, dropOverlay, fileInput, side) {
-            // 阻止默认行为
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropArea.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            // 显示拖放覆盖层
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropArea.addEventListener(eventName, () => {
-                    dropOverlay.classList.add('active');
-                }, false);
-            });
-            
-            // 隐藏拖放覆盖层
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropArea.addEventListener(eventName, () => {
-                    dropOverlay.classList.remove('active');
-                }, false);
-            });
-            
-            // 处理文件拖放
-            dropArea.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                
-                if (files.length > 0) {
-                    handleFile(files[0], side);
-                }
-            }, false);
+        // 辅助函数：转义HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
         
-        // 阻止默认事件
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        // 行高固定20px（与 .text-line 一致）
+        const LINE_HEIGHT = 20;
         
-        // 处理文件选择
-        function handleFileSelect(e, side) {
-            const files = e.target.files;
-            if (files.length > 0) {
-                handleFile(files[0], side);
-            }
-        }
-        
-        // 处理文件
-        function handleFile(file, side) {
-            // 检查文件类型
-            if (!file.type.match('text.*') && !file.name.match(/\.(txt|json|xml|html|css|js|md|log|csv|java|py|php|rb|go)$/i)) {
-                alert('请选择文本文件 (.txt, .json, .xml, .html, .css, .js, .md, .log, .csv, .java, .py, .php, .rb, .go 等)');
+        // 更新滚动条差异标记 (基于差异结果和总行数)
+        function updateScrollMarks(side) {
+            const container = side === 'left' ? leftTextContainer : rightTextContainer;
+            const marksContainer = side === 'left' ? leftScrollMarks : rightScrollMarks;
+            const diffLines = side === 'left' ? state.diffResult?.leftDiffLines : state.diffResult?.rightDiffLines;
+            const totalLines = side === 'left' ? state.left.lines.length : state.right.lines.length;
+            
+            // 清空旧标记
+            marksContainer.innerHTML = '';
+            
+            // 没有对比结果 或 无差异行 或 没有内容时，不显示标记
+            if (!state.diffResult || !diffLines || diffLines.length === 0 || totalLines === 0) {
                 return;
             }
             
-            const reader = new FileReader();
+            // 获取滚动容器可视高度和内容总高度
+            const clientHeight = container.clientHeight;
+            const scrollHeight = totalLines * LINE_HEIGHT;
+            if (scrollHeight <= 0 || clientHeight <= 0) return;
             
-            reader.onload = function(e) {
-                const content = e.target.result;
+            // 遍历差异行，生成细线标记
+            diffLines.forEach(diff => {
+                const lineIdx = diff.line - 1;      // 0-index
+                const offsetY = lineIdx * LINE_HEIGHT; // 距离顶部的绝对偏移
+                // 计算标记在滚动条轨道上的相对位置百分比 (相对于可滚动内容)
+                let percent = offsetY / scrollHeight;
+                // 限制百分比范围 [0, 1]
+                percent = Math.min(1, Math.max(0, percent));
+                // 标记在可视容器中的 top 值 (相对于 marksContainer 高度)
+                const markTop = percent * clientHeight;
                 
-                // 更新状态
-                state[side].content = content;
-                state[side].fileName = file.name;
-                state[side].lines = content.split('\n');
-                
-                // 更新UI
-                updateFileDisplay(side);
-                
-                // 隐藏提示
-                if (side === 'left') {
-                    leftHint.classList.add('hidden');
-                } else {
-                    rightHint.classList.add('hidden');
-                }
-                
-                // 如果两个文件都已加载，自动对比
-                if (state.left.content && state.right.content) {
-                    setTimeout(compareTexts, 300);
-                }
-            };
-            
-            reader.readAsText(file);
+                const mark = document.createElement('div');
+                mark.className = `diff-scroll-mark ${diff.type}`;
+                mark.style.top = `${markTop}px`;
+                marksContainer.appendChild(mark);
+            });
         }
         
-        // 更新文件显示
-        function updateFileDisplay(side) {
-            const fileInfo = state[side];
-            
-            // 更新文件名
-            if (side === 'left') {
-                leftFileName.textContent = fileInfo.fileName;
-            } else {
-                rightFileName.textContent = fileInfo.fileName;
+        // 同时更新左右两侧的滚动条标记
+        function updateBothScrollMarks() {
+            if (!state.diffResult) {
+                if (leftScrollMarks) leftScrollMarks.innerHTML = '';
+                if (rightScrollMarks) rightScrollMarks.innerHTML = '';
+                return;
             }
-            
-            // 更新行号和内容
-            updateTextDisplay(side);
+            updateScrollMarks('left');
+            updateScrollMarks('right');
         }
         
-        // 更新文本显示
+        // 监听滚动容器尺寸变化 (ResizeObserver)
+        let resizeObserver = null;
+        function observeContainerResize() {
+            if (resizeObserver) resizeObserver.disconnect();
+            resizeObserver = new ResizeObserver(() => {
+                if (state.diffResult) {
+                    updateBothScrollMarks();
+                }
+            });
+            if (leftTextContainer) resizeObserver.observe(leftTextContainer);
+            if (rightTextContainer) resizeObserver.observe(rightTextContainer);
+        }
+        
+        // 更新文本显示 (无差异样式，原始内容)
         function updateTextDisplay(side) {
             const fileInfo = state[side];
             const lines = fileInfo.lines;
-            
-            // 生成行号
             let lineNumbersHTML = '';
             let textContentHTML = '';
-            
             for (let i = 0; i < lines.length; i++) {
                 lineNumbersHTML += `<span class="line-number" data-line="${i+1}">${i+1}</span>`;
                 textContentHTML += `<span class="text-line" data-line="${i+1}">${escapeHtml(lines[i])}</span>`;
             }
-            
             if (side === 'left') {
                 leftLineNumbers.innerHTML = lineNumbersHTML;
                 leftTextContent.innerHTML = textContentHTML;
@@ -618,33 +438,31 @@
             }
         }
         
-        // 对比文本
-        function compareTexts() {
-            if (!state.left.content || !state.right.content) {
-                alert('请先选择两个要对比的文本文件');
-                return;
+        // 更新文件名显示（完整路径）
+        function updateFileNameDisplay(side) {
+            const fileInfo = state[side];
+            const displayPath = fileInfo.filePath || fileInfo.fileName || '未选择文件';
+            if (side === 'left') {
+                leftFileName.textContent = displayPath;
+                leftFileName.title = displayPath; // 鼠标悬浮显示完整路径
+            } else {
+                rightFileName.textContent = displayPath;
+                rightFileName.title = displayPath;
             }
-            
-            // 执行对比
-            const diffResult = diffLines(state.left.lines, state.right.lines);
-            state.diffResult = diffResult;
-            
-            // 显示对比结果
-            displayDiffResult(diffResult);
-            
-            // 更新差异行号显示
-            updateDiffLinesDisplay(diffResult);
         }
         
-        // 文本对比算法
+        // 更新文件显示（内容 + 文件名）
+        function updateFileDisplay(side) {
+            updateFileNameDisplay(side);
+            updateTextDisplay(side);
+        }
+        
+        // ---------- 核心 diff 算法 (LCS 变体) ----------
         function diffLines(leftLines, rightLines) {
             const m = leftLines.length;
             const n = rightLines.length;
-            
-            // 创建DP表
             const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
             
-            // 填充DP表
             for (let i = 1; i <= m; i++) {
                 for (let j = 1; j <= n; j++) {
                     if (leftLines[i - 1] === rightLines[j - 1]) {
@@ -655,109 +473,106 @@
                 }
             }
             
-            // 回溯获取差异
             const result = {
                 left: [],
                 right: [],
-                leftDiffLines: [], // 存储左侧差异行号
-                rightDiffLines: [] // 存储右侧差异行号
+                leftDiffLines: [],   // { line, type }
+                rightDiffLines: []
             };
             
             let i = m, j = n;
-            
             while (i > 0 || j > 0) {
                 if (i > 0 && j > 0 && leftLines[i - 1] === rightLines[j - 1]) {
-                    // 行相同
                     result.left.unshift({ text: leftLines[i - 1], type: 'same', originalLine: i });
                     result.right.unshift({ text: rightLines[j - 1], type: 'same', originalLine: j });
-                    i--;
-                    j--;
+                    i--; j--;
                 } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-                    // 右侧新增行
+                    // 右侧新增
                     result.left.unshift({ text: '', type: 'empty', originalLine: null });
                     result.right.unshift({ text: rightLines[j - 1], type: 'added', originalLine: j });
                     result.rightDiffLines.push({ line: j, type: 'added' });
                     j--;
                 } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
-                    // 左侧删除行
+                    // 左侧删除
                     result.left.unshift({ text: leftLines[i - 1], type: 'removed', originalLine: i });
                     result.right.unshift({ text: '', type: 'empty', originalLine: null });
                     result.leftDiffLines.push({ line: i, type: 'removed' });
                     i--;
                 } else {
-                    // 行不同（修改）
+                    // 修改（双方都有但不同）
                     result.left.unshift({ text: leftLines[i - 1], type: 'changed', originalLine: i });
                     result.right.unshift({ text: rightLines[j - 1], type: 'changed', originalLine: j });
                     result.leftDiffLines.push({ line: i, type: 'changed' });
                     result.rightDiffLines.push({ line: j, type: 'changed' });
-                    i--;
-                    j--;
+                    i--; j--;
                 }
             }
             
-            // 对差异行号进行排序
-            result.leftDiffLines.sort((a, b) => a.line - b.line);
-            result.rightDiffLines.sort((a, b) => a.line - b.line);
-            
+            result.leftDiffLines.sort((a,b) => a.line - b.line);
+            result.rightDiffLines.sort((a,b) => a.line - b.line);
             return result;
         }
         
-        // 显示对比结果
-        function displayDiffResult(diffResult) {
-            // 显示左侧对比结果
-            let leftHTML = '';
-            let rightHTML = '';
-            let leftLineNumbersHTML = '';
-            let rightLineNumbersHTML = '';
-            
-            diffResult.left.forEach((item, index) => {
-                const lineNum = index + 1;
+        // 渲染对比高亮 (基于diffResult)
+        function renderDiffHighlight(diffResult) {
+            if (!diffResult) return;
+            // 左侧渲染
+            let leftHTML = '', rightHTML = '', leftLineNumHTML = '', rightLineNumHTML = '';
+            diffResult.left.forEach((item, idx) => {
+                const lineNum = idx + 1;
                 const className = item.type === 'same' ? '' : `diff-${item.type}`;
                 leftHTML += `<span class="text-line ${className}" data-line="${lineNum}">${escapeHtml(item.text)}</span>`;
-                leftLineNumbersHTML += `<span class="line-number" data-line="${lineNum}">${lineNum}</span>`;
+                leftLineNumHTML += `<span class="line-number" data-line="${lineNum}">${lineNum}</span>`;
             });
-            
-            diffResult.right.forEach((item, index) => {
-                const lineNum = index + 1;
+            diffResult.right.forEach((item, idx) => {
+                const lineNum = idx + 1;
                 const className = item.type === 'same' ? '' : `diff-${item.type}`;
                 rightHTML += `<span class="text-line ${className}" data-line="${lineNum}">${escapeHtml(item.text)}</span>`;
-                rightLineNumbersHTML += `<span class="line-number" data-line="${lineNum}">${lineNum}</span>`;
+                rightLineNumHTML += `<span class="line-number" data-line="${lineNum}">${lineNum}</span>`;
             });
-            
             leftTextContent.innerHTML = leftHTML;
             rightTextContent.innerHTML = rightHTML;
-            leftLineNumbers.innerHTML = leftLineNumbersHTML;
-            rightLineNumbers.innerHTML = rightLineNumbersHTML;
+            leftLineNumbers.innerHTML = leftLineNumHTML;
+            rightLineNumbers.innerHTML = rightLineNumHTML;
         }
         
-        // 更新差异行号显示
-        function updateDiffLinesDisplay(diffResult) {
-            // 显示左侧差异行号
-            if (diffResult.leftDiffLines.length > 0) {
-                let leftHTML = '';
-                diffResult.leftDiffLines.forEach(item => {
-                    leftHTML += `<span class="line-number-item ${item.type}">${item.line}</span>`;
-                });
-                leftDiffLines.innerHTML = leftHTML;
-            } else {
-                leftDiffLines.innerHTML = '<span class="no-differences">无差异行</span>';
-            }
+        // 执行对比（更新高亮 + 滚动条标记）
+        function performComparison() {
+            if (!state.left.content || !state.right.content) return false;
+            const diff = diffLines(state.left.lines, state.right.lines);
+            state.diffResult = diff;
+            renderDiffHighlight(diff);
+            // 更新滚动条标记（细线标识）
+            updateBothScrollMarks();
+            return true;
+        }
+        
+        // 重置所有内容
+        function resetAll() {
+            state.left = { content: '', fileName: '', filePath: '', lines: [] };
+            state.right = { content: '', fileName: '', filePath: '', lines: [] };
+            state.diffResult = null;
             
-            // 显示右侧差异行号
-            if (diffResult.rightDiffLines.length > 0) {
-                let rightHTML = '';
-                diffResult.rightDiffLines.forEach(item => {
-                    rightHTML += `<span class="line-number-item ${item.type}">${item.line}</span>`;
-                });
-                rightDiffLines.innerHTML = rightHTML;
-            } else {
-                rightDiffLines.innerHTML = '<span class="no-differences">无差异行</span>';
-            }
+            leftFileName.textContent = '未选择文件';
+            rightFileName.textContent = '未选择文件';
+            leftLineNumbers.innerHTML = '';
+            rightLineNumbers.innerHTML = '';
+            leftTextContent.innerHTML = '';
+            rightTextContent.innerHTML = '';
+            
+            leftFileInput.value = '';
+            rightFileInput.value = '';
+            
+            leftHint.classList.remove('hidden');
+            rightHint.classList.remove('hidden');
+            
+            // 清除滚动条标记
+            if (leftScrollMarks) leftScrollMarks.innerHTML = '';
+            if (rightScrollMarks) rightScrollMarks.innerHTML = '';
         }
         
-        // 加载示例
+        // 加载示例 (保留原有示例功能)
         function loadExample() {
-            // 示例文本1
             const example1 = `# 用户配置文件
 # 版本: 1.0
 
@@ -781,7 +596,6 @@ feature_c = enabled
 cache_size = 1024
 cache_ttl = 3600`;
 
-            // 示例文本2
             const example2 = `# 用户配置文件
 # 版本: 1.1
 
@@ -808,84 +622,135 @@ cache_size = 2048
 cache_ttl = 7200
 cache_type = redis`;
 
-            // 更新状态
             state.left.content = example1;
             state.right.content = example2;
             state.left.fileName = 'config_v1.0.ini';
+            state.left.filePath = '示例/config_v1.0.ini';
             state.right.fileName = 'config_v1.1.ini';
+            state.right.filePath = '示例/config_v1.1.ini';
             state.left.lines = example1.split('\n');
             state.right.lines = example2.split('\n');
-
-            // 更新UI
+            
             updateFileDisplay('left');
             updateFileDisplay('right');
-            
-            // 隐藏提示
             leftHint.classList.add('hidden');
             rightHint.classList.add('hidden');
             
-            // 对比文本
-            setTimeout(compareTexts, 300);
+            performComparison();  // 对比并高亮，同时更新滚动条标记
         }
         
-        // 重置所有
-        function resetAll() {
-            // 重置状态
-            state.left = { content: '', fileName: '', lines: [] };
-            state.right = { content: '', fileName: '', lines: [] };
-            state.diffResult = null;
-            
-            // 重置UI
-            leftFileName.textContent = '未选择文件';
-            rightFileName.textContent = '未选择文件';
-            leftLineNumbers.innerHTML = '';
-            rightLineNumbers.innerHTML = '';
-            leftTextContent.innerHTML = '';
-            rightTextContent.innerHTML = '';
-            
-            // 重置差异行号显示
-            leftDiffLines.innerHTML = '<span class="no-differences">无差异</span>';
-            rightDiffLines.innerHTML = '<span class="no-differences">无差异</span>';
-            
-            // 重置文件输入
-            leftFileInput.value = '';
-            rightFileInput.value = '';
-            
-            // 显示提示
-            leftHint.classList.remove('hidden');
-            rightHint.classList.remove('hidden');
+        // 获取文件的完整路径（尽量模拟）
+        function getFilePath(file) {
+            // 优先使用 webkitRelativePath（如果文件是从文件夹拖拽且支持）
+            if (file.webkitRelativePath && file.webkitRelativePath !== '') {
+                return file.webkitRelativePath;
+            }
+            // 否则返回文件名（因为无法获取真实绝对路径）
+            return file.name;
         }
         
-        // 设置同步滚动
+        // 处理文件拖放 + 读取
+        function handleFile(file, side) {
+            const validExt = /\.(txt|json|xml|html|css|js|md|log|csv|java|py|php|rb|go|ini|conf)$/i;
+            if (!file.type.match('text.*') && !validExt.test(file.name)) {
+                alert('请选择文本文件 (.txt, .json, .xml, .html, .css, .js, .md, .log, .csv, .java, .py, .php, .rb, .go 等)');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                state[side].content = content;
+                state[side].fileName = file.name;
+                state[side].filePath = getFilePath(file);
+                state[side].lines = content.split('\n');
+                updateFileDisplay(side);
+                if (side === 'left') leftHint.classList.add('hidden');
+                else rightHint.classList.add('hidden');
+                // 两边都有内容时自动对比
+                if (state.left.content && state.right.content) {
+                    performComparison();
+                } else {
+                    // 只有一个文件时清除差异及标记
+                    if (state.diffResult) {
+                        state.diffResult = null;
+                        if (side === 'left') updateTextDisplay('left');
+                        if (side === 'right') updateTextDisplay('right');
+                        updateBothScrollMarks();
+                    }
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+        
+        // 拖拽事件设置
+        function setupDropEvents(dropArea, dropOverlay, fileInput, side) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+                dropArea.addEventListener(ev, preventDefaults, false);
+            });
+            ['dragenter', 'dragover'].forEach(ev => {
+                dropArea.addEventListener(ev, () => dropOverlay.classList.add('active'), false);
+            });
+            ['dragleave', 'drop'].forEach(ev => {
+                dropArea.addEventListener(ev, () => dropOverlay.classList.remove('active'), false);
+            });
+            dropArea.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length) handleFile(files[0], side);
+            }, false);
+        }
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function handleFileSelect(e, side) {
+            if (e.target.files.length) handleFile(e.target.files[0], side);
+        }
+        
+        // 同步滚动
         function setupSyncScroll() {
-            const leftContainer = document.getElementById('leftTextContainer');
-            const rightContainer = document.getElementById('rightTextContainer');
-            
             let isScrolling = false;
-            
-            leftContainer.addEventListener('scroll', function() {
+            leftTextContainer.addEventListener('scroll', () => {
                 if (isScrolling) return;
                 isScrolling = true;
-                rightContainer.scrollTop = leftContainer.scrollTop;
-                rightContainer.scrollLeft = leftContainer.scrollLeft;
+                rightTextContainer.scrollTop = leftTextContainer.scrollTop;
+                rightTextContainer.scrollLeft = leftTextContainer.scrollLeft;
                 setTimeout(() => { isScrolling = false; }, 10);
             });
-            
-            rightContainer.addEventListener('scroll', function() {
+            rightTextContainer.addEventListener('scroll', () => {
                 if (isScrolling) return;
                 isScrolling = true;
-                leftContainer.scrollTop = rightContainer.scrollTop;
-                leftContainer.scrollLeft = rightContainer.scrollLeft;
+                leftTextContainer.scrollTop = rightTextContainer.scrollTop;
+                leftTextContainer.scrollLeft = rightTextContainer.scrollLeft;
                 setTimeout(() => { isScrolling = false; }, 10);
             });
         }
         
-        // 转义HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        // 监听窗口尺寸变化，重新计算滚动条标记位置
+        function bindScrollMarkUpdateOnResize() {
+            window.addEventListener('resize', () => {
+                if (state.diffResult) updateBothScrollMarks();
+            });
         }
+        
+        // ---------- 初始化 ----------
+        function init() {
+            setupDropEvents(leftDropArea, leftDropOverlay, leftFileInput, 'left');
+            setupDropEvents(rightDropArea, rightDropOverlay, rightFileInput, 'right');
+            leftFileInput.addEventListener('change', (e) => handleFileSelect(e, 'left'));
+            rightFileInput.addEventListener('change', (e) => handleFileSelect(e, 'right'));
+            setupSyncScroll();
+            
+            observeContainerResize();
+            bindScrollMarkUpdateOnResize();
+            
+            // 挂载示例和重置函数供控制台调用（但不添加额外按钮，保持原功能不变）
+            window.loadExample = loadExample;
+            window.resetAll = resetAll;
+        }
+        
+        init();
     </script>
 </body>
 </html>
