@@ -6,6 +6,8 @@
     <title>双色球预测</title>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- SheetJS CDN 用于导入Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -308,30 +310,24 @@
         .btn-sm {
             padding: 8px 14px;
         }
+        /* 导入excel 额外样式保持一致 */
+        .file-input-hidden {
+            display: none;
+        }
+        .import-hint {
+            font-size: 0.7rem;
+            color: #5b6e8c;
+            margin-top: 8px;
+            background: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 48px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- 数据录入区 -->
-    <div class="section">
-        <h3>📋 历史数据</h3>
-        <div class="stats-bar">
-            <span>📅 有效期数: <strong id="historyCount">0</strong></span>
-            <span>📊 频率实时分析</span>
-        </div>
-        <div class="input-group">
-            <input type="text" id="redInput" placeholder="红球,例: 5,12,19,22,28,33" autocomplete="off">
-            <input type="number" id="blueInput" placeholder="蓝球 1-16" min="1" max="16">
-        </div>
-        <div class="button-group">
-            <button onclick="addHistory()" class="btn-primary">➕ 添加数据</button>
-            <button onclick="loadSampleData()" class="btn-outline">📀 示例数据</button>
-            <button onclick="clearAllData()" class="btn-outline">🗑️ 清空</button>
-        </div>
-        <div class="info-text">✔ 红球6个不重复(1-33) 蓝球1-16，支持逗号/空格分隔</div>
-    </div>
-
-    <!-- 生成控制区 -->
+    <!-- 1. 生成控制区（移到最前） -->
     <div class="section">
         <h3>✨ 号码生成</h3>
         <div class="button-group">
@@ -347,7 +343,7 @@
         </div>
     </div>
 
-   
+    <!-- 2. 预测结果模块 -->
     <div class="section" style="padding: 0; overflow: hidden;">
         <h3 style="padding: 18px 16px 0 16px; margin-bottom: 0;">🎯 预测结果</h3>
         <div id="resultsContainer" class="results-unified" style="margin: 12px 12px 18px 12px;">
@@ -355,7 +351,31 @@
         </div>
     </div>
 
-    <!-- 统计图表区 -->
+    <!-- 3. 历史数据模块（移动至预测结果下方，并增加excel导入功能） -->
+    <div class="section">
+        <h3>📋 历史数据</h3>
+        <div class="stats-bar">
+            <span>📅 有效期数: <strong id="historyCount">0</strong></span>
+            <span>📊 频率实时分析</span>
+        </div>
+        <div class="input-group">
+            <input type="text" id="redInput" placeholder="红球,例: 5,12,19,22,28,33" autocomplete="off">
+            <input type="number" id="blueInput" placeholder="蓝球 1-16" min="1" max="16">
+        </div>
+        <div class="button-group">
+            <button onclick="addHistory()" class="btn-primary">➕ 添加数据</button>
+            <button onclick="loadSampleData()" class="btn-outline">📀 示例数据</button>
+            <button onclick="clearAllData()" class="btn-outline">🗑️ 清空</button>
+            <button id="importExcelBtn" class="btn-outline">📂 导入Excel</button>
+        </div>
+        <input type="file" id="excelUploadInput" accept=".xlsx, .xls, .csv, .xlsm" class="file-input-hidden" />
+        <div class="import-hint">
+            💡 导入格式：支持① 两列（红球逗号分隔，蓝球数字） ② 七列（红球6列+蓝球1列）。自动校验合法数据并追加。
+        </div>
+        <div class="info-text">✔ 红球6个不重复(1-33) 蓝球1-16，支持逗号/空格分隔</div>
+    </div>
+
+    <!-- 4. 统计图表区 -->
     <div class="section">
         <h3>📊 红球频率</h3>
         <div class="chart-container">
@@ -418,6 +438,30 @@
                 return false;
             }
             this.history.push([redNumbers, blue]);
+            localStorage.setItem('lotteryData_v3', JSON.stringify(this.history));
+            this.initFreq();
+            updateCharts();
+            updateHistoryStats();
+            return true;
+        },
+
+        // 批量导入专用：验证单条数据合法性（不弹窗，返回结果）
+        validateSingle(redNumbers, blue) {
+            let redSorted = [...redNumbers].sort((a,b)=>a-b);
+            if (redSorted.length !== 6) return { valid: false, reason: '红球数量必须为6个' };
+            const uniqueSet = new Set(redSorted);
+            if (uniqueSet.size !== 6) return { valid: false, reason: '红球存在重复' };
+            if (redSorted.some(n => n < 1 || n > 33)) return { valid: false, reason: '红球超出1-33范围' };
+            if (blue < 1 || blue > 16) return { valid: false, reason: '蓝球超出1-16范围' };
+            return { valid: true, red: redSorted, blue };
+        },
+
+        // 批量追加历史（不重复刷新图表，一次性提交）
+        batchAddHistory(validItems) {
+            if (!validItems.length) return false;
+            for (let item of validItems) {
+                this.history.push([item.red, item.blue]);
+            }
             localStorage.setItem('lotteryData_v3', JSON.stringify(this.history));
             this.initFreq();
             updateCharts();
@@ -596,7 +640,6 @@
 
     // ========= 全新渲染：统一方框 + 同行精简 =========
     function renderResults(groupsArray) {
-        // groupsArray 格式: [{ index:1, red:[...], blue: num }]
         const container = document.getElementById('resultsContainer');
         if (!groupsArray || groupsArray.length === 0) {
             container.innerHTML = `<div class="empty-placeholder">✨ 暂无生成结果，点击上方策略生成</div>`;
@@ -613,11 +656,9 @@
         for (let g of groupsArray) {
             const redNumbers = g.red;
             const blueNum = g.blue;
-            // 红球字符串
             const redStr = redNumbers.join(' · ');
             html += `
                 <div class="result-row">
-                    
                     <div class="numbers-line">
                         <div class="row-index">第${g.index}组</div>
                         <div class="red-group">
@@ -635,16 +676,14 @@
         container.innerHTML = html;
     }
 
-    // 生成主逻辑 - 生成多组并以精简同行方式展示在同一个方框内
+    // 生成主逻辑
     function generate(method) {
         let count = parseInt(document.getElementById('genCount').value, 10);
         if (isNaN(count) || count < 1) count = 5;
-        if (count > 20) count = 20;   // 性能限制
-
+        if (count > 20) count = 20;
         const resultGroups = [];
         for (let i = 0; i < count; i++) {
             let [red, blue] = predictor.generate(method);
-            // 安全兜底
             if (!red || red.length !== 6) {
                 const fallback = predictor.randomGenerate();
                 red = fallback[0];
@@ -669,12 +708,11 @@
         if (predictor.addData(redNumbers, blue)) {
             document.getElementById('redInput').value = '';
             document.getElementById('blueInput').value = '';
-            // 清空之前的结果区域，避免误导，但保留提示
             document.getElementById('resultsContainer').innerHTML = `<div class="empty-placeholder">✅ 数据已录入，可生成新预测</div>`;
         }
     }
 
-    // 示例数据 (不重复覆盖提醒)
+    // 示例数据
     function loadSampleData() {
         if (predictor.history.length > 0) {
             if (!confirm('加载示例将替换现有历史数据，确定继续吗？')) return;
@@ -705,12 +743,134 @@
         }
     }
 
+    // ========== Excel 导入功能（修复版：增强解析，支持中英文逗号、空格等） ==========
+    function importExcelData(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+            if (!rows || rows.length === 0) {
+                alert('Excel 文件无数据');
+                return;
+            }
+
+            const validRecords = [];
+            let invalidCount = 0;
+            // 智能解析：尝试判断列数，支持两列（红球字符串+蓝球数字）或七列（6红+1蓝）
+            for (let idx = 0; idx < rows.length; idx++) {
+                const row = rows[idx];
+                if (!row || row.length === 0) continue;
+                // 跳过可能标题行：如果第一行包含中文“红球”“蓝球”“期号”“号码”等关键词，自动跳过第一行
+                if (idx === 0 && row.some(cell => typeof cell === 'string' && /红球|蓝球|期号|号码/i.test(cell))) {
+                    continue;
+                }
+                let redNumbers = [];
+                let blueNum = null;
+                
+                // 情况1: 7列及以上 (前6为红球，第7列为蓝球) — 加强数字容错
+                if (row.length >= 7) {
+                    const potentialReds = [];
+                    for (let c = 0; c < 6; c++) {
+                        let val = row[c];
+                        if (val === undefined || val === "") break;
+                        let num = Number(val);
+                        if (!isNaN(num) && num >= 1 && num <= 33) potentialReds.push(num);
+                    }
+                    if (potentialReds.length === 6) {
+                        let blueVal = row[6];
+                        let blueNumVal = Number(blueVal);
+                        if (!isNaN(blueNumVal) && blueNumVal >= 1 && blueNumVal <= 16) {
+                            redNumbers = potentialReds;
+                            blueNum = blueNumVal;
+                        }
+                    }
+                }
+                
+                // 情况2: 两列模式（红球字符串，蓝球数字）— 增强分隔符支持（中英文逗号、空格、分号等）
+                if (redNumbers.length === 0 && row.length >= 2) {
+                    let redStrRaw = row[0];
+                    let blueRaw = row[1];
+                    if (redStrRaw && (blueRaw !== undefined && blueRaw !== "")) {
+                        // 清理红球字符串：转字符串，去除首尾空格，统一分割符：支持英文逗号,中文逗号，空格，分号，制表符
+                        let strRed = String(redStrRaw).trim();
+                        // 使用正则分割：匹配 英文逗号、中文逗号、空格、分号、制表符 等常见分隔符
+                        let parts = strRed.split(/[,，\s;；\t]+/);
+                        let parsedReds = [];
+                        for (let p of parts) {
+                            let trimmed = p.trim();
+                            if (trimmed === "") continue;
+                            let num = Number(trimmed);
+                            if (!isNaN(num) && num >= 1 && num <= 33) {
+                                parsedReds.push(num);
+                            }
+                        }
+                        if (parsedReds.length === 6) {
+                            // 蓝球处理：支持数字字符串或数字
+                            let blueVal = blueRaw;
+                            let numBlue = (typeof blueVal === 'number') ? blueVal : Number(String(blueVal).trim());
+                            if (!isNaN(numBlue) && numBlue >= 1 && numBlue <= 16) {
+                                redNumbers = parsedReds;
+                                blueNum = numBlue;
+                            }
+                        }
+                    }
+                }
+                
+                // 最终校验
+                if (redNumbers.length === 6 && blueNum !== null) {
+                    const validation = predictor.validateSingle(redNumbers, blueNum);
+                    if (validation.valid) {
+                        validRecords.push({ red: validation.red, blue: validation.blue });
+                    } else {
+                        invalidCount++;
+                    }
+                } else {
+                    invalidCount++;
+                }
+            }
+
+            if (validRecords.length === 0) {
+                alert(`未检测到合法数据。请确保格式为：\n① 两列(红球逗号/空格分隔，蓝球数字) ② 七列(六个红球数字+蓝球数字)\n本次跳过 ${invalidCount} 行无效数据。`);
+                return;
+            }
+            const success = predictor.batchAddHistory(validRecords);
+            if (success) {
+                alert(`成功导入 ${validRecords.length} 条历史数据，无效行数 ${invalidCount}。图表及频率已更新。`);
+                document.getElementById('resultsContainer').innerHTML = `<div class="empty-placeholder">📂 已导入 ${validRecords.length} 条新数据，可生成预测</div>`;
+            } else {
+                alert('导入失败');
+            }
+        };
+        reader.onerror = () => alert('文件读取失败');
+        reader.readAsArrayBuffer(file);
+    }
+
+    // 绑定导入按钮事件
+    function setupExcelImport() {
+        const importBtn = document.getElementById('importExcelBtn');
+        const fileInput = document.getElementById('excelUploadInput');
+        if (importBtn && fileInput) {
+            importBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            fileInput.addEventListener('change', (e) => {
+                if (fileInput.files && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    importExcelData(file);
+                    fileInput.value = ''; // 清空以便重复导入同文件
+                }
+            });
+        }
+    }
+
     // 初始化
     predictor.loadFromStorage();
     updateCharts();
     updateHistoryStats();
-    // 初始显示占位
     document.getElementById('resultsContainer').innerHTML = `<div class="empty-placeholder">🎯 选择生成策略，号码将在此处同行展示</div>`;
+    setupExcelImport();
 </script>
 </body>
 </html>
