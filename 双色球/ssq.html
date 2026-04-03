@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>双色球预测 · 极简同行版</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #f4f6fc;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 16px 12px 40px;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        /* 卡片通用样式 */
+        .section {
+            background: white;
+            border-radius: 28px;
+            padding: 20px 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eef2f8;
+        }
+
+        .section h3 {
+            font-size: 1.35rem;
+            font-weight: 640;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+            border-left: 4px solid #dc2626;
+            padding-left: 14px;
+            letter-spacing: -0.2px;
+        }
+
+        /* 输入组 */
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 12px 0 8px;
+        }
+
+        .input-group input {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 60px;
+            font-size: 15px;
+            background: #ffffff;
+            font-family: monospace;
+            transition: 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0 8px;
+        }
+
+        button {
+            background: #f1f5f9;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: 0.15s;
+            touch-action: manipulation;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+        }
+
+        button:active {
+            transform: scale(0.96);
+            background: #e2e8f0;
+        }
+
+        .btn-primary {
+            background: #dc2626;
+            color: white;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.2);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid #cbd5e1;
+        }
+
+        .gen-control {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 14px;
+            background: #f8fafc;
+            padding: 10px 16px;
+            border-radius: 48px;
+        }
+
+        .gen-control label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        #genCount {
+            width: 70px;
+            padding: 8px 8px;
+            text-align: center;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            font-size: 16px;
+        }
+
+        /* ========= 预测结果 - 全新紧凑同行版 ========= */
+        /* 单一统合方框 */
+        .results-unified {
+            background: #ffffff;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid #eef2f8;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        /* 表头装饰（可选简洁） */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            background: #fef9f5;
+            padding: 10px 16px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #b45353;
+            border-bottom: 1px solid #ffe4e0;
+            letter-spacing: 0.3px;
+        }
+
+        /* 每一行结果 */
+        .result-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 2px 5px;
+            border-bottom: 1px solid #f0f2f5;
+            transition: background 0.1s;
+            font-size: 0.9rem;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        /* 组号区域 */
+        .row-index {
+            font-weight: 600;
+            color: #4b5563;
+            background: #f1f5f9;
+            padding: 2px 5px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            min-width: 5px;
+            text-align: center;
+        }
+
+        /* 号码区域：红蓝球同行 */
+        .numbers-line {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 5px;
+            flex: 2;
+            justify-content: flex-end;
+        }
+
+        .red-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            background: #fff1f0;
+            padding: 4px 12px;
+            border-radius: 10px;
+        }
+
+        .red-ball {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #b91c1c;
+            letter-spacing: 0.5px;
+        }
+
+        .blue-badge {
+            background: #eef2ff;
+            padding: 4px 12px;
+            border-radius: 48px;
+            font-weight: 700;
+            color: #1e3a8a;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .blue-ball-num {
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        /* 极简分割符 */
+        .separator {
+            color: #cbd5e1;
+            font-size: 0.75rem;
+            margin: 0 2px;
+        }
+
+        /* 空状态提示 */
+        .empty-placeholder {
+            text-align: center;
+            padding: 32px 20px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        /* 滚动区 */
+        .results-scroll {
+            max-height: 440px;
+            overflow-y: auto;
+        }
+
+        /* 移动端适配: 小屏幕下号码换行优雅 */
+        @media (max-width: 560px) {
+            .result-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+                padding: 2px 5px;
+            }
+            .numbers-line {
+                justify-content: flex-start;
+                width: 100%;
+                gap: 5px;
+            }
+            .row-index {
+                align-self: flex-start;
+            }
+            .red-group, .blue-badge {
+                padding: 3px 5px;
+            }
+            .red-ball {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            width: 100%;
+            margin: 18px 0 8px;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 6px 0;
+        }
+        canvas {
+            max-height: 250px;
+            width: 100%;
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 60px;
+            margin-bottom: 16px;
+            font-size: 0.8rem;
+        }
+        .info-text {
+            font-size: 0.7rem;
+            color: #5b6e8c;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .btn-sm {
+            padding: 8px 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 数据录入区 -->
+    <div class="section">
+        <h3>📋 历史数据</h3>
+        <div class="stats-bar">
+            <span>📅 有效期数: <strong id="historyCount">0</strong></span>
+            <span>📊 频率实时分析</span>
+        </div>
+        <div class="input-group">
+            <input type="text" id="redInput" placeholder="红球,例: 5,12,19,22,28,33" autocomplete="off">
+            <input type="number" id="blueInput" placeholder="蓝球 1-16" min="1" max="16">
+        </div>
+        <div class="button-group">
+            <button onclick="addHistory()" class="btn-primary">➕ 添加数据</button>
+            <button onclick="loadSampleData()" class="btn-outline">📀 示例数据</button>
+            <button onclick="clearAllData()" class="btn-outline">🗑️ 清空</button>
+        </div>
+        <div class="info-text">✔ 红球6个不重复(1-33) 蓝球1-16，支持逗号/空格分隔</div>
+    </div>
+
+    <!-- 生成控制区 -->
+    <div class="section">
+        <h3>✨ 号码生成</h3>
+        <div class="button-group">
+            <button onclick="generate('random')">🎲 随机</button>
+            <button onclick="generate('frequency')">🔥 热号优先</button>
+            <button onclick="generate('balanced')">⚖️ 区间均衡</button>
+            <button onclick="generate('smart')">🧠 智能加权</button>
+        </div>
+        <div class="gen-control">
+            <label>生成组数 :</label>
+            <input type="number" id="genCount" value="5" min="1" max="16">
+            <span style="font-size:13px; color:#4b5563;">每组红蓝同行展示</span>
+        </div>
+    </div>
+
+    <!-- 预测结果显示区 (统一方框精简同行版) -->
+    <div class="section" style="padding: 0; overflow: hidden;">
+        <h3 style="padding: 18px 16px 0 16px; margin-bottom: 0;">🎯 预测结果</h3>
+        <div id="resultsContainer" class="results-unified" style="margin: 12px 12px 18px 12px;">
+            <div class="empty-placeholder">⚡ 点击上方按钮，生成号码组合</div>
+        </div>
+    </div>
+
+    <!-- 统计图表区 -->
+    <div class="section">
+        <h3>📊 红球频率</h3>
+        <div class="chart-container">
+            <canvas id="redChart"></canvas>
+        </div>
+        <h3>💙 蓝球频率</h3>
+        <div class="chart-container">
+            <canvas id="blueChart"></canvas>
+        </div>
+        <div class="info-text">基于历史数据自动更新 · 长按图表可保存</div>
+    </div>
+</div>
+
+<script>
+    // ---------- 双色球核心 (完整算法 + 本地存储) ----------
+    const predictor = {
+        redBalls: Array.from({ length: 33 }, (_, i) => i + 1),
+        blueBalls: Array.from({ length: 16 }, (_, i) => i + 1),
+        history: [],
+        redFreq: {},
+        blueFreq: {},
+
+        loadFromStorage() {
+            const stored = localStorage.getItem('lotteryData_v3');
+            if (stored) {
+                try {
+                    this.history = JSON.parse(stored);
+                } catch(e) { this.history = []; }
+            } else {
+                this.history = [];
+            }
+            this.initFreq();
+        },
+
+        initFreq() {
+            for (let i = 1; i <= 33; i++) this.redFreq[i] = 0;
+            for (let i = 1; i <= 16; i++) this.blueFreq[i] = 0;
+            this.history.forEach(([redArr, blue]) => {
+                if (Array.isArray(redArr)) {
+                    redArr.forEach(n => { if (this.redFreq[n] !== undefined) this.redFreq[n]++; });
+                }
+                if (this.blueFreq[blue] !== undefined) this.blueFreq[blue]++;
+            });
+        },
+
+        addData(red, blue) {
+            let redNumbers = red.map(n => parseInt(n, 10));
+            if (redNumbers.some(isNaN)) {
+                alert('红球必须为有效数字');
+                return false;
+            }
+            redNumbers = redNumbers.sort((a,b)=>a-b);
+            const uniqueSet = new Set(redNumbers);
+            if (uniqueSet.size !== 6 || redNumbers.some(n => n < 1 || n > 33)) {
+                alert('红球需6个不重复数字，范围1-33');
+                return false;
+            }
+            if (blue < 1 || blue > 16 || isNaN(blue)) {
+                alert('蓝球必须为1-16之间的数字');
+                return false;
+            }
+            this.history.push([redNumbers, blue]);
+            localStorage.setItem('lotteryData_v3', JSON.stringify(this.history));
+            this.initFreq();
+            updateCharts();
+            updateHistoryStats();
+            return true;
+        },
+
+        replaceHistory(newHistory) {
+            this.history = newHistory;
+            localStorage.setItem('lotteryData_v3', JSON.stringify(this.history));
+            this.initFreq();
+            updateCharts();
+            updateHistoryStats();
+        },
+
+        // 生成方法集
+        generate(method) {
+            const methods = {
+                random: () => this.randomGenerate(),
+                frequency: () => this.freqGenerateSafe(),
+                balanced: () => this.balancedGenerate(),
+                smart: () => this.smartGenerateSafe()
+            };
+            return methods[method] ? methods[method]() : this.randomGenerate();
+        },
+
+        randomGenerate() {
+            const shuffled = [...this.redBalls];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            const red = shuffled.slice(0, 6).sort((a,b)=>a-b);
+            const blue = Math.floor(Math.random() * 16) + 1;
+            return [red, blue];
+        },
+
+        freqGenerateSafe() {
+            if (this.history.length === 0) return this.randomGenerate();
+            const redEntries = Object.entries(this.redFreq);
+            let candidates = redEntries.sort((a,b) => b[1] - a[1]).slice(0, 20).map(([n]) => parseInt(n));
+            if (candidates.length < 6) candidates = [...this.redBalls];
+            const red = this.selectUnique(candidates, 6);
+            let blueCandidates = Object.entries(this.blueFreq).sort((a,b)=>b[1]-a[1]).slice(0, 5).map(([n])=>parseInt(n));
+            if (blueCandidates.length === 0) blueCandidates = [...this.blueBalls];
+            const blue = blueCandidates[Math.floor(Math.random() * blueCandidates.length)];
+            return [red, blue];
+        },
+
+        balancedGenerate() {
+            const ranges = [[1,11], [12,22], [23,33]];
+            let red = [];
+            for (let [start, end] of ranges) {
+                const candidates = this.redBalls.filter(n => n >= start && n <= end);
+                const selected = this.selectUnique(candidates, 2);
+                red.push(...selected);
+            }
+            if (red.length !== 6) {
+                const missing = 6 - red.length;
+                const remaining = this.redBalls.filter(n => !red.includes(n));
+                const extra = this.selectUnique(remaining, missing);
+                red.push(...extra);
+            }
+            red.sort((a,b)=>a-b);
+            const blue = Math.floor(Math.random() * 8) + 5;
+            return [red, blue];
+        },
+
+        smartGenerateSafe() {
+            if (this.history.length === 0) return this.randomGenerate();
+            const recentFreq = this.getRecentFreq(18);
+            const weights = this.redBalls.map(num => {
+                const globalW = (this.redFreq[num] || 0) * 0.65;
+                const recentW = (recentFreq[num] || 0) * 0.35;
+                return globalW + recentW + 0.6;
+            });
+            const red = this.selectByWeight(weights, 6);
+            const blue = this.smartBlueSelect();
+            return [red, blue];
+        },
+
+        selectByWeight(weights, count) {
+            let selected = [];
+            let availableIndices = [...Array(33).keys()];
+            let currentWeights = [...weights];
+            while (selected.length < count && availableIndices.length > 0) {
+                let total = 0;
+                for (let idx of availableIndices) total += currentWeights[idx];
+                if (total === 0) break;
+                let rand = Math.random() * total;
+                let accum = 0;
+                let chosenIdx = -1;
+                for (let idx of availableIndices) {
+                    accum += currentWeights[idx];
+                    if (rand <= accum) {
+                        chosenIdx = idx;
+                        break;
+                    }
+                }
+                if (chosenIdx === -1) chosenIdx = availableIndices[0];
+                const number = this.redBalls[chosenIdx];
+                selected.push(number);
+                availableIndices = availableIndices.filter(i => i !== chosenIdx);
+            }
+            if (selected.length < count) {
+                const existing = new Set(selected);
+                const rest = this.redBalls.filter(n => !existing.has(n));
+                const needed = count - selected.length;
+                const add = this.selectUnique(rest, needed);
+                selected.push(...add);
+            }
+            return selected.sort((a,b)=>a-b);
+        },
+
+        selectUnique(arr, count) {
+            if (!arr.length) return [];
+            const shuffled = [...arr];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled.slice(0, Math.min(count, shuffled.length));
+        },
+
+        getRecentFreq(lookback = 20) {
+            const recent = this.history.slice(-lookback);
+            const freq = {};
+            for (let i = 1; i <= 33; i++) freq[i] = 0;
+            recent.forEach(([red]) => {
+                red.forEach(n => { if (freq[n] !== undefined) freq[n]++; });
+            });
+            return freq;
+        },
+
+        smartBlueSelect() {
+            const blueStats = [];
+            for (let i = 1; i <= 16; i++) {
+                blueStats.push({ num: i, freq: this.blueFreq[i] || 0 });
+            }
+            blueStats.sort((a,b) => a.freq - b.freq);
+            const cold = blueStats.slice(0, 5).map(s => s.num);
+            const hot = blueStats.slice(-4).map(s => s.num);
+            let pool = [...new Set([...cold, ...hot])];
+            if (pool.length === 0) pool = [...this.blueBalls];
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+    };
+
+    // 图表实例
+    let redChart, blueChart;
+
+    function updateCharts() {
+        const redLabels = predictor.redBalls;
+        const redData = redLabels.map(n => predictor.redFreq[n] || 0);
+        if (redChart) redChart.destroy();
+        const ctxRed = document.getElementById('redChart').getContext('2d');
+        redChart = new Chart(ctxRed, {
+            type: 'bar',
+            data: { labels: redLabels, datasets: [{ label: '出现次数', data: redData, backgroundColor: 'rgba(220, 38, 38, 0.65)', borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } } }, scales: { x: { ticks: { maxRotation: 45, autoSkip: true, font: { size: 9 } } }, y: { ticks: { stepSize: 1, precision: 0 } } } }
+        });
+        const blueLabels = predictor.blueBalls;
+        const blueData = blueLabels.map(n => predictor.blueFreq[n] || 0);
+        if (blueChart) blueChart.destroy();
+        const ctxBlue = document.getElementById('blueChart').getContext('2d');
+        blueChart = new Chart(ctxBlue, {
+            type: 'bar',
+            data: { labels: blueLabels, datasets: [{ label: '出现次数', data: blueData, backgroundColor: 'rgba(30, 64, 175, 0.7)', borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } }, scales: { y: { ticks: { stepSize: 1, precision: 0 } } } }
+        });
+    }
+
+    function updateHistoryStats() {
+        document.getElementById('historyCount').innerText = predictor.history.length;
+    }
+
+    // ========= 全新渲染：统一方框 + 同行精简 =========
+    function renderResults(groupsArray) {
+        // groupsArray 格式: [{ index:1, red:[...], blue: num }]
+        const container = document.getElementById('resultsContainer');
+        if (!groupsArray || groupsArray.length === 0) {
+            container.innerHTML = `<div class="empty-placeholder">✨ 暂无生成结果，点击上方策略生成</div>`;
+            return;
+        }
+
+        let html = `
+            <div class="results-header">
+                <span>📌 组序</span>
+                <span>🎨 红球 + 蓝球 (同行)</span>
+            </div>
+            <div class="results-scroll">
+        `;
+        for (let g of groupsArray) {
+            const redNumbers = g.red;
+            const blueNum = g.blue;
+            // 红球字符串
+            const redStr = redNumbers.join(' · ');
+            html += `
+                <div class="result-row">
+                    <div class="row-index">第${g.index}组</div>
+                    <div class="numbers-line">
+                        <div class="red-group">
+                            <span class="red-ball">🔴 ${redStr}</span>
+                        </div>
+                        <div class="blue-badge">
+                            <span>🔵 蓝球</span>
+                            <span class="blue-ball-num">${blueNum}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    // 生成主逻辑 - 生成多组并以精简同行方式展示在同一个方框内
+    function generate(method) {
+        let count = parseInt(document.getElementById('genCount').value, 10);
+        if (isNaN(count) || count < 1) count = 5;
+        if (count > 20) count = 20;   // 性能限制
+
+        const resultGroups = [];
+        for (let i = 0; i < count; i++) {
+            let [red, blue] = predictor.generate(method);
+            // 安全兜底
+            if (!red || red.length !== 6) {
+                const fallback = predictor.randomGenerate();
+                red = fallback[0];
+                blue = fallback[1];
+            }
+            resultGroups.push({ index: i + 1, red: red.slice(), blue: blue });
+        }
+        renderResults(resultGroups);
+    }
+
+    // 添加历史数据
+    function addHistory() {
+        let redRaw = document.getElementById('redInput').value.trim();
+        let blueRaw = document.getElementById('blueInput').value.trim();
+        if (!redRaw || !blueRaw) {
+            alert('请填写红球（逗号分隔）和蓝球数字');
+            return;
+        }
+        let redParts = redRaw.split(/[ ,]+/);
+        let redNumbers = redParts.map(p => parseInt(p, 10)).filter(v => !isNaN(v));
+        let blue = parseInt(blueRaw, 10);
+        if (predictor.addData(redNumbers, blue)) {
+            document.getElementById('redInput').value = '';
+            document.getElementById('blueInput').value = '';
+            // 清空之前的结果区域，避免误导，但保留提示
+            document.getElementById('resultsContainer').innerHTML = `<div class="empty-placeholder">✅ 数据已录入，可生成新预测</div>`;
+        }
+    }
+
+    // 示例数据 (不重复覆盖提醒)
+    function loadSampleData() {
+        if (predictor.history.length > 0) {
+            if (!confirm('加载示例将替换现有历史数据，确定继续吗？')) return;
+        }
+        const sampleHistory = [];
+        for (let i = 0; i < 58; i++) {
+            const shuffled = [...predictor.redBalls];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            const red = shuffled.slice(0, 6).sort((a,b)=>a-b);
+            const blue = Math.floor(Math.random() * 16) + 1;
+            sampleHistory.push([red, blue]);
+        }
+        predictor.replaceHistory(sampleHistory);
+        document.getElementById('resultsContainer').innerHTML = `<div class="empty-placeholder">📊 已加载${sampleHistory.length}期示例，点击上方生成预测</div>`;
+    }
+
+    function clearAllData() {
+        if (predictor.history.length === 0) {
+            alert('没有历史数据可清除');
+            return;
+        }
+        if (confirm('⚠️ 永久清空所有历史记录，确定吗？')) {
+            predictor.replaceHistory([]);
+            document.getElementById('resultsContainer').innerHTML = `<div class="empty-placeholder">🗑️ 历史已清空，可添加新数据或加载示例</div>`;
+        }
+    }
+
+    // 初始化
+    predictor.loadFromStorage();
+    updateCharts();
+    updateHistoryStats();
+    // 初始显示占位
+    document.getElementById('resultsContainer').innerHTML = `<div class="empty-placeholder">🎯 选择生成策略，号码将在此处同行展示</div>`;
+</script>
+</body>
+</html>
