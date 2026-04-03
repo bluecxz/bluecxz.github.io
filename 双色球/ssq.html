@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>双色球预测 · 极简同行版</title>
+    <title>双色球预测</title>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -138,7 +138,7 @@
             font-size: 16px;
         }
 
-        /* ========= 预测结果 - 全新紧凑同行版 ========= */
+       
         /* 单一统合方框 */
         .results-unified {
             background: #ffffff;
@@ -342,11 +342,11 @@
         <div class="gen-control">
             <label>生成组数 :</label>
             <input type="number" id="genCount" value="5" min="1" max="16">
-            <span style="font-size:13px; color:#4b5563;">每组红蓝同行展示</span>
+            <span style="font-size:13px; color:#4b5563;">每组红蓝展示</span>
         </div>
     </div>
 
-    <!-- 预测结果显示区 (统一方框精简同行版) -->
+   
     <div class="section" style="padding: 0; overflow: hidden;">
         <h3 style="padding: 18px 16px 0 16px; margin-bottom: 0;">🎯 预测结果</h3>
         <div id="resultsContainer" class="results-unified" style="margin: 12px 12px 18px 12px;">
@@ -605,7 +605,7 @@
         let html = `
             <div class="results-header">
                 <span>📌 组序</span>
-                <span>🎨 红球 + 蓝球 (同行)</span>
+                <span>🎨 红球 + 蓝球 </span>
             </div>
             <div class="results-scroll">
         `;
@@ -616,8 +616,9 @@
             const redStr = redNumbers.join(' · ');
             html += `
                 <div class="result-row">
-                    <div class="row-index">第${g.index}组</div>
+                    
                     <div class="numbers-line">
+                        <div class="row-index">第${g.index}组</div>
                         <div class="red-group">
                             <span class="red-ball">🔴 ${redStr}</span>
                         </div>
