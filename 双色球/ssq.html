@@ -370,7 +370,8 @@
         </div>
         <input type="file" id="excelUploadInput" accept=".xlsx, .xls, .csv, .xlsm" class="file-input-hidden" />
         <div class="import-hint">
-            💡 导入格式：支持① 两列（红球逗号分隔，蓝球数字） ② 七列（红球6列+蓝球1列）。自动校验合法数据并追加。
+            💡 导入格式：支持① 两列（红球逗号分隔，蓝球数字） ② 七列（红球6列+蓝球1列）。自动校验合法数据并追加。<br>
+            📌 自动忽略第一行（标题行）和第一列（如序号列），从第二行第二列开始读取。
         </div>
         <div class="info-text">✔ 红球6个不重复(1-33) 蓝球1-16，支持逗号/空格分隔</div>
     </div>
@@ -638,7 +639,7 @@
         document.getElementById('historyCount').innerText = predictor.history.length;
     }
 
-    // ========= 全新渲染：统一方框 + 同行精简 =========
+    // ========= 渲染：统一方框 + 同行精简 =========
     function renderResults(groupsArray) {
         const container = document.getElementById('resultsContainer');
         if (!groupsArray || groupsArray.length === 0) {
@@ -743,7 +744,7 @@
         }
     }
 
-    // ========== Excel 导入功能（修复版：增强解析，支持中英文逗号、空格等） ==========
+    // ========== Excel 导入功能（忽略第一行和第一列） ==========
     function importExcelData(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -758,28 +759,28 @@
 
             const validRecords = [];
             let invalidCount = 0;
-            // 智能解析：尝试判断列数，支持两列（红球字符串+蓝球数字）或七列（6红+1蓝）
-            for (let idx = 0; idx < rows.length; idx++) {
-                const row = rows[idx];
-                if (!row || row.length === 0) continue;
-                // 跳过可能标题行：如果第一行包含中文“红球”“蓝球”“期号”“号码”等关键词，自动跳过第一行
-                if (idx === 0 && row.some(cell => typeof cell === 'string' && /红球|蓝球|期号|号码/i.test(cell))) {
-                    continue;
-                }
+            // 强制忽略第一行（索引0），从第二行开始读取
+            for (let idx = 1; idx < rows.length; idx++) {
+                const originalRow = rows[idx];
+                if (!originalRow || originalRow.length === 0) continue;
+                // 忽略第一列（索引0），取后续列作为数据列
+                const dataRow = originalRow.slice(1);
+                if (dataRow.length === 0) continue;
+
                 let redNumbers = [];
                 let blueNum = null;
                 
-                // 情况1: 7列及以上 (前6为红球，第7列为蓝球) — 加强数字容错
-                if (row.length >= 7) {
+                // 情况1: 数据列数 >= 7 (即原始列数 >= 8，但忽略第一列后剩余7列以上: 6红+1蓝)
+                if (dataRow.length >= 7) {
                     const potentialReds = [];
                     for (let c = 0; c < 6; c++) {
-                        let val = row[c];
+                        let val = dataRow[c];
                         if (val === undefined || val === "") break;
                         let num = Number(val);
                         if (!isNaN(num) && num >= 1 && num <= 33) potentialReds.push(num);
                     }
                     if (potentialReds.length === 6) {
-                        let blueVal = row[6];
+                        let blueVal = dataRow[6];
                         let blueNumVal = Number(blueVal);
                         if (!isNaN(blueNumVal) && blueNumVal >= 1 && blueNumVal <= 16) {
                             redNumbers = potentialReds;
@@ -788,14 +789,13 @@
                     }
                 }
                 
-                // 情况2: 两列模式（红球字符串，蓝球数字）— 增强分隔符支持（中英文逗号、空格、分号等）
-                if (redNumbers.length === 0 && row.length >= 2) {
-                    let redStrRaw = row[0];
-                    let blueRaw = row[1];
+                // 情况2: 数据列数 >= 2 (两列模式: 红球字符串，蓝球数字)
+                if (redNumbers.length === 0 && dataRow.length >= 2) {
+                    let redStrRaw = dataRow[0];
+                    let blueRaw = dataRow[1];
                     if (redStrRaw && (blueRaw !== undefined && blueRaw !== "")) {
-                        // 清理红球字符串：转字符串，去除首尾空格，统一分割符：支持英文逗号,中文逗号，空格，分号，制表符
                         let strRed = String(redStrRaw).trim();
-                        // 使用正则分割：匹配 英文逗号、中文逗号、空格、分号、制表符 等常见分隔符
+                        // 支持中英文逗号、空格、分号、制表符等分隔
                         let parts = strRed.split(/[,，\s;；\t]+/);
                         let parsedReds = [];
                         for (let p of parts) {
@@ -807,9 +807,7 @@
                             }
                         }
                         if (parsedReds.length === 6) {
-                            // 蓝球处理：支持数字字符串或数字
-                            let blueVal = blueRaw;
-                            let numBlue = (typeof blueVal === 'number') ? blueVal : Number(String(blueVal).trim());
+                            let numBlue = (typeof blueRaw === 'number') ? blueRaw : Number(String(blueRaw).trim());
                             if (!isNaN(numBlue) && numBlue >= 1 && numBlue <= 16) {
                                 redNumbers = parsedReds;
                                 blueNum = numBlue;
@@ -832,7 +830,7 @@
             }
 
             if (validRecords.length === 0) {
-                alert(`未检测到合法数据。请确保格式为：\n① 两列(红球逗号/空格分隔，蓝球数字) ② 七列(六个红球数字+蓝球数字)\n本次跳过 ${invalidCount} 行无效数据。`);
+                alert(`未检测到合法数据。请确保格式为：\n① 两列(红球逗号/空格分隔，蓝球数字) ② 七列(六个红球数字+蓝球数字)\n本次跳过 ${invalidCount} 行无效数据。\n注意：已自动忽略第一行（标题）和第一列（如序号）。`);
                 return;
             }
             const success = predictor.batchAddHistory(validRecords);
