@@ -169,11 +169,11 @@
         .global-toolbar {
             background: #ffffff;
             border-top: 1px solid #e2edf2;
-            padding: 12px 24px;
+            padding: 10px 5px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 20px;
+            gap: 10px;
             flex-wrap: wrap;
             z-index: 3;
             box-shadow: 0 -2px 8px rgba(0,0,0,0.02);
@@ -195,13 +195,13 @@
         .btn {
             border: none;
             background: #f1f5f9;
-            padding: 10px 24px;
+            padding: 5px 15px;
             border-radius: 60px;
             font-weight: 600;
             font-size: 14px;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
             cursor: pointer;
             transition: 0.2s;
             color: #1e293b;
@@ -237,18 +237,18 @@
         .lang-switcher {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 1px;
             background: #f8fafc;
-            padding: 4px 12px;
-            border-radius: 60px;
+            padding: 1px 5px;
+            border-radius: 30px;
             border: 1px solid #e2e8f0;
         }
         .lang-select {
-            padding: 8px 12px;
+            padding: 8px 1px;
             border: none;
             background: transparent;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 12px;
             cursor: pointer;
             border-radius: 30px;
             outline: none;
@@ -257,8 +257,8 @@
         .swap-icon {
             background: #eef2ff;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -472,7 +472,7 @@
 <body>
 <div class="app-container">
     <div class="main-layout">
-        <!-- 左侧配置面板 -->
+        <!-- 左侧配置面板 (折叠/展开) -->
         <div class="config-panel collapsed" id="configPanel">
             <div class="config-title">
                 <i class="fas fa-layer-group"></i> 配置
@@ -544,15 +544,13 @@
         </div>
     </div>
 
-    <!-- 底部按钮栏 -->
+    <!-- 底部工具栏：左侧显示配置按钮，中间为语言切换器（多语言功能），右侧为翻译按钮 -->
     <div class="global-toolbar">
         <div class="toolbar-left">
-            <button id="toggleConfigBtn" class="btn btn-outline"><i class="fas fa-sliders-h"></i> 显示配置</button>
+            <button id="toggleConfigBtn" class="btn btn-outline"><i class="fas fa-sliders-h"></i> 配置</button>
         </div>
         <div class="toolbar-center">
-            <button id="translate-btn" class="btn btn-primary"><i class="fas fa-language"></i> 翻译</button>
-        </div>
-        <div class="toolbar-right">
+            <!-- 多语言转换功能按钮组（语言选择 + 交换图标）移至页面正中间 -->
             <div class="lang-switcher">
                 <select id="source-lang" class="lang-select">
                     <option value="英语">英语</option><option value="中文">中文</option><option value="日语">日语</option>
@@ -566,6 +564,10 @@
                     <option value="西班牙语">西班牙语</option><option value="俄语">俄语</option><option value="阿拉伯语">阿拉伯语</option>
                 </select>
             </div>
+        </div>
+        <div class="toolbar-right">
+            <!-- 翻译按钮移到靠右边位置 -->
+            <button id="translate-btn" class="btn btn-primary"><i class="fas fa-language"></i> 翻译</button>
         </div>
     </div>
     <div id="loader" style="display: none; position: fixed; bottom: 80px; right: 20px; background: white; border-radius: 30px; padding: 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size:12px;"><span class="loader-mini"></span> 翻译中...</div>
@@ -841,10 +843,10 @@
             configStatusDiv.className = 'status success';
             setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 3000);
 
-            // ★ 新增：保存后自动清空手动配置表单的所有输入框
+            // 保存后自动清空手动配置表单的所有输入框
             manualConfigName.value = '';
             apiKeyInput.value = '';
-            apiHostInput.value = '';   // 恢复默认提示值
+            apiHostInput.value = '';
             modelIdInput.value = '';
             customPromptInput.value = '';
             
@@ -905,7 +907,7 @@
             });
         }
 
-        // ---------- 翻译核心 (未改动) ----------
+        // ---------- 翻译核心 ----------
         async function translateTextWithGPT(text, source, target, config) {
             if (!config || !config.apiKey) throw new Error("请先配置有效的API");
             const apiUrl = `${config.apiHost}/v1/chat/completions`;
@@ -992,7 +994,7 @@
             autoTranslateTimeout = setTimeout(() => performTranslation(), 500);
         }
 
-        // ---------- 事件绑定 ----------
+        // ---------- 事件绑定（所有功能原样保留）----------
         inputText.addEventListener('input', function() {
             const cnt = inputText.value.length;
             charCountSpan.textContent = cnt;
@@ -1027,8 +1029,6 @@
         showErrorBtn.addEventListener('click', () => {
             errorDetailsDiv.style.display = errorDetailsDiv.style.display === 'none' ? 'block' : 'none';
         });
-
-        // 下拉菜单切换配置
         configSelect.addEventListener('change', (e) => {
             const selectedName = e.target.value;
             if (selectedName && configGroups.some(c => c.name === selectedName)) {
@@ -1038,13 +1038,7 @@
                 setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 2500);
             }
         });
-
-        // 删除配置按钮事件
-        deleteConfigBtn.addEventListener('click', () => {
-            deleteCurrentConfig();
-        });
-
-        // 导入JSON
+        deleteConfigBtn.addEventListener('click', () => deleteCurrentConfig());
         importConfigBtn.addEventListener('click', () => importFileInput.click());
         importFileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -1068,8 +1062,6 @@
             };
             reader.readAsText(file, 'UTF-8');
         });
-
-        // 手动保存配置 (重新绑定事件)
         if (saveConfigBtn) {
             const newSaveBtn = saveConfigBtn.cloneNode(true);
             saveConfigBtn.parentNode.replaceChild(newSaveBtn, saveConfigBtn);
@@ -1079,11 +1071,9 @@
                 addOrUpdateManualConfig();
             });
         }
-
-        // 面板折叠
         let isConfigCollapsed = true;
         function updateToggleUI() {
-            toggleConfigBtn.innerHTML = isConfigCollapsed ? '<i class="fas fa-sliders-h"></i> 显示配置' : '<i class="fas fa-times"></i> 隐藏配置';
+            toggleConfigBtn.innerHTML = isConfigCollapsed ? '<i class="fas fa-sliders-h"></i> 配置' : '<i class="fas fa-times"></i> 配置';
         }
         toggleConfigBtn.addEventListener('click', () => {
             configPanel.classList.toggle('collapsed');
@@ -1091,7 +1081,6 @@
             updateToggleUI();
         });
         
-        // 初始化
         loadMultiConfigs();
         refreshConfigSelect();
         updateApiStatusUI();
