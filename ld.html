@@ -115,14 +115,14 @@
             min-width: 0;
             background: #ffffff;
             border-radius: 10px;
-            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 2px 3px -12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
         .reader-header {
-            padding: 1.5rem 2rem 0.8rem 2rem;
+            padding: 1rem 1rem 1rem 1rem;
             border-bottom: 1px solid #eef2f6;
         }
 
@@ -197,7 +197,7 @@
         }
 
         .page-container {
-            margin: 0 2rem 1.2rem 2rem;
+            margin: 1rem 1rem 1rem 1rem;
             background: #ffffff;
             border-radius: 24px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.02), 0 6px 12px -8px rgba(0,0,0,0.1);
@@ -205,33 +205,37 @@
 
         .reading-page {
             background: #fefef7;
-            border-radius: 10px;
-            padding: 1.8rem 2rem;
-            min-height: 500px;
+            border-radius: 5px;
+            padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+            min-height: 600px;
             max-height: 600px;
-            height: 500px;
-            overflow-y: hidden;
-            font-family: 'Georgia', 'Times New Roman', '宋体', 'Segoe UI', serif;
-            font-size: 1rem;
-            line-height: 1.7;
+            height: 600px;
+            overflow-y: auto;        /* 改为 auto，显示滚动条，保证窗口变化可滚动阅读全部文字 */
+            font-family: 'Georgia', 'Times New Roman', '黑体', 'Segoe UI', serif;
+            font-size: 1.rem;
+            line-height: 2;
             color: #1f2d3a;
             white-space: pre-wrap;
             word-break: break-word;
             box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.02);
-            scrollbar-width: none;
         }
 
         .reading-page::-webkit-scrollbar {
-            display: none;
+            width: 8px;
+            background: #eef2f6;
+        }
+        .reading-page::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
         }
 
         .controls {
-            padding: 0.8rem 2rem 1.5rem 2rem;
+            padding: 1rem 1rem 1rem 1rem;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 2px;
             border-top: 1px solid #ecf3f9;
             background: #ffffff;
         }
@@ -368,7 +372,7 @@
             line-height: 1.7;
             white-space: pre-wrap;
             word-break: break-word;
-            padding: 1.8rem 2rem;
+            padding: 1rem 1rem;
             background: transparent;
         }
 
@@ -454,7 +458,7 @@
         <div class="style-panel">
             <div class="font-control">
                 <button class="font-btn" id="fontDecreaseBtn" title="减小字号">A-</button>
-                <span class="font-size-value" id="fontSizeDisplay">16px</span>
+                <span class="font-size-value" id="fontSizeDisplay">20px</span>
                 <button class="font-btn" id="fontIncreaseBtn" title="增大字号">A+</button>
             </div>
             <select id="voiceSelect" class="voice-select" disabled>
@@ -501,7 +505,8 @@
         let isSpeaking = false;
         let selectedVoice = null;
         
-        let currentFontSize = 16;
+        // 默认字体改为20px (文件大小=20)
+        let currentFontSize = 20;
         
         // ----- 目录和偏移映射 -----
         let tocItems = [];            // { title, startOffset }
@@ -510,6 +515,17 @@
         // ---------- 异步分页控制 ----------
         let currentBuildCancel = null;
         let isBuildingPages = false;
+        
+        // 优化后的空行处理：将所有连续两个及以上的换行符替换为单个换行符，彻底去除多余空行
+        function normalizeSpacing(text) {
+            // 统一换行符为 \n
+            let normalized = text.replace(/\r\n?/g, '\n');
+            // 将连续两个及以上换行符替换为单个换行符（保留必要的段落分隔，但消除所有多余空行）
+            normalized = normalized.replace(/\n{2,}/g, '\n');
+            // 去除首尾多余的换行
+            normalized = normalized.replace(/^\n+/, '').replace(/\n+$/, '');
+            return normalized;
+        }
         
         // 禁用/启用控件 (保留原始功能)
         function setControlsEnabled(enabled) {
@@ -805,14 +821,18 @@
         function increaseFont() { applyFontSize(currentFontSize + 2); }
         function decreaseFont() { applyFontSize(currentFontSize - 2); }
         
-        // ----------------- 分页核心 (保留原算法) -----------------
-        function splitTextIntoChunks(text, maxChunkLen = 260) {
-            const chunks = [];
+        // ---------- 固定每页500字的分页函数（替代原来的高度测量分页）----------
+        async function buildPagesAsync(text, maxHeight, signal) {
+            if (!text || text.trim() === "") return [];
+            const pagesResult = [];
             let start = 0;
             const len = text.length;
+            const PAGE_SIZE = 500;   // 固定每页500字
             while (start < len) {
-                let end = Math.min(start + maxChunkLen, len);
+                if (signal && signal.aborted) return [];
+                let end = Math.min(start + PAGE_SIZE, len);
                 if (end < len) {
+                    // 在结束位置附近寻找合适的断点（换行、句号、感叹号、问号、分号、空格等）
                     let lookback = Math.min(30, end - start);
                     for (let i = 0; i < lookback; i++) {
                         const idx = end - i;
@@ -822,62 +842,11 @@
                         }
                     }
                 }
-                chunks.push(text.substring(start, end));
+                pagesResult.push(text.substring(start, end));
                 start = end;
+                // 让出事件循环，避免卡死
+                if (pagesResult.length % 20 === 0) await new Promise(resolve => setTimeout(resolve, 0));
             }
-            return chunks;
-        }
-        
-        function measureChunkHeight(chunk) { measureDiv.innerText = chunk; return measureDiv.offsetHeight; }
-        function ensureChunkNotOverflow(chunk, maxHeight, maxDepth = 3) {
-            if (maxDepth <= 0 || chunk.length <= 20) return [chunk];
-            const h = measureChunkHeight(chunk);
-            if (h <= maxHeight) return [chunk];
-            const mid = Math.floor(chunk.length / 2);
-            const left = chunk.substring(0, mid);
-            const right = chunk.substring(mid);
-            return [...ensureChunkNotOverflow(left, maxHeight, maxDepth-1), ...ensureChunkNotOverflow(right, maxHeight, maxDepth-1)];
-        }
-        
-        async function buildPagesAsync(text, maxHeight, signal) {
-            if (!text || text.trim() === "") return [];
-            if (maxHeight <= 0) {
-                const lines = text.split(/\r?\n/);
-                const simplePages = [];
-                for (let i = 0; i < lines.length; i += 28) simplePages.push(lines.slice(i, i+28).join('\n'));
-                return simplePages.length ? simplePages : [text];
-            }
-            let rawChunks = splitTextIntoChunks(text, 240);
-            let safeChunks = [];
-            for (let ch of rawChunks) {
-                if (signal && signal.aborted) return [];
-                const subChunks = ensureChunkNotOverflow(ch, maxHeight, 2);
-                safeChunks.push(...subChunks);
-            }
-            if (safeChunks.length === 0) return [text];
-            const chunkHeights = new Array(safeChunks.length);
-            for (let i = 0; i < safeChunks.length; i++) {
-                if (signal && signal.aborted) return [];
-                chunkHeights[i] = measureChunkHeight(safeChunks[i]);
-                if (i % 12 === 0 && i > 0) await new Promise(resolve => setTimeout(resolve, 0));
-            }
-            const pagesResult = [];
-            let currentPageChunks = [], currentHeight = 0;
-            for (let idx = 0; idx < safeChunks.length; idx++) {
-                if (signal && signal.aborted) return [];
-                const chunk = safeChunks[idx], h = chunkHeights[idx];
-                if (currentPageChunks.length === 0 && h > maxHeight) { pagesResult.push(chunk); continue; }
-                if (currentHeight + h <= maxHeight) {
-                    currentPageChunks.push(chunk);
-                    currentHeight += h;
-                } else {
-                    if (currentPageChunks.length) pagesResult.push(currentPageChunks.join(''));
-                    currentPageChunks = [chunk];
-                    currentHeight = h;
-                }
-                if (idx % 20 === 0) await new Promise(resolve => setTimeout(resolve, 0));
-            }
-            if (currentPageChunks.length) pagesResult.push(currentPageChunks.join(''));
             return pagesResult.length ? pagesResult : [text];
         }
         
@@ -893,18 +862,9 @@
             const cancelToken = { aborted: false };
             currentBuildCancel = cancelToken;
             setControlsEnabled(false);
-            showProcessingMsg('📖 智能分页中...');
-            const pageElem = document.querySelector('.reading-page');
-            let maxHeight = pageElem.clientHeight || 480;
-            const computedStyle = window.getComputedStyle(pageElem);
-            const pageRect = pageElem.getBoundingClientRect();
-            measureDiv.style.width = pageRect.width + 'px';
-            measureDiv.style.padding = computedStyle.padding;
-            measureDiv.style.fontSize = computedStyle.fontSize;
-            measureDiv.style.lineHeight = computedStyle.lineHeight;
-            measureDiv.style.fontFamily = computedStyle.fontFamily;
-            measureDiv.style.whiteSpace = 'pre-wrap';
-            let newPages = await buildPagesAsync(rawText, maxHeight, cancelToken);
+            showProcessingMsg('📖 智能分页中（固定500字/页）...');
+            // 固定每页500字，不再需要测量高度，直接调用 buildPagesAsync
+            let newPages = await buildPagesAsync(rawText, 0, cancelToken);
             if (cancelToken.aborted || thisBuildId !== rebuildSequence) return;
             currentBuildCancel = null;
             pages = newPages.length ? newPages : [rawText];
@@ -914,8 +874,8 @@
             updateButtonsState();
             setControlsEnabled(true);
             refreshTOCAndOffsets();
-            ttsStatusSpan.innerText = '📖 文本已加载，可点击朗读';
-            setTimeout(() => { if (ttsStatusSpan.innerText === '📖 文本已加载，可点击朗读') ttsStatusSpan.innerText = '⚡ 就绪 · 自动连读模式'; }, 1800);
+            ttsStatusSpan.innerText = '📖 文本已加载，每页约500字，可点击朗读';
+            setTimeout(() => { if (ttsStatusSpan.innerText === '📖 文本已加载，每页约500字，可点击朗读') ttsStatusSpan.innerText = '⚡ 就绪 · 自动连读模式'; }, 1800);
         }
         
         function displayCurrentPage() {
@@ -931,7 +891,7 @@
             pageIndicator.innerText = `第 ${currentPageIdx+1} / ${pages.length} 页`;
         }
         
-        // 修复后的 TTS 逻辑：增加朗读有效性检测，避免异常翻页
+        // TTS 逻辑 (保持原始完整)
         function stopTTS() { 
             if (window.speechSynthesis) window.speechSynthesis.cancel(); 
             isSpeaking = false; 
@@ -948,7 +908,6 @@
         
         function speakCurrentPage() { 
             if (!pages.length) return;
-            // 如果正在朗读，先停止（确保干净状态）
             if (window.speechSynthesis && isSpeaking) {
                 window.speechSynthesis.cancel();
                 isSpeaking = false;
@@ -956,7 +915,6 @@
             }
             const textToRead = pages[currentPageIdx];
             if (!textToRead || textToRead.trim() === "") {
-                // 如果当前页无文字，尝试自动翻页
                 if (currentPageIdx + 1 < pages.length) {
                     currentPageIdx++;
                     displayCurrentPage();
@@ -971,7 +929,6 @@
             if (selectedVoice) utterance.voice = selectedVoice;
             utterance.lang = 'zh-CN';
             
-            // 标记本次朗读是否真正开始（用于区分异常结束）
             let hasStarted = false;
             
             utterance.onstart = () => { 
@@ -988,9 +945,7 @@
                 const wasSpeaking = isSpeaking;
                 isSpeaking = false; 
                 currentUtterance = null;
-                // 只有朗读真正开始过，且没有因为停止而中断，才进行自动翻页
                 if (hasStarted && wasSpeaking && startPageIdx === currentPageIdx && pages.length > 0) {
-                    // 正常结束，自动翻到下一页继续朗读
                     if (currentPageIdx + 1 < pages.length) {
                         currentPageIdx++;
                         displayCurrentPage();
@@ -1004,7 +959,6 @@
                         speakBtn.disabled = pages.length === 0;
                     }
                 } else {
-                    // 异常结束（例如被取消或从未开始）不做任何翻页
                     if (!hasStarted) {
                         ttsStatusSpan.innerText = '⚠️ 朗读未启动，请检查语音设置或重试';
                     }
@@ -1055,7 +1009,9 @@
         }
         
         function loadTextAndReset(content) {
-            rawText = content;
+            // 关键优化：去除所有多余空行（连续两个及以上换行变为单个换行），彻底解决空行过多问题
+            const cleanedContent = normalizeSpacing(content);
+            rawText = cleanedContent;
             stopTTS();
             tocItems = extractChaptersFromText(rawText);
             if (currentBuildCancel) currentBuildCancel.aborted = true;
