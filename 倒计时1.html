@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倒计时器</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            transition: background-color 0.5s;
+        }
+        #timer {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        input[type="number"] {
+            padding: 8px;
+            font-size: 16px;
+            width: 100px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .blink {
+            animation: blink 0.5s infinite;
+        }
+        @keyframes blink {
+            0% { background-color: #f0f0f0; }
+            50% { background-color: #ff0000; }
+            100% { background-color: #f0f0f0; }
+        }
+        #errorMessage {
+            color: red;
+            margin-top: 10px;
+            display: none;
+        }
+        #playSoundBtn {
+            display: none;
+            margin-top: 10px;
+            background-color: #ff9800;
+        }
+        #playSoundBtn:hover {
+            background-color: #e68900;
+        }
+    </style>
+</head>
+<body>
+    <div id="timer">05:00</div>
+    <div class="input-container">
+        <input type="number" id="timeInput" value="5" min="1" step="1" placeholder="分钟">
+        <span>分钟</span>
+    </div>
+    <div class="buttons">
+        <button id="startBtn">开始</button>
+        <button id="resetBtn">重置</button>
+    </div>
+    <button id="playSoundBtn">点击播放提醒音</button>
+    <div id="errorMessage"></div>
+    <audio id="alertSound" src="‪437488_321967-lq.mp3"></audio>
+    <script>
+        const timerDisplay = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const timeInput = document.getElementById('timeInput');
+        const alertSound = document.getElementById('alertSound');
+        const playSoundBtn = document.getElementById('playSoundBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        let timeLeft = 5 * 60; // 默认5分钟（秒）
+        let timerId = null;
+        let isRunning = false;
+        let isAudioLoaded = false;
+        let soundLoopId = null;
+
+        // 检查音频加载
+        alertSound.addEventListener('loadeddata', () => {
+            isAudioLoaded = true;
+        });
+        alertSound.addEventListener('error', () => {
+            isAudioLoaded = false;
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = '音频加载失败，请检查网络或刷新页面';
+        });
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function playSoundLoop() {
+            if (isAudioLoaded) {
+                alertSound.play().catch(e => {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = '请点击“播放提醒音”以启用音频';
+                    playSoundBtn.style.display = 'block';
+                });
+            }
+        }
+
+        function startSoundLoop() {
+            if (soundLoopId) clearInterval(soundLoopId);
+            playSoundLoop();
+            soundLoopId = setInterval(playSoundLoop, alertSound.duration * 1000 + 500); // 音频长度+0.5秒间隔
+            setTimeout(() => {
+                clearInterval(soundLoopId);
+                alertSound.pause();
+                alertSound.currentTime = 0;
+                soundLoopId = null;
+            }, 10000); // 10秒后停止
+        }
+
+        function startTimer() {
+            if (!isRunning) {
+                let inputMinutes = parseInt(timeInput.value) || 5;
+                if (inputMinutes < 1) inputMinutes = 1;
+                timeLeft = inputMinutes * 60;
+                updateDisplay();
+                isRunning = true;
+                startBtn.textContent = '暂停';
+                timeInput.disabled = true;
+                errorMessage.style.display = 'none';
+                playSoundBtn.style.display = 'none';
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerId);
+                        isRunning = false;
+                        startBtn.textContent = '开始';
+                        startBtn.disabled = true;
+                        timeInput.disabled = false;
+                        document.body.classList.add('blink');
+                        if (isAudioLoaded) {
+                            startSoundLoop();
+                        } else {
+                            errorMessage.style.display = 'block';
+                            errorMessage.textContent = '音频未加载，请刷新页面';
+                        }
+                    }
+                }, 1000);
+            } else {
+                clearInterval(timerId);
+                isRunning = false;
+                startBtn.textContent = '开始';
+                timeInput.disabled = false;
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            clearInterval(soundLoopId);
+            document.body.classList.remove('blink');
+            alertSound.pause();
+            alertSound.currentTime = 0;
+            timeLeft = 5 * 60;
+            isRunning = false;
+            startBtn.textContent = '开始';
+            startBtn.disabled = false;
+            timeInput.disabled = false;
+            timeInput.value = '5';
+            errorMessage.style.display = 'none';
+            playSoundBtn.style.display = 'none';
+            updateDisplay();
+        }
+
+        playSoundBtn.addEventListener('click', () => {
+            alertSound.play().then(() => {
+                playSoundBtn.style.display = 'none';
+                errorMessage.style.display = 'none';
+            }).catch(e => {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '音频播放失败，请重试';
+            });
+        });
+
+        startBtn.addEventListener('click', startTimer);
+        resetBtn.addEventListener('click', resetTimer);
+
+        updateDisplay();
+    </script>
+</body>
+</html>
