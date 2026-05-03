@@ -22,13 +22,43 @@
         }
         .input-container {
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
-        input[type="number"] {
+        /* 下拉菜单与手动输入组合样式 */
+        .time-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+        select, #customMinutesInput {
             padding: 8px;
             font-size: 16px;
-            width: 100px;
             border-radius: 5px;
             border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+            outline: none;
+        }
+        select:focus, #customMinutesInput:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 3px rgba(76, 175, 80, 0.5);
+        }
+        #customMinutesInput {
+            width: 80px;
+            cursor: text;
+        }
+        .input-container span {
+            font-size: 16px;
+            color: #333;
         }
         .buttons {
             display: flex;
@@ -76,8 +106,22 @@
 <body>
     <div id="timer">05:00</div>
     <div class="input-container">
-        <input type="number" id="timeInput" value="5" min="1" step="1" placeholder="分钟">
-        <span>分钟</span>
+        <div class="time-selector">
+            <select id="presetSelect">
+                <option value="1">1 </option>
+                <option value="3">3 </option>
+                <option value="5" selected>5 </option>
+                <option value="10">10 </option>
+                <option value="15">15 </option>
+                <option value="20">20 </option>
+                <option value="30">30 </option>
+                <option value="45">45 </option>
+                <option value="60">60 </option>
+                <option value="custom">自定义 (手动输入)</option>
+            </select>
+            <input type="number" id="customMinutesInput" value="5" min="1" step="1" placeholder="分钟" style="display: none;">
+            <span>分钟</span>
+        </div>
     </div>
     <div class="buttons">
         <button id="startBtn">开始</button>
@@ -90,7 +134,8 @@
         const timerDisplay = document.getElementById('timer');
         const startBtn = document.getElementById('startBtn');
         const resetBtn = document.getElementById('resetBtn');
-        const timeInput = document.getElementById('timeInput');
+        const presetSelect = document.getElementById('presetSelect');
+        const customMinutesInput = document.getElementById('customMinutesInput');
         const alertSound = document.getElementById('alertSound');
         const playSoundBtn = document.getElementById('playSoundBtn');
         const errorMessage = document.getElementById('errorMessage');
@@ -99,6 +144,119 @@
         let isRunning = false;
         let isAudioLoaded = false;
         let soundLoopId = null;
+
+        // 获取当前选中的分钟数 (整合下拉菜单 + 自定义输入)
+        function getCurrentMinutes() {
+            const selectedVal = presetSelect.value;
+            if (selectedVal === 'custom') {
+                let customVal = parseInt(customMinutesInput.value);
+                if (isNaN(customVal) || customVal < 1) {
+                    customVal = 1;
+                }
+                return customVal;
+            } else {
+                return parseInt(selectedVal);
+            }
+        }
+
+        // 同步自定义输入框的显示/隐藏及双向数值变更
+        function syncCustomInputVisibility() {
+            if (presetSelect.value === 'custom') {
+                customMinutesInput.style.display = 'inline-block';
+                // 确保自定义输入框有合理的值
+                let curCustom = parseInt(customMinutesInput.value);
+                if (isNaN(curCustom) || curCustom < 1) {
+                    customMinutesInput.value = 1;
+                }
+            } else {
+                customMinutesInput.style.display = 'none';
+                // 当下拉选择非自定义时，保证自定义输入框的值与所选预设保持一致（便于切换回自定义时合理）
+                const presetMinutes = parseInt(presetSelect.value);
+                if (!isNaN(presetMinutes) && presetMinutes > 0) {
+                    customMinutesInput.value = presetMinutes;
+                }
+            }
+        }
+
+        // 当下拉菜单选项改变时，处理自定义输入显示、并更新显示界面中的剩余时间 (仅当未运行计时时，可以实时预览时间)
+        function onPresetOrCustomChange() {
+            if (isRunning) {
+                // 计时运行中不允许修改时间，但为了体验，如果尝试更改，给予提示但不修改实际timeLeft？但最好保持不可修改样式，不过需求没有特别限制，按照原始逻辑：开始后timeInput禁用，这里也禁用下拉/输入
+                // 但是为了防止干扰，在计时运行时通过禁用控件实现, 原始设计timeInput.disabled = true时不可编辑，我们增加同样逻辑
+                return;
+            }
+            syncCustomInputVisibility();
+            // 更新显示的剩余时间预览（不重置整体状态，仅改变显示，与原始“重置”行为一致更合理，但原始设计修改输入框时未自动改变显示，只会在开始/重置时改变显示。为了体验，当用户调整下拉/自定义时实时刷新显示时间，但需要注意不干扰start状态）
+            // 但是原始逻辑中只有“开始”会基于输入值重置timeLeft，以及重置按钮会重置为默认5分钟。为了不破坏原有行为，此处仅刷新预览，同时修改timeLeft的值？否则开始时会基于getCurrentMinutes设置，预览独立显示更好。
+            // 为了更加符合直觉: 当用户选择/输入分钟时，立刻更新时间显示文本 (类似于模拟新的设定值，但不影响计时器运行状态, 且和原始“开始”行为保持一致，开始时会基于这个时间)
+            if (!isRunning) {
+                let minutes = getCurrentMinutes();
+                let previewSeconds = minutes * 60;
+                const minutesPart = Math.floor(previewSeconds / 60);
+                const secondsPart = previewSeconds % 60;
+                timerDisplay.textContent = `${minutesPart.toString().padStart(2, '0')}:${secondsPart.toString().padStart(2, '0')}`;
+                // 同步timeLeft变量使之与当前选择匹配，确保开始和重置不冲突；reset也会重置下拉和数值并更新timeLeft，这里保持预览与timeLeft同步
+                timeLeft = previewSeconds;
+            }
+        }
+
+        // 监听下拉菜单变化
+        presetSelect.addEventListener('change', () => {
+            if (!isRunning) {
+                onPresetOrCustomChange();
+            } else {
+                // 如果正在运行，拒绝更改并临时恢复原选中值（避免视觉混乱）
+                const currentMin = Math.floor(timeLeft / 60);
+                // 根据当前实际剩余时间匹配下拉选项（若匹配就设定，若不匹配但存在自定义选项则暂保持原样）
+                let found = false;
+                for (let i = 0; i < presetSelect.options.length; i++) {
+                    const opt = presetSelect.options[i];
+                    if (opt.value !== 'custom' && parseInt(opt.value) === currentMin) {
+                        presetSelect.value = opt.value;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    presetSelect.value = 'custom';
+                    if (customMinutesInput) customMinutesInput.value = currentMin;
+                }
+                syncCustomInputVisibility();
+                // 显示无法修改的提示闪现错误但为了不打扰，使用errorMessage短暂提示？
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = '计时运行时无法修改时间，请先暂停或重置';
+                setTimeout(() => {
+                    if (!isRunning) errorMessage.style.display = 'none';
+                    else {
+                        // 如果仍然运行不清除提示，但在开始计时未运行时自动清除，reset清除，额外增加
+                    }
+                }, 1500);
+                return;
+            }
+        });
+
+        // 自定义输入框修改时做限制和同步预览
+        customMinutesInput.addEventListener('input', function() {
+            if (!isRunning) {
+                let val = parseInt(customMinutesInput.value);
+                if (isNaN(val)) val = 1;
+                if (val < 1) customMinutesInput.value = 1;
+                if (presetSelect.value === 'custom') {
+                    onPresetOrCustomChange();
+                }
+            } else {
+                // 运行时如果用户尝试修改输入框，阻止数值变更但可以恢复原值
+                const currentMin = Math.floor(timeLeft / 60);
+                if (customMinutesInput.value != currentMin) {
+                    customMinutesInput.value = currentMin;
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = '计时运行时无法修改时间，请先暂停或重置';
+                    setTimeout(() => {
+                        if (!isRunning) errorMessage.style.display = 'none';
+                    }, 1500);
+                }
+            }
+        });
 
         // 检查音频加载
         alertSound.addEventListener('loadeddata', () => {
@@ -129,7 +287,10 @@
         function startSoundLoop() {
             if (soundLoopId) clearInterval(soundLoopId);
             playSoundLoop();
-            soundLoopId = setInterval(playSoundLoop, alertSound.duration * 1000 + 500); // 音频长度+0.5秒间隔
+            // 获取音频实际时长，如果duration无效取默认2秒
+            let duration = alertSound.duration;
+            if (!isFinite(duration) || duration <= 0) duration = 2;
+            soundLoopId = setInterval(playSoundLoop, duration * 1000 + 500); 
             setTimeout(() => {
                 clearInterval(soundLoopId);
                 alertSound.pause();
@@ -140,24 +301,32 @@
 
         function startTimer() {
             if (!isRunning) {
-                let inputMinutes = parseInt(timeInput.value) || 5;
+                // 获取当前设定的分钟数 (基于下拉+自定义)
+                let inputMinutes = getCurrentMinutes();
                 if (inputMinutes < 1) inputMinutes = 1;
+                // 同步timeLeft后更新显示
                 timeLeft = inputMinutes * 60;
                 updateDisplay();
                 isRunning = true;
                 startBtn.textContent = '暂停';
-                timeInput.disabled = true;
+                // 禁用时间和下拉控件的交互
+                presetSelect.disabled = true;
+                customMinutesInput.disabled = true;
                 errorMessage.style.display = 'none';
                 playSoundBtn.style.display = 'none';
                 timerId = setInterval(() => {
-                    timeLeft--;
-                    updateDisplay();
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateDisplay();
+                    }
                     if (timeLeft <= 0) {
                         clearInterval(timerId);
                         isRunning = false;
                         startBtn.textContent = '开始';
                         startBtn.disabled = true;
-                        timeInput.disabled = false;
+                        presetSelect.disabled = false;
+                        customMinutesInput.disabled = false;
+                        // 启用控件但不重置当前的输入组合样式，保持倒计时归零时用户所设定值展示（重置不影响）
                         document.body.classList.add('blink');
                         if (isAudioLoaded) {
                             startSoundLoop();
@@ -168,10 +337,34 @@
                     }
                 }, 1000);
             } else {
+                // 暂停逻辑
                 clearInterval(timerId);
                 isRunning = false;
                 startBtn.textContent = '开始';
-                timeInput.disabled = false;
+                // 恢复控件可用性
+                presetSelect.disabled = false;
+                customMinutesInput.disabled = false;
+                // 让界面可以重新修改定时值，但是交互按原始设计：暂停后可以重新开始，还可以基于现在的显示开始（保持timeLeft）
+                // 同时保留输入控件的当前状态，同步下拉选项与剩余时间对应的分钟匹配（保证后续修改与展示容易）
+                const remainingMinutes = Math.floor(timeLeft / 60);
+                // 尝试匹配下拉菜单中现有预设值
+                let matched = false;
+                for (let i = 0; i < presetSelect.options.length; i++) {
+                    const opt = presetSelect.options[i];
+                    if (opt.value !== 'custom' && parseInt(opt.value) === remainingMinutes) {
+                        presetSelect.value = opt.value;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    presetSelect.value = 'custom';
+                    customMinutesInput.value = remainingMinutes;
+                } else {
+                    // 如果匹配到了预设同时保证自定义输入框的值一致
+                    customMinutesInput.value = remainingMinutes;
+                }
+                syncCustomInputVisibility();
             }
         }
 
@@ -181,12 +374,20 @@
             document.body.classList.remove('blink');
             alertSound.pause();
             alertSound.currentTime = 0;
+            // 重置所有状态为默认值：5分钟
+            // 设置下拉菜单为5分钟（选中5分钟选项）
+            presetSelect.value = '5';
+            // 自定义输入框设回5
+            customMinutesInput.value = '5';
+            syncCustomInputVisibility();    // 确保自定义可见性，因为预设值不是custom
+            // 重置剩余时间
             timeLeft = 5 * 60;
             isRunning = false;
             startBtn.textContent = '开始';
             startBtn.disabled = false;
-            timeInput.disabled = false;
-            timeInput.value = '5';
+            // 确保控件可用
+            presetSelect.disabled = false;
+            customMinutesInput.disabled = false;
             errorMessage.style.display = 'none';
             playSoundBtn.style.display = 'none';
             updateDisplay();
@@ -205,7 +406,62 @@
         startBtn.addEventListener('click', startTimer);
         resetBtn.addEventListener('click', resetTimer);
 
-        updateDisplay();
+        // 初始化同步自定义显示及显示正确的默认时间 (5:00)
+        function init() {
+            syncCustomInputVisibility();
+            // 确保初始timeLeft为5分钟
+            timeLeft = 5 * 60;
+            updateDisplay();
+            presetSelect.disabled = false;
+            customMinutesInput.disabled = false;
+            // 附加双向保障: 如果用户通过自定义输入且当前是custom模式，预览数值同步时间
+            if (presetSelect.value === 'custom') {
+                let initMin = parseInt(customMinutesInput.value);
+                if (isNaN(initMin) || initMin < 1) customMinutesInput.value = 5;
+                timeLeft = (parseInt(customMinutesInput.value) || 5) * 60;
+                updateDisplay();
+            } else {
+                let initPreset = parseInt(presetSelect.value);
+                if (!isNaN(initPreset)) timeLeft = initPreset * 60;
+                updateDisplay();
+            }
+        }
+        
+        // 额外添加监听自定义输入框改变同步timeLeft预览 (无论是否运行,运行时不允许修改已做拦截，但未运行时调用onPresetOrCustomChange)
+        customMinutesInput.addEventListener('change', function() {
+            if (!isRunning) {
+                let val = parseInt(customMinutesInput.value);
+                if (isNaN(val) || val < 1) {
+                    customMinutesInput.value = 1;
+                    val = 1;
+                }
+                if (presetSelect.value === 'custom') {
+                    onPresetOrCustomChange();
+                } else {
+                    // 如果当前下拉不是自定义但用户改了自定义输入，主要是为了后续切换到自定义时数值正确，不影响显示
+                    // 另外如果同步预览需要处理? 但仅在非自定义下不干扰显示。
+                }
+            }
+        });
+        
+        // 确保在未运行时任何改变都及时更新timeLeft预览及内部存储，保证“开始”根据当前设定值
+        function syncTimeFromUI() {
+            if (!isRunning) {
+                let minutes = getCurrentMinutes();
+                if (minutes < 1) minutes = 1;
+                timeLeft = minutes * 60;
+                updateDisplay();
+            }
+        }
+        // 监听下拉菜单变化同步timeLeft，除自定义选项外
+        presetSelect.addEventListener('change', () => {
+            if (!isRunning) syncTimeFromUI();
+        });
+        customMinutesInput.addEventListener('input', () => {
+            if (!isRunning && presetSelect.value === 'custom') syncTimeFromUI();
+        });
+        
+        init();
     </script>
 </body>
 </html>
