@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>打印助手</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,[email]wght@14..32[/email],300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .app-wrapper {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .main-nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 60px;
+            padding: 8px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 12px 32px;
+            border-radius: 48px;
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #4a5568;
+            font-family: 'Inter', sans-serif;
+        }
+        .nav-tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .page {
+            display: none;
+            background: white;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: fadeInUp 0.4s ease;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .page.active-page {
+            display: block;
+        }
+        .page-header {
+            padding: 20px 28px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .page-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .toolbar {
+            background: #fefefe;
+            padding: 20px 28px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        .tool-group {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 12px 18px;
+            border: 1px solid #eef2f8;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s ease;
+            min-width: 150px;
+            flex: 0 1 auto;
+        }
+        .tool-group:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .tool-group label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .tool-group select,
+        .tool-group input,
+        .tool-group button {
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .tool-group select:hover,
+        .tool-group input:hover {
+            border-color: #cbd5e1;
+        }
+        .tool-group button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-weight: 500;
+        }
+        .tool-group button.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .inline-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .canvas-area {
+            background: linear-gradient(145deg, #e2e8f0 0%, #cbd5e6 100%);
+            padding: 28px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        .canvas-wrapper {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+            overflow: auto;
+            max-width: 100%;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 12px;
+            cursor: crosshair;
+        }
+        .info-panel {
+            background: #f8fafc;
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            border-top: 1px solid #eef2f8;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+        .btn-export {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-print {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-export:hover,
+        .btn-print:hover,
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        .nav-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .file-list {
+            max-height: 180px;
+            overflow-y: auto;
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 8px;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: white;
+            margin: 6px 0;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.8rem;
+        }
+        .remove-file-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 4px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .remove-file-btn:hover {
+            background: #dc2626;
+            transform: scale(1.02);
+        }
+        .page-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: white;
+            padding: 6px 20px;
+            border-radius: 60px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .page-btn {
+            background: #e2e8f0;
+            color: #1e293b;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: #cbd5e1;
+        }
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .size-input {
+            width: 80px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .badge {
+            display: inline-block;
+            background: #e2e8f0;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        .border-color-input {
+            width: 50px;
+            height: 32px;
+            padding: 2px;
+            border-radius: 8px;
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+        .toast-msg.show {
+            opacity: 1;
+        }
+        @media (max-width: 780px) {
+            body {
+                padding: 12px;
+            }
+            .toolbar {
+                flex-direction: column;
+            }
+            .tool-group {
+                width: 100%;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .main-nav {
+                border-radius: 30px;
+                padding: 6px 10px;
+                gap: 6px;
+            }
+            .nav-tab {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        <!-- 导航 -->
+        <div class="main-nav">
+            <button class="nav-tab active" data-page="single">📐 单页设计</button>
+            <button class="nav-tab" data-page="pdf">📉 PDF/图片合并</button>
+            <button class="nav-tab" data-page="layout">🖌️ 整版预览</button>
+        </div>
+
+        <!-- 单页设计 -->
+        <div id="singlePagePanel" class="page active-page">
+            <div class="page-header">
+                <h2>📐 单页设计 · 自由创作</h2>
+                <button id="saveAndGoToLayoutBtn" class="nav-btn">💾 保存并进入整版预览 →</button>
+            </div>
+            <div class="toolbar">
+                <!-- 纸张预设 -->
+                <div class="tool-group">
+                    <label>📄 纸张预设</label>
+                    <select id="paperPreset">
+                        <option value="A4" selected>A4 (210×297mm)</option>
+                        <option value="A3">A3 (297×420mm)</option>
+                        <option value="A5">A5 (148×210mm)</option>
+                        <option value="A6">A6 (105×148mm)</option>
+                        <option value="B5">B5 (176×250mm)</option>
+                        <option value="Letter">信纸 (216×279mm)</option>
+                        <option value="custom">✏️ 自定义尺寸</option>
+                    </select>
+                    <div class="inline-row" style="margin-top:8px;">
+                        <input type="number" id="customWidthMM" value="210" step="1" class="size-input" placeholder="宽"> mm
+                        <span>×</span>
+                        <input type="number" id="customHeightMM" value="297" step="1" class="size-input" placeholder="高"> mm
+                        <button id="applySizeBtn" class="primary">应用</button>
+                    </div>
+                </div>
+                <!-- 插入图片 -->
+                <div class="tool-group">
+                    <label>🖼️ 插入图片</label>
+                    <input type="file" id="singleImageUpload" accept="image/jpeg,image/png,image/webp">
+                </div>
+                <!-- 插入PDF -->
+                <div class="tool-group">
+                    <label>📉 插入PDF</label>
+                    <input type="file" id="singlePdfUpload" accept="application/pdf">
+                </div>
+                <!-- 添加文字 -->
+                <div class="tool-group">
+                    <label>✏️ 添加文字</label>
+                    <div class="inline-row">
+                        <input type="text" id="singleTextInput" placeholder="文字内容" value="设计稿">
+                        <button id="singleAddTextBtn" class="primary">添加</button>
+                    </div>
+                </div>
+                <!-- 绘制线条 -->
+                <div class="tool-group">
+                    <label>📏 绘制线条</label>
+                    <div class="inline-row">
+                        <button id="singleHorLineBtn" style="background:#8b5cf6;color:white;border:none;padding:6px 14px;border-radius:40px;">━ 横线</button>
+                        <button id="singleVerLineBtn" style="background:#8b5cf6;color:white;border:none;padding:6px 14px;border-radius:40px;">┃ 竖线</button>
+                    </div>
+                    <div class="inline-row">
+                        <input type="color" id="singleLineColor" value="#e11d48">
+                        <input type="number" id="singleLineWidth" value="2" step="0.5" style="width:65px;">
+                    </div>
+                </div>
+                <!-- 辅助功能 -->
+                <div class="tool-group">
+                    <label>⚙️ 辅助功能</label>
+                    <label style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="singleShowGrid" checked> 显示参考网格
+                    </label>
+                    <button id="singleResetBtn" style="background:#f97316;color:white;border:none;padding:6px 16px;border-radius:40px;">🗑️ 清空画板</button>
+                </div>
+            </div>
+            <div class="canvas-area">
+                <div class="canvas-wrapper"><canvas id="singleCanvas"></canvas></div>
+            </div>
+            <div class="info-panel">
+                <div>💡 右键点击元素可删除 | 支持多种纸张预设</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button id="singlePrintBtn" class="btn-print">🖨️ 直接打印</button>
+                    <button id="singleExportBtn" class="btn-export">🖼️ 导出PNG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF/图片合并 -->
+        <div id="pdfMergePanel" class="page">
+            <div class="page-header">
+                <h2>📉 PDF/图片合并 · 多页拼版打印（带边框）</h2>
+            </div>
+            <div class="toolbar">
+                <div class="tool-group">
+                    <label>📤 上传文件 (PDF/图片)</label>
+                    <input type="file" id="fileUploadInput" accept="image/jpeg,image/png,image/webp,application/pdf" multiple>
+                    <div style="font-size:11px;color:#64748b;margin-top:4px;">支持 JPG、PNG、PDF，混合上传自动拼版</div>
+                </div>
+                <div class="tool-group">
+                    <label>🧩 每页拼版数量</label>
+                    <div class="inline-row">
+                        <select id="pdfLayoutRows">
+                            <option value="1">1行</option>
+                            <option value="2">2行</option>
+                            <option value="3" selected>3行</option>
+                            <option value="4">4行</option>
+                            <option value="5">5行</option>
+                            <option value="6">6行</option>
+                        </select>
+                        <span>×</span>
+                        <select id="pdfLayoutCols">
+                            <option value="1">1列</option>
+                            <option value="2">2列</option>
+                            <option value="3" selected>3列</option>
+                            <option value="4">4列</option>
+                            <option value="5">5列</option>
+                            <option value="6">6列</option>
+                        </select>
+                        <button id="applyPdfLayoutBtn" class="primary">应用</button>
+                    </div>
+                </div>
+                <div class="tool-group">
+                    <label>📏 页边距 (mm)</label>
+                    <input type="range" id="pdfMarginSlider" min="0" max="18" step="0.5" value="5">
+                    <span id="pdfMarginValue">5 mm</span>
+                </div>
+                <div class="tool-group">
+                    <label>🖼️ 单元格边框</label>
+                    <div class="inline-row">
+                        <input type="color" id="cellBorderColor" value="#cbd5e1">
+                        <input type="number" id="cellBorderWidth" value="1.5" min="0" max="5" step="0.5" style="width:60px;"> px
+                    </div>
+                    <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                        <input type="checkbox" id="showCellBorder" checked> 显示边框
+                    </label>
+                </div>
+                <div class="tool-group">
+                    <button id="clearFileListBtn" style="background:#ef4444;color:white;border:none;padding:8px 20px;border-radius:40px;">清空所有文件</button>
+                </div>
+            </div>
+            <div class="canvas-area">
+                <div class="canvas-wrapper"><canvas id="pdfMergeCanvas" width="1240" height="1754"></canvas></div>
+            </div>
+            <div class="info-panel" style="flex-direction:column;align-items:stretch;gap:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <span>📁 已上传: <strong id="fileCountDisplay" style="color:#667eea;">0</strong> 个文件 | 总页数: <strong id="totalPagesDisplay" style="color:#667eea;">0</strong> 页A4</span>
+                    <div class="page-controls">
+                        <button id="prevPageBtn" class="page-btn">◀ 上一页</button>
+                        <span id="currentPageSpan" style="font-weight:500;">第 1 / 1 页</span>
+                        <button id="nextPageBtn" class="page-btn">下一页 ▶</button>
+                    </div>
+                </div>
+                <div id="fileList" class="file-list"></div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button id="pdfPrintAllBtn" class="btn-print">🖨️ 直接打印全部</button>
+                    <button id="pdfExportAllBtn" class="btn-export">🖼️ 导出全部PNG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 整版预览 -->
+        <div id="layoutPanel" class="page">
+            <div class="page-header">
+                <h2>🖌️ 整版预览 · A4拼版输出</h2>
+                <button id="backToDesignBtn" class="nav-btn" style="background:#64748b;">← 返回单页设计</button>
+            </div>
+            <div class="toolbar">
+                <div class="tool-group">
+                    <label>🧩 拼版数量</label>
+                    <div class="inline-row">
+                        <select id="layoutRows">
+                            <option>1</option><option>2</option><option selected>3</option>
+                            <option>4</option><option>5</option><option>6</option>
+                            <option>7</option><option>8</option><option>9</option><option>10</option>
+                        </select>
+                        <span>×</span>
+                        <select id="layoutCols">
+                            <option>1</option><option>2</option><option selected>3</option>
+                            <option>4</option><option>5</option><option>6</option>
+                            <option>7</option><option>8</option><option>9</option><option>10</option>
+                        </select>
+                        <button id="applyLayoutBtn" class="primary">生成拼版</button>
+                    </div>
+                    <div style="font-size:12px;margin-top:6px;">共 <strong id="totalCellsCount" style="color:#667eea;">9</strong> 个页面</div>
+                </div>
+                <div class="tool-group">
+                    <label>📏 页边距 (mm)</label>
+                    <input type="range" id="layoutMarginSlider" min="0" max="18" step="0.5" value="5">
+                    <span id="layoutMarginValue">5 mm</span>
+                    <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                        <input type="checkbox" id="layoutShowCrop" checked> ✂️ 显示裁剪线
+                    </label>
+                </div>
+                <div class="tool-group">
+                    <button id="resetLayoutBtn" style="background:#ef4444;color:white;border:none;padding:8px 20px;border-radius:40px;">重置拼版内容</button>
+                </div>
+            </div>
+            <div class="canvas-area">
+                <div class="canvas-wrapper"><canvas id="layoutCanvas" width="1240" height="1754"></canvas></div>
+            </div>
+            <div class="info-panel">
+                <div>✨ 基于单页设计内容，自动缩放并完美拼版到A4纸</div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <button id="layoutPrintBtn" class="btn-print">🖨️ 直接打印</button>
+                    <button id="layoutExportBtn" class="btn-export">🖼️ 导出PNG</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 消息 -->
+    <div id="toastMsg" class="toast-msg"></div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // ===== 常量 =====
+        const A4_W_PX = 1240,
+            A4_H_PX = 1754;
+        const MM_TO_PX = 150 / 25.4;
+
+        // 纸张预设映射
+        const PAPER_PRESETS = {
+            'A4': { w: 210, h: 297, label: 'A4' },
+            'A3': { w: 297, h: 420, label: 'A3' },
+            'A5': { w: 148, h: 210, label: 'A5' },
+            'A6': { w: 105, h: 148, label: 'A6' },
+            'B5': { w: 176, h: 250, label: 'B5' },
+            'Letter': { w: 216, h: 279, label: '信纸' }
+        };
+
+        // ===== DOM 引用 =====
+        const toastEl = document.getElementById('toastMsg');
+        let toastTimer = null;
+
+        function showToast(msg, duration) {
+            duration = duration || 1800;
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+        }
+
+        // ===== 单页设计模块 =====
+        let singleCanvas = null;
+        let singleWidthMM = 210,
+            singleHeightMM = 297;
+        let singleWidthPX = 0,
+            singleHeightPX = 0;
+        let singleLineColor = "#e11d48",
+            singleLineWidth = 2,
+            singleShowGridFlag = true;
+        let savedSingleObjectsJSON = [],
+            savedSingleSizeMM = { w: 210, h: 297 };
+
+        function applyPaperSize(wMM, hMM, silent) {
+            if (wMM <= 0 || hMM <= 0) { showToast('⚠️ 尺寸必须大于0'); return false; }
+            singleWidthMM = wMM;
+            singleHeightMM = hMM;
+            updateSingleCanvasSize();
+            saveSingleDesign();
+            // 更新输入框
+            document.getElementById('customWidthMM').value = Math.round(wMM);
+            document.getElementById('customHeightMM').value = Math.round(hMM);
+            if (!silent) showToast(`✅ 已切换至 ${Math.round(wMM)}×${Math.round(hMM)} mm`);
+            return true;
+        }
+
+        function initSingleCanvas() {
+            singleWidthPX = Math.round(singleWidthMM * MM_TO_PX);
+            singleHeightPX = Math.round(singleHeightMM * MM_TO_PX);
+            singleCanvas = new fabric.Canvas('singleCanvas', {
+                width: singleWidthPX,
+                height: singleHeightPX,
+                selection: true
+            });
+            drawSingleBackground();
+            setupContextMenu(singleCanvas);
+            addTextToSingle('A4 设计稿\n双击编辑文字');
+            saveSingleDesign();
+        }
+
+        function setupContextMenu(canvas) {
+            canvas.on('mouse:down', e => {
+                if (e.button === 2 && e.target && !e.target.data?.isBackground) {
+                    canvas.remove(e.target);
+                    canvas.renderAll();
+                    e.e.preventDefault();
+                    showToast('🗑️ 已删除元素', 1000);
+                }
+            });
+            canvas.wrapperEl.addEventListener('contextmenu', e => e.preventDefault());
+        }
+
+        function drawSingleBackground() {
+            if (!singleCanvas) return;
+            singleCanvas.getObjects().filter(o => o.data?.isBackground).forEach(o => singleCanvas.remove(o));
+            // 白色底
+            singleCanvas.add(new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: singleCanvas.width,
+                height: singleCanvas.height,
+                fill: '#ffffff',
+                selectable: false,
+                evented: false,
+                data: { isBackground: true }
+            }));
+            // 网格
+            if (singleShowGridFlag) {
+                const step = 40;
+                for (let x = 0; x <= singleCanvas.width; x += step) {
+                    singleCanvas.add(new fabric.Line([x, 0, x, singleCanvas.height], {
+                        stroke: '#e2e8f0',
+                        strokeWidth: 0.5,
+                        selectable: false,
+                        evented: false,
+                        data: { isBackground: true }
+                    }));
+                }
+                for (let y = 0; y <= singleCanvas.height; y += step) {
+                    singleCanvas.add(new fabric.Line([0, y, singleCanvas.width, y], {
+                        stroke: '#e2e8f0',
+                        strokeWidth: 0.5,
+                        selectable: false,
+                        evented: false,
+                        data: { isBackground: true }
+                    }));
+                }
+            }
+            singleCanvas.renderAll();
+        }
+
+        function updateSingleCanvasSize() {
+            singleWidthPX = Math.round(singleWidthMM * MM_TO_PX);
+            singleHeightPX = Math.round(singleHeightMM * MM_TO_PX);
+            const objs = singleCanvas.getObjects().filter(o => !o.data?.isBackground);
+            const oldCx = singleCanvas.width / 2,
+                oldCy = singleCanvas.height / 2;
+            singleCanvas.setWidth(singleWidthPX);
+            singleCanvas.setHeight(singleHeightPX);
+            singleCanvas.calcOffset();
+            const newCx = singleWidthPX / 2,
+                newCy = singleHeightPX / 2;
+            objs.forEach(o => {
+                o.set({ left: o.left + (newCx - oldCx), top: o.top + (newCy - oldCy) });
+                o.setCoords();
+            });
+            drawSingleBackground();
+            objs.forEach(o => singleCanvas.add(o));
+            singleCanvas.renderAll();
+        }
+
+        function addTextToSingle(t) {
+            if (!t || !t.trim()) t = '文字';
+            const fontSize = Math.min(48, singleCanvas.height * 0.08);
+            const o = new fabric.IText(t, {
+                fontSize: fontSize,
+                fill: '#1f2937',
+                backgroundColor: '#fef9c3',
+                padding: 8,
+                editable: true,
+                left: singleCanvas.width / 2 - 60,
+                top: singleCanvas.height / 2 - 20
+            });
+            singleCanvas.add(o);
+            singleCanvas.setActiveObject(o);
+            singleCanvas.renderAll();
+        }
+
+        function addImageToSingle(f) {
+            const r = new FileReader();
+            r.onload = e => {
+                fabric.Image.fromURL(e.target.result, img => {
+                    const maxW = singleCanvas.width * 0.6,
+                        maxH = singleCanvas.height * 0.6;
+                    const s = Math.min(maxW / img.width, maxH / img.height, 1);
+                    img.scale(s);
+                    img.set({
+                        left: singleCanvas.width / 2 - (img.width * s) / 2,
+                        top: singleCanvas.height / 2 - (img.height * s) / 2
+                    });
+                    singleCanvas.add(img);
+                    singleCanvas.renderAll();
+                    showToast('🖼️ 图片已添加', 1000);
+                });
+            };
+            r.readAsDataURL(f);
+        }
+
+        async function addPdfToSingle(f) {
+            const r = new FileReader();
+            r.onload = async e => {
+                const arr = new Uint8Array(e.target.result);
+                try {
+                    const pdf = await pdfjsLib.getDocument({ data: arr }).promise;
+                    const page = await pdf.getPage(1);
+                    const vp = page.getViewport({ scale: 1.5 });
+                    const c = document.createElement('canvas');
+                    c.width = vp.width;
+                    c.height = vp.height;
+                    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+                    fabric.Image.fromURL(c.toDataURL(), img => {
+                        const maxW = singleCanvas.width * 0.7,
+                            maxH = singleCanvas.height * 0.7;
+                        const s = Math.min(maxW / img.width, maxH / img.height, 1);
+                        img.scale(s);
+                        img.set({
+                            left: singleCanvas.width / 2 - (img.width * s) / 2,
+                            top: singleCanvas.height / 2 - (img.height * s) / 2
+                        });
+                        singleCanvas.add(img);
+                        singleCanvas.renderAll();
+                        showToast('📄 PDF已导入', 1000);
+                    });
+                } catch (err) {
+                    showToast('⚠️ PDF解析失败', 2000);
+                }
+            };
+            r.readAsArrayBuffer(f);
+        }
+
+        function createLineOnSingle(horizontal) {
+            const len = Math.min(singleCanvas.width, singleCanvas.height) * 0.3;
+            const line = horizontal ?
+                new fabric.Line([singleCanvas.width / 2 - len / 2, singleCanvas.height / 2, singleCanvas.width / 2 + len / 2,
+                    singleCanvas.height / 2
+                ], { stroke: singleLineColor, strokeWidth: singleLineWidth }) :
+                new fabric.Line([singleCanvas.width / 2, singleCanvas.height / 2 - len / 2, singleCanvas.width / 2,
+                    singleCanvas.height / 2 + len / 2
+                ], { stroke: singleLineColor, strokeWidth: singleLineWidth });
+            singleCanvas.add(line);
+            singleCanvas.renderAll();
+        }
+
+        function clearSingleCanvas() {
+            const bg = singleCanvas.getObjects().filter(o => o.data?.isBackground);
+            singleCanvas.clear();
+            bg.forEach(b => singleCanvas.add(b));
+            singleCanvas.renderAll();
+            showToast('🗑️ 画板已清空', 1000);
+        }
+
+        function saveSingleDesign() {
+            savedSingleObjectsJSON = singleCanvas.getObjects()
+                .filter(o => !o.data?.isBackground)
+                .map(o => o.toJSON());
+            savedSingleSizeMM = { w: singleWidthMM, h: singleHeightMM };
+            return savedSingleObjectsJSON.length > 0;
+        }
+
+        // ===== 整版拼版 =====
+        let layoutCanvas = null;
+        let currentRows = 3,
+            currentCols = 3,
+            currentMarginMM = 5,
+            showCropLines = true,
+            layoutUserObjects = [];
+
+        function getLayoutParams(w, h, m, r, c) {
+            const aw = w - m * 2,
+                ah = h - m * 2;
+            return { cellW: aw / c, cellH: ah / r, startX: m, startY: m };
+        }
+
+        function getCellCenter(row, col, m, rows, cols, w, h) {
+            const { cellW, cellH, startX, startY } = getLayoutParams(w, h, m, rows, cols);
+            return { x: startX + col * cellW + cellW / 2, y: startY + row * cellH + cellH / 2 };
+        }
+
+        function drawLayoutBackground() {
+            if (!layoutCanvas) return;
+            layoutCanvas.getObjects().filter(o => o.data?.isBackground).forEach(o => layoutCanvas.remove(o));
+            layoutCanvas.add(new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: A4_W_PX,
+                height: A4_H_PX,
+                fill: '#ffffff',
+                selectable: false,
+                evented: false,
+                data: { isBackground: true }
+            }));
+            const m = currentMarginMM * MM_TO_PX;
+            const { cellW, cellH, startX, startY } = getLayoutParams(A4_W_PX, A4_H_PX, m, currentRows, currentCols);
+            // 网格线
+            for (let c = 0; c <= currentCols; c++) {
+                const x = startX + c * cellW;
+                if (x >= m && x <= A4_W_PX - m) {
+                    layoutCanvas.add(new fabric.Line([x, startY, x, startY + currentRows * cellH], {
+                        stroke: '#cbd5e6',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false,
+                        data: { isBackground: true }
+                    }));
+                }
+            }
+            for (let r = 0; r <= currentRows; r++) {
+                const y = startY + r * cellH;
+                if (y >= m && y <= startY + currentRows * cellH) {
+                    layoutCanvas.add(new fabric.Line([startX, y, startX + currentCols * cellW, y], {
+                        stroke: '#cbd5e6',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false,
+                        data: { isBackground: true }
+                    }));
+                }
+            }
+            // 裁剪线
+            if (showCropLines) {
+                const crop = '#d97706',
+                    len = 12;
+                const corners = [
+                    [m, m],
+                    [A4_W_PX - m, m],
+                    [m, A4_H_PX - m],
+                    [A4_W_PX - m, A4_H_PX - m]
+                ];
+                corners.forEach(([x, y], i) => {
+                    layoutCanvas.add(new fabric.Line([x, y, x + len, y], {
+                        stroke: crop,
+                        strokeWidth: 1.5,
+                        selectable: false,
+                        evented: false,
+                        data: { isBackground: true }
+                    }));
+                    layoutCanvas.add(new fabric.Line([x, y, x, y + len], {
+                        stroke: crop,
+                        strokeWidth: 1.5,
+                        selectable: false,
+                        evented: false,
+                        data: { isBackground: true }
+                    }));
+                    if (i === 1 || i === 3) {
+                        layoutCanvas.add(new fabric.Line([x - len, y, x, y], {
+                            stroke: crop,
+                            strokeWidth: 1.5,
+                            selectable: false,
+                            evented: false,
+                            data: { isBackground: true }
+                        }));
+                    }
+                    if (i === 2 || i === 3) {
+                        layoutCanvas.add(new fabric.Line([x, y - len, x, y], {
+                            stroke: crop,
+                            strokeWidth: 1.5,
+                            selectable: false,
+                            evented: false,
+                            data: { isBackground: true }
+                        }));
+                    }
+                });
+            }
+            layoutCanvas.renderAll();
+        }
+
+        async function generateImposition() {
+            if (!layoutCanvas) return;
+            if (!savedSingleObjectsJSON.length) {
+                showToast('⚠️ 请先在单页设计中添加内容', 2000);
+                return;
+            }
+            layoutUserObjects.forEach(o => layoutCanvas.remove(o));
+            layoutUserObjects = [];
+            const m = currentMarginMM * MM_TO_PX;
+            const total = currentRows * currentCols;
+            const sw_mm = savedSingleSizeMM.w,
+                sh_mm = savedSingleSizeMM.h;
+            const tw = (A4_W_PX - m * 2) / currentCols;
+            const th = (A4_H_PX - m * 2) / currentRows;
+            const scale = Math.min(tw / (sw_mm * MM_TO_PX), th / (sh_mm * MM_TO_PX));
+            drawLayoutBackground();
+            for (let i = 0; i < total; i++) {
+                const r = Math.floor(i / currentCols),
+                    c = i % currentCols;
+                const center = getCellCenter(r, c, m, currentRows, currentCols, A4_W_PX, A4_H_PX);
+                for (const json of savedSingleObjectsJSON) {
+                    const cloned = await new Promise(res => fabric.util.enlivenObjects([json], objs => res(objs[0])));
+                    if (cloned) {
+                        const srcCx = (sw_mm * MM_TO_PX) / 2,
+                            srcCy = (sh_mm * MM_TO_PX) / 2;
+                        const dx = cloned.left - srcCx,
+                            dy = cloned.top - srcCy;
+                        cloned.scaleX = (cloned.scaleX || 1) * scale;
+                        cloned.scaleY = (cloned.scaleY || 1) * scale;
+                        cloned.set({ left: center.x + dx * scale, top: center.y + dy * scale });
+                        cloned.setCoords();
+                        layoutCanvas.add(cloned);
+                        layoutUserObjects.push(cloned);
+                    }
+                }
+            }
+            layoutCanvas.renderAll();
+            document.getElementById('totalCellsCount').innerText = total;
+            showToast(`✅ 拼版完成，共 ${total} 个页面`, 1500);
+        }
+
+        // ===== 合并模块 =====
+        let mergeCanvas = null;
+        let uploadedFiles = [];
+        let mergeLayoutRows = 3,
+            mergeLayoutCols = 3,
+            mergeMarginMM = 5;
+        let mergePagesData = [];
+        let currentPageIndex = 0;
+        let totalMergePages = 0;
+        let showCellBorder = true;
+        let cellBorderColor = "#cbd5e1";
+        let cellBorderWidth = 1.5;
+
+        function drawMergeBackground() {
+            if (!mergeCanvas) return;
+            mergeCanvas.getObjects().forEach(o => mergeCanvas.remove(o));
+            mergeCanvas.add(new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: A4_W_PX,
+                height: A4_H_PX,
+                fill: '#ffffff',
+                selectable: false,
+                evented: false
+            }));
+            mergeCanvas.renderAll();
+        }
+
+        async function addFileToMerge(file) {
+            const fileType = file.type;
+            const fileName = file.name;
+            if (fileType.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        uploadedFiles.push({
+                            name: fileName,
+                            type: 'image',
+                            data: e.target.result,
+                            width: img.width,
+                            height: img.height
+                        });
+                        updateFileList();
+                        rebuildAllMergePages();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else if (fileType === 'application/pdf') {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const typedarray = new Uint8Array(e.target.result);
+                    try {
+                        const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+                        const page = await pdf.getPage(1);
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        const canvasTemp = document.createElement('canvas');
+                        const context = canvasTemp.getContext('2d');
+                        canvasTemp.width = viewport.width;
+                        canvasTemp.height = viewport.height;
+                        await page.render({ canvasContext: context, viewport: viewport }).promise;
+                        const imgData = canvasTemp.toDataURL();
+                        uploadedFiles.push({
+                            name: fileName,
+                            type: 'pdf',
+                            data: imgData,
+                            width: viewport.width,
+                            height: viewport.height
+                        });
+                        updateFileList();
+                        await rebuildAllMergePages();
+                    } catch (err) {
+                        showToast('⚠️ PDF解析失败: ' + fileName, 2500);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                showToast('⚠️ 不支持的文件类型: ' + fileName, 2000);
+            }
+        }
+
+        async function rebuildAllMergePages() {
+            if (!mergeCanvas) return;
+            const perPage = mergeLayoutRows * mergeLayoutCols;
+            totalMergePages = Math.ceil(uploadedFiles.length / perPage) || 1;
+            document.getElementById('totalPagesDisplay').innerText = totalMergePages;
+            mergePagesData = [];
+            const marginPx = mergeMarginMM * MM_TO_PX;
+
+            for (let pageIdx = 0; pageIdx < totalMergePages; pageIdx++) {
+                const startIdx = pageIdx * perPage;
+                const endIdx = Math.min(startIdx + perPage, uploadedFiles.length);
+                const tempCanvas = new fabric.Canvas(null, { width: A4_W_PX, height: A4_H_PX });
+                tempCanvas.add(new fabric.Rect({
+                    left: 0,
+                    top: 0,
+                    width: A4_W_PX,
+                    height: A4_H_PX,
+                    fill: '#ffffff',
+                    selectable: false,
+                    evented: false
+                }));
+
+                const { cellW, cellH, startX, startY } = getLayoutParams(A4_W_PX, A4_H_PX, marginPx, mergeLayoutRows,
+                    mergeLayoutCols);
+
+                // 辅助网格
+                for (let c = 0; c <= mergeLayoutCols; c++) {
+                    const x = startX + c * cellW;
+                    if (x >= marginPx && x <= A4_W_PX - marginPx) {
+                        tempCanvas.add(new fabric.Line([x, startY, x, startY + mergeLayoutRows * cellH], {
+                            stroke: '#e2e8f0',
+                            strokeWidth: 0.5,
+                            selectable: false,
+                            evented: false
+                        }));
+                    }
+                }
+                for (let r = 0; r <= mergeLayoutRows; r++) {
+                    const y = startY + r * cellH;
+                    if (y >= startY && y <= startY + mergeLayoutRows * cellH) {
+                        tempCanvas.add(new fabric.Line([startX, y, startX + mergeLayoutCols * cellW, y], {
+                            stroke: '#e2e8f0',
+                            strokeWidth: 0.5,
+                            selectable: false,
+                            evented: false
+                        }));
+                    }
+                }
+
+                // 单元格边框
+                if (showCellBorder && cellBorderWidth > 0) {
+                    for (let r = 0; r < mergeLayoutRows; r++) {
+                        for (let c = 0; c < mergeLayoutCols; c++) {
+                            const rect = new fabric.Rect({
+                                left: startX + c * cellW,
+                                top: startY + r * cellH,
+                                width: cellW,
+                                height: cellH,
+                                fill: 'transparent',
+                                stroke: cellBorderColor,
+                                strokeWidth: cellBorderWidth,
+                                selectable: false,
+                                evented: false
+                            });
+                            tempCanvas.add(rect);
+                        }
+                    }
+                }
+
+                // 添加文件内容
+                for (let i = startIdx; i < endIdx; i++) {
+                    const localIdx = i - startIdx;
+                    const row = Math.floor(localIdx / mergeLayoutCols);
+                    const col = localIdx % mergeLayoutCols;
+                    const center = getCellCenter(row, col, marginPx, mergeLayoutRows, mergeLayoutCols, A4_W_PX, A4_H_PX);
+                    const fileData = uploadedFiles[i].data;
+                    const img = await new Promise(resolve => fabric.Image.fromURL(fileData, resolve));
+                    if (img) {
+                        const targetW = (A4_W_PX - marginPx * 2) / mergeLayoutCols;
+                        const targetH = (A4_H_PX - marginPx * 2) / mergeLayoutRows;
+                        const scale = Math.min(targetW / img.width, targetH / img.height);
+                        img.scale(scale);
+                        img.set({
+                            left: center.x - (img.width * scale) / 2,
+                            top: center.y - (img.height * scale) / 2
+                        });
+                        tempCanvas.add(img);
+                    }
+                }
+                tempCanvas.renderAll();
+                mergePagesData.push(tempCanvas.toDataURL('png'));
+                tempCanvas.dispose();
+            }
+            currentPageIndex = 0;
+            await displayMergeCurrentPage();
+            updateMergePageControls();
+        }
+
+        async function displayMergeCurrentPage() {
+            if (!mergeCanvas || mergePagesData.length === 0) {
+                drawMergeBackground();
+                return;
+            }
+            const imgData = mergePagesData[currentPageIndex];
+            mergeCanvas.getObjects().forEach(o => mergeCanvas.remove(o));
+            mergeCanvas.add(new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: A4_W_PX,
+                height: A4_H_PX,
+                fill: '#ffffff',
+                selectable: false,
+                evented: false,
+                data: { isBackground: true }
+            }));
+            const img = await new Promise(resolve => fabric.Image.fromURL(imgData, resolve));
+            if (img) {
+                img.set({ left: 0, top: 0, width: A4_W_PX, height: A4_H_PX, selectable: false, evented: false });
+                mergeCanvas.add(img);
+            }
+            mergeCanvas.renderAll();
+        }
+
+        function updateMergePageControls() {
+            document.getElementById('currentPageSpan').innerHTML = `第 ${currentPageIndex+1} / ${totalMergePages} 页`;
+            document.getElementById('prevPageBtn').disabled = (currentPageIndex === 0);
+            document.getElementById('nextPageBtn').disabled = (currentPageIndex >= totalMergePages - 1);
+        }
+
+        function prevMergePage() {
+            if (currentPageIndex > 0) { currentPageIndex--;
+                displayMergeCurrentPage();
+                updateMergePageControls(); }
+        }
+
+        function nextMergePage() {
+            if (currentPageIndex < totalMergePages - 1) { currentPageIndex++;
+                displayMergeCurrentPage();
+                updateMergePageControls(); }
+        }
+
+        function updateFileList() {
+            const container = document.getElementById('fileList');
+            const countSpan = document.getElementById('fileCountDisplay');
+            countSpan.innerText = uploadedFiles.length;
+            container.innerHTML = uploadedFiles.map((file, idx) =>
+                `<div class="file-item"><span>${file.type === 'image' ? '🖼️' : '📄'} ${file.name.substring(0, 35)}<span class="badge">${file.type === 'image' ? '图片' : 'PDF'}</span></span><button class="remove-file-btn" data-idx="${idx}">删除</button></div>`
+            ).join('');
+            document.querySelectorAll('.remove-file-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.dataset.idx);
+                    uploadedFiles.splice(idx, 1);
+                    updateFileList();
+                    rebuildAllMergePages();
+                });
+            });
+        }
+
+        // ===== 打印工具 =====
+        function directPrint(canvasInstance, widthMM, heightMM, title) {
+            if (!canvasInstance) return;
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = A4_W_PX;
+            offscreenCanvas.height = A4_H_PX;
+            const ctx = offscreenCanvas.getContext('2d');
+            const originalCanvas = canvasInstance.getElement();
+            ctx.drawImage(originalCanvas, 0, 0, A4_W_PX, A4_H_PX);
+            const imgDataURL = offscreenCanvas.toDataURL('image/png');
+            const printWindow = window.open('', '_blank', 'width=800,height=600,toolbar=yes,menubar=yes,scrollbars=yes');
+            if (!printWindow) { showToast('⚠️ 请允许弹出窗口以进行打印', 2500); return; }
+            printWindow.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
+                <style>*{margin:0;padding:0;} @page{size:A4;margin:0;} body{display:flex;justify-content:center;align-items:center;min-height:100vh;background:white;} img{width:${Math.round(widthMM)}mm;height:${Math.round(heightMM)}mm;}</style>
+                </head><body><img src="${imgDataURL}"><script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script></body></html>`);
+            printWindow.document.close();
+        }
+
+        function directPrintMultiPage(pageDataURLs, title) {
+            if (!pageDataURLs || pageDataURLs.length === 0) { showToast('⚠️ 没有可打印的内容', 2000); return; }
+            const printWindow = window.open('', '_blank', 'width=800,height=600,toolbar=yes,menubar=yes,scrollbars=yes');
+            if (!printWindow) { showToast('⚠️ 请允许弹出窗口以进行打印', 2500); return; }
+            let html =
+                `<!DOCTYPE html><html><head><title>${title}</title><style>*{margin:0;padding:0;} @page{size:A4;margin:0;} .page{page-break-after:always;display:flex;justify-content:center;align-items:center;min-height:297mm;background:white;} img{width:210mm;height:297mm;display:block;}</style></head><body>`;
+            for (let i = 0; i < pageDataURLs.length; i++) {
+                html += `<div class="page"><img src="${pageDataURLs[i]}" /></div>`;
+            }
+            html +=
+                `<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script></body></html>`;
+            printWindow.document.write(html);
+            printWindow.document.close();
+        }
+
+        // ===== 页面切换 =====
+        function switchPage(pageId) {
+            document.getElementById('singlePagePanel').classList.remove('active-page');
+            document.getElementById('pdfMergePanel').classList.remove('active-page');
+            document.getElementById('layoutPanel').classList.remove('active-page');
+            if (pageId === 'single') {
+                document.getElementById('singlePagePanel').classList.add('active-page');
+            } else if (pageId === 'pdf') {
+                document.getElementById('pdfMergePanel').classList.add('active-page');
+                if (mergeCanvas && mergePagesData.length === 0 && uploadedFiles.length === 0) drawMergeBackground();
+            } else if (pageId === 'layout') {
+                document.getElementById('layoutPanel').classList.add('active-page');
+                generateImposition();
+            }
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.page === pageId);
+            });
+        }
+
+        // ===== 事件绑定 =====
+        function bindEvents() {
+            // 导航
+            document.querySelectorAll('.nav-tab').forEach(btn =>
+                btn.addEventListener('click', () => switchPage(btn.dataset.page))
+            );
+
+            // ---- 单页设计 ----
+            // 纸张预设：自动应用
+            document.getElementById('paperPreset').addEventListener('change', function() {
+                const val = this.value;
+                if (val === 'custom') return;
+                const preset = PAPER_PRESETS[val];
+                if (preset) {
+                    document.getElementById('customWidthMM').value = preset.w;
+                    document.getElementById('customHeightMM').value = preset.h;
+                    applyPaperSize(preset.w, preset.h, false);
+                }
+            });
+
+            // 应用尺寸按钮（自定义）
+            document.getElementById('applySizeBtn').addEventListener('click', function() {
+                const w = parseFloat(document.getElementById('customWidthMM').value);
+                const h = parseFloat(document.getElementById('customHeightMM').value);
+                if (w > 0 && h > 0) {
+                    applyPaperSize(w, h, false);
+                } else {
+                    showToast('⚠️ 请输入有效的尺寸', 1800);
+                }
+            });
+
+            // 预设应用按钮（兼容旧操作）
+            document.getElementById('applyPresetBtn')?.addEventListener('click', function() {
+                const val = document.getElementById('paperPreset').value;
+                if (val === 'custom') {
+                    const w = parseFloat(document.getElementById('customWidthMM').value);
+                    const h = parseFloat(document.getElementById('customHeightMM').value);
+                    if (w > 0 && h > 0) applyPaperSize(w, h, false);
+                    else showToast('⚠️ 请输入有效尺寸', 1800);
+                } else {
+                    const preset = PAPER_PRESETS[val];
+                    if (preset) {
+                        document.getElementById('customWidthMM').value = preset.w;
+                        document.getElementById('customHeightMM').value = preset.h;
+                        applyPaperSize(preset.w, preset.h, false);
+                    }
+                }
+            });
+
+            document.getElementById('singleAddTextBtn').onclick = () =>
+                addTextToSingle(document.getElementById('singleTextInput').value || '文字');
+            document.getElementById('singleImageUpload').onchange = e => {
+                if (e.target.files[0]) addImageToSingle(e.target.files[0]);
+                e.target.value = '';
+            };
+            document.getElementById('singlePdfUpload').onchange = e => {
+                if (e.target.files[0]) addPdfToSingle(e.target.files[0]);
+                e.target.value = '';
+            };
+            document.getElementById('singleHorLineBtn').onclick = () => {
+                singleLineColor = document.getElementById('singleLineColor').value;
+                singleLineWidth = parseFloat(document.getElementById('singleLineWidth').value);
+                createLineOnSingle(true);
+            };
+            document.getElementById('singleVerLineBtn').onclick = () => {
+                singleLineColor = document.getElementById('singleLineColor').value;
+                singleLineWidth = parseFloat(document.getElementById('singleLineWidth').value);
+                createLineOnSingle(false);
+            };
+            document.getElementById('singleResetBtn').onclick = () => clearSingleCanvas();
+            document.getElementById('singleExportBtn').onclick = () => {
+                const a = document.createElement('a');
+                a.download = 'single_design.png';
+                a.href = singleCanvas.toDataURL('png');
+                a.click();
+                showToast('📥 导出成功', 1200);
+            };
+            document.getElementById('singlePrintBtn').onclick = () =>
+                directPrint(singleCanvas, singleWidthMM, singleHeightMM, '单页设计');
+            document.getElementById('singleShowGrid').onchange = e => {
+                singleShowGridFlag = e.target.checked;
+                drawSingleBackground();
+                singleCanvas.getObjects().filter(o => !o.data?.isBackground).forEach(o => singleCanvas.add(o));
+                singleCanvas.renderAll();
+            };
+            document.getElementById('saveAndGoToLayoutBtn').onclick = async () => {
+                if (saveSingleDesign()) {
+                    showToast('💾 已保存，进入整版预览', 1500);
+                    switchPage('layout');
+                    await generateImposition();
+                } else {
+                    showToast('⚠️ 请先添加内容', 1800);
+                }
+            };
+
+            // ---- 整版预览 ----
+            document.getElementById('backToDesignBtn').onclick = () => switchPage('single');
+            document.getElementById('layoutMarginSlider').oninput = async e => {
+                currentMarginMM = parseFloat(e.target.value);
+                document.getElementById('layoutMarginValue').innerText = currentMarginMM + ' mm';
+                await generateImposition();
+            };
+            document.getElementById('layoutShowCrop').onchange = async e => {
+                showCropLines = e.target.checked;
+                await generateImposition();
+            };
+            document.getElementById('applyLayoutBtn').onclick = async () => {
+                currentRows = parseInt(document.getElementById('layoutRows').value);
+                currentCols = parseInt(document.getElementById('layoutCols').value);
+                await generateImposition();
+            };
+            document.getElementById('resetLayoutBtn').onclick = () => {
+                layoutUserObjects.forEach(o => layoutCanvas.remove(o));
+                layoutUserObjects = [];
+                drawLayoutBackground();
+                layoutCanvas.renderAll();
+                showToast('🔄 拼版已重置', 1200);
+            };
+            document.getElementById('layoutExportBtn').onclick = () => {
+                const a = document.createElement('a');
+                a.download = 'full_imposition.png';
+                a.href = layoutCanvas.toDataURL('png');
+                a.click();
+                showToast('📥 导出成功', 1200);
+            };
+            document.getElementById('layoutPrintBtn').onclick = () =>
+                directPrint(layoutCanvas, 210, 297, 'A4拼版');
+            document.getElementById('layoutRows').addEventListener('change', async () => {
+                currentRows = parseInt(document.getElementById('layoutRows').value);
+                document.getElementById('totalCellsCount').innerText = currentRows * currentCols;
+                await generateImposition();
+            });
+            document.getElementById('layoutCols').addEventListener('change', async () => {
+                currentCols = parseInt(document.getElementById('layoutCols').value);
+                document.getElementById('totalCellsCount').innerText = currentRows * currentCols;
+                await generateImposition();
+            });
+
+            // ---- 合并页面 ----
+            document.getElementById('fileUploadInput').onchange = e => {
+                Array.from(e.target.files).forEach(f => addFileToMerge(f));
+                e.target.value = '';
+            };
+            document.getElementById('clearFileListBtn').onclick = () => {
+                uploadedFiles = [];
+                updateFileList();
+                rebuildAllMergePages();
+                showToast('🗑️ 已清空所有文件', 1200);
+            };
+            document.getElementById('applyPdfLayoutBtn').onclick = async () => {
+                mergeLayoutRows = parseInt(document.getElementById('pdfLayoutRows').value);
+                mergeLayoutCols = parseInt(document.getElementById('pdfLayoutCols').value);
+                await rebuildAllMergePages();
+                showToast('✅ 拼版布局已更新', 1200);
+            };
+            document.getElementById('pdfMarginSlider').oninput = async e => {
+                mergeMarginMM = parseFloat(e.target.value);
+                document.getElementById('pdfMarginValue').innerText = mergeMarginMM + ' mm';
+                await rebuildAllMergePages();
+            };
+            document.getElementById('pdfPrintAllBtn').onclick = () => {
+                if (mergePagesData.length) directPrintMultiPage(mergePagesData, 'PDF/图片合并');
+                else showToast('⚠️ 没有可打印的内容', 1800);
+            };
+            document.getElementById('pdfExportAllBtn').onclick = async () => {
+                if (mergePagesData.length === 0) { showToast('⚠️ 无内容可导出', 1800); return; }
+                for (let i = 0; i < mergePagesData.length; i++) {
+                    const a = document.createElement('a');
+                    a.download = `merge_page_${i+1}.png`;
+                    a.href = mergePagesData[i];
+                    a.click();
+                    await new Promise(r => setTimeout(r, 200));
+                }
+                showToast(`📥 已导出 ${mergePagesData.length} 张`, 1500);
+            };
+            document.getElementById('prevPageBtn').onclick = () => prevMergePage();
+            document.getElementById('nextPageBtn').onclick = () => nextMergePage();
+
+            // 边框设置
+            document.getElementById('showCellBorder').onchange = async e => {
+                showCellBorder = e.target.checked;
+                await rebuildAllMergePages();
+            };
+            document.getElementById('cellBorderColor').onchange = async e => {
+                cellBorderColor = e.target.value;
+                await rebuildAllMergePages();
+            };
+            document.getElementById('cellBorderWidth').oninput = async e => {
+                cellBorderWidth = parseFloat(e.target.value) || 0;
+                await rebuildAllMergePages();
+            };
+        }
+
+        // ===== 初始化 =====
+        function init() {
+            // 默认使用 A4
+            const defaultPreset = PAPER_PRESETS['A4'];
+            singleWidthMM = defaultPreset.w;
+            singleHeightMM = defaultPreset.h;
+            document.getElementById('customWidthMM').value = defaultPreset.w;
+            document.getElementById('customHeightMM').value = defaultPreset.h;
+            document.getElementById('paperPreset').value = 'A4';
+
+            initSingleCanvas();
+
+            layoutCanvas = new fabric.Canvas('layoutCanvas', {
+                width: A4_W_PX,
+                height: A4_H_PX,
+                selection: true
+            });
+            drawLayoutBackground();
+
+            mergeCanvas = new fabric.Canvas('pdfMergeCanvas', {
+                width: A4_W_PX,
+                height: A4_H_PX,
+                selection: true
+            });
+            drawMergeBackground();
+
+            bindEvents();
+            setTimeout(() => saveSingleDesign(), 500);
+            showToast('📐  · 默认A4', 2000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
