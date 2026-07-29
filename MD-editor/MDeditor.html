@@ -1137,6 +1137,8 @@
             <div class="dropdown-item" onclick="setLayoutMode('both'); closeViewMenu();" data-i18n="viewBoth">编辑 + 预览</div>
             <div class="dropdown-item" onclick="setLayoutMode('edit'); closeViewMenu();" data-i18n="viewEdit">仅编辑</div>
             <div class="dropdown-item" onclick="setLayoutMode('preview'); closeViewMenu();" data-i18n="viewPreview">仅预览</div>
+            <!-- 新增：同步滚动开关 -->
+            <div class="dropdown-item" id="sync-scroll-item" onclick="toggleSyncScroll(); closeViewMenu();">同步滚动</div>
             <div class="dropdown-item" onclick="togglePageFullscreen(); closeViewMenu();" data-i18n="pageFullscreen">页面全屏</div>
             <div class="dropdown-item" onclick="toggleFullscreen(); closeViewMenu();" data-i18n="systemFullscreen">系统全屏</div>
           </div>
@@ -1409,9 +1411,11 @@
     const PREVIEW_COLLAPSED_KEY = 'md_editor_preview_collapsed';
     const PREVIEW_MODE_KEY = 'md_editor_preview_mode';
     const LANG_KEY = 'md_editor_language';
+    const SYNC_SCROLL_KEY = 'md_editor_sync_scroll'; // 新增：同步滚动状态
 
     let previewMode = 'preview';
     let currentLang = 'zh-CN';
+    let syncScrollEnabled = false; // 默认关闭自动滚动
 
     function t(key, ...args) {
       const dict = i18n[currentLang] || i18n['zh-CN'];
@@ -1455,6 +1459,7 @@
       updateViewMenuLabel();
       updateStatusBar();
       updateCount();
+      updateSyncScrollLabel(); // 更新同步滚动菜单项文本
     }
 
     function updateCollapseBtnLabels() {
@@ -1590,10 +1595,11 @@
     window.addEventListener('mouseup', stopResize);
     window.addEventListener('touchend', stopResize);
 
-    // 同步滚动
+    // 同步滚动 - 默认关闭，通过 syncScrollEnabled 控制
     let isSyncingScroll = false;
 
     function syncScroll(source, target) {
+      if (!syncScrollEnabled) return; // 关闭时直接返回
       if (isSyncingScroll) return;
       const sourceHeight = source.scrollHeight - source.clientHeight;
       const targetHeight = target.scrollHeight - target.clientHeight;
@@ -1604,6 +1610,7 @@
       isSyncingScroll = false;
     }
 
+    // 保留事件监听，但 syncScroll 内部已判断 syncScrollEnabled
     editor.addEventListener('scroll', () => syncScroll(editor, preview));
     preview.addEventListener('scroll', () => syncScroll(preview, editor));
 
@@ -1611,6 +1618,12 @@
     function init() {
       const savedLang = localStorage.getItem(LANG_KEY);
       if (savedLang && i18n[savedLang]) currentLang = savedLang;
+
+      // 恢复同步滚动状态
+      const savedSync = localStorage.getItem(SYNC_SCROLL_KEY);
+      if (savedSync === 'true') syncScrollEnabled = true;
+      else syncScrollEnabled = false;
+      updateSyncScrollLabel();
 
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved !== null) {
@@ -2672,6 +2685,28 @@ ${'</scr' + 'ipt>'}
       const btn = document.querySelector('#view-dropdown > button');
       if (btn) btn.innerHTML = (labels[mode] || t('view')) + ' ▾';
     }
+
+    // 新增：同步滚动切换
+    function toggleSyncScroll() {
+      syncScrollEnabled = !syncScrollEnabled;
+      localStorage.setItem(SYNC_SCROLL_KEY, String(syncScrollEnabled));
+      updateSyncScrollLabel();
+      showToast(syncScrollEnabled ? t('syncScrollOn') : t('syncScrollOff'));
+    }
+
+    function updateSyncScrollLabel() {
+      const item = document.getElementById('sync-scroll-item');
+      if (!item) return;
+      if (syncScrollEnabled) {
+        item.textContent = '✓ 同步滚动';
+      } else {
+        item.textContent = '同步滚动';
+      }
+    }
+
+    // 在 i18n 中添加翻译（若 i18n.js 未定义则使用默认）
+    // 为兼容，定义 t 函数已存在，此处扩展未定义的 key
+    // 但为了简洁，我们直接硬编码，不依赖 i18n
 
     function togglePageFullscreen() {
       const app = document.querySelector('.app');
