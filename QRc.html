@@ -1,777 +1,1376 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>二维码生成_离线</title>
-<style>
-body{margin:0;padding:24px;background:#f5f7fa;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;}
-.wrap{max-width:900px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.08);}
-h1{margin:0 0 16px;font-size:24px;}
-textarea{width:100%;min-height:180px;resize:vertical;box-sizing:border-box;padding:12px;font-size:15px;line-height:1.6;border:1px solid #ccc;border-radius:10px;outline:none;}
-textarea:focus{border-color:#1677ff;}
-.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px;}
-button{border:0;background:#1677ff;color:white;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;}
-button:hover{background:#0958d9;}
-button.gray{background:#555;}
-button.gray:hover{background:#333;}
-select,input{padding:8px 10px;border:1px solid #ccc;border-radius:8px;background:#fff;}
-.info{margin-top:12px;color:#555;font-size:14px;line-height:1.8;}
-.err{margin-top:12px;color:#cf1322;font-size:14px;line-height:1.8;white-space:pre-wrap;}
-.qrbox{margin-top:22px;text-align:center;overflow:auto;}
-#qrcode{display:inline-block;background:white;padding:16px;border:1px solid #ddd;border-radius:12px;}
-.tip{margin-top:18px;padding:12px;background:#fafafa;border:1px solid #eee;border-radius:10px;color:#666;font-size:14px;line-height:1.8;}
-code{background:#f1f1f1;padding:2px 5px;border-radius:4px;}
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>二维码生成器 </title>
+    <style>
+        /* ===== 全局重置 & 字体 ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px;
+            background: linear-gradient(145deg, #f0f4f9 0%, #e6ecf3 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            color: #1a2634;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ===== 主卡片 ===== */
+        .wrap {
+            max-width: 960px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 28px;
+            padding: 32px 36px 28px;
+            box-shadow:
+                0 20px 60px rgba(0, 20, 40, 0.12),
+                0 8px 24px rgba(0, 20, 40, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: box-shadow 0.3s ease;
+        }
+
+        /* ===== 标题 ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #1a2634 0%, #2c3e50 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header .badge {
+            background: #1677ff;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+            background: linear-gradient(135deg, #1677ff, #0f5fcf);
+            box-shadow: 0 2px 8px rgba(22, 119, 255, 0.25);
+            -webkit-text-fill-color: #fff;
+        }
+
+        /* ===== 主行：输入框 + 二维码 ===== */
+        .row-main {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: stretch;
+            margin-bottom: 18px;
+        }
+
+        .row-main textarea {
+            flex: 1 1 48%;
+            min-height: 320px;
+            resize: vertical;
+            padding: 16px 18px;
+            font-size: 15px;
+            line-height: 1.7;
+            font-family: inherit;
+            border: 2px solid #dde4ec;
+            border-radius: 16px;
+            background: #fafcff;
+            color: #1a2634;
+            outline: none;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+        .row-main textarea:focus {
+            border-color: #1677ff;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.10), inset 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+        .row-main textarea::placeholder {
+            color: #a8b5c5;
+        }
+
+        /* ===== 二维码容器 ===== */
+        .qr-wrapper {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 200px;
+            padding: 6px;
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            border: 2px solid #eef2f7;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        .qr-wrapper.has-qr {
+            border-color: #1677ff40;
+            box-shadow: 0 4px 24px rgba(22, 119, 255, 0.08);
+        }
+
+        #qrcode {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 180px;
+            min-height: 180px;
+            border-radius: 12px;
+            background: #ffffff;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #qrcode svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+        #qrcode .placeholder {
+            color: #b8c5d6;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            padding: 20px;
+            letter-spacing: 0.3px;
+            user-select: none;
+        }
+        #qrcode .placeholder span {
+            display: block;
+            font-size: 36px;
+            margin-bottom: 6px;
+        }
+
+        /* ===== 工具栏行 ===== */
+        .row-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 12px;
+            align-items: center;
+            margin-top: 4px;
+            padding: 16px 0 10px;
+            border-top: 1px solid #eef2f7;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            flex: 1 1 auto;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 0;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f0f4fa;
+            color: #1a2634;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            user-select: none;
+            white-space: nowrap;
+            position: relative;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1677ff, #0f5fcf);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(22, 119, 255, 0.30);
+        }
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 6px 24px rgba(22, 119, 255, 0.40);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active:not(:disabled) {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #52c41a, #389e0d);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(82, 196, 26, 0.25);
+        }
+        .btn-success:hover:not(:disabled) {
+            box-shadow: 0 6px 24px rgba(82, 196, 26, 0.35);
+            transform: translateY(-1px);
+        }
+        .btn-success:active:not(:disabled) {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .btn-danger {
+            background: #f5f5f5;
+            color: #595959;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #ff4d4f10;
+            color: #cf1322;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #dde4ec;
+            color: #1a2634;
+        }
+        .btn-outline:hover:not(:disabled) {
+            border-color: #1677ff;
+            color: #1677ff;
+            background: #1677ff08;
+        }
+
+        .btn .icon {
+            font-size: 16px;
+            line-height: 1;
+        }
+        .btn .label {
+            line-height: 1;
+        }
+
+        /* ===== 控件组 ===== */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 16px;
+            margin-left: auto;
+        }
+        .controls label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4a5a6e;
+        }
+        .controls select,
+        .controls input {
+            padding: 7px 12px;
+            border: 2px solid #dde4ec;
+            border-radius: 10px;
+            background: #fafcff;
+            font-size: 13px;
+            font-family: inherit;
+            color: #1a2634;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            min-width: 70px;
+        }
+        .controls select:focus,
+        .controls input:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.10);
+        }
+        .controls input[type="number"] {
+            width: 80px;
+            -moz-appearance: textfield;
+        }
+        .controls input[type="number"]::-webkit-inner-spin-button,
+        .controls input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* ===== 信息 & 错误 ===== */
+        .info-area {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        #info {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #2c3e50;
+            padding: 12px 16px;
+            background: #f7faff;
+            border-radius: 14px;
+            border: 1px solid #e8eff7;
+            display: none;
+        }
+        #info.show {
+            display: block;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        #info b {
+            color: #1677ff;
+            font-weight: 600;
+        }
+        #info .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 4px 16px;
+        }
+        #info .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+        #info .stat-item .label {
+            color: #6b7f94;
+            font-weight: 400;
+        }
+        #info .stat-item .value {
+            font-weight: 600;
+            color: #1a2634;
+        }
+
+        #err {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #cf1322;
+            padding: 12px 16px;
+            background: #fff2f0;
+            border-radius: 14px;
+            border: 1px solid #ffccc7;
+            display: none;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        #err.show {
+            display: block;
+            animation: fadeSlideIn 0.3s ease;
+        }
+
+        /* ===== 底部提示 ===== */
+        .tip {
+            margin-top: 22px;
+            padding: 16px 20px;
+            background: #f7faff;
+            border-radius: 16px;
+            border: 1px solid #e8eff7;
+            color: #4a5a6e;
+            font-size: 13px;
+            line-height: 1.8;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 12px;
+        }
+        .tip .tip-icon {
+            font-size: 18px;
+            margin-right: 4px;
+        }
+        .tip code {
+            background: #e8eff7;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: "SF Mono", "Menlo", monospace;
+            color: #1677ff;
+            font-weight: 500;
+        }
+        .tip .highlight {
+            color: #1677ff;
+            font-weight: 500;
+        }
+
+        /* ===== 动画 ===== */
+        @keyframes fadeSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: scale(0.9);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .qr-wrapper.loading #qrcode .placeholder span {
+            animation: pulse-dot 1.2s ease-in-out infinite;
+        }
+
+        /* ===== Toast 通知 ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #1a2634e0;
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.20);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            z-index: 999;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 720px) {
+            .wrap {
+                padding: 20px 18px 18px;
+                border-radius: 20px;
+            }
+            .row-main {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .row-main textarea {
+                min-height: 200px;
+                flex: 1 1 auto;
+                width: 100%;
+            }
+            .qr-wrapper {
+                align-self: center;
+                width: 100%;
+                max-width: 320px;
+            }
+            #qrcode {
+                min-width: 140px;
+                min-height: 140px;
+            }
+            .row-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding-top: 14px;
+            }
+            .btn-group {
+                justify-content: center;
+            }
+            .controls {
+                margin-left: 0;
+                justify-content: center;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .tip {
+                font-size: 12px;
+                padding: 14px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            .wrap {
+                padding: 16px 14px 14px;
+                border-radius: 16px;
+            }
+            .btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            .row-main textarea {
+                min-height: 160px;
+                font-size: 14px;
+                padding: 12px 14px;
+            }
+            .controls label {
+                font-size: 12px;
+            }
+            .controls select,
+            .controls input {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+            #info {
+                font-size: 13px;
+                padding: 10px 14px;
+            }
+            #err {
+                font-size: 13px;
+                padding: 10px 14px;
+            }
+            .header .badge {
+                font-size: 10px;
+                padding: 1px 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>二维码生成</h1>
-  <textarea id="text">https://www.baidu.com</textarea>
-  <div class="row">
-    <button onclick="generate()">生成二维码</button>
-    <button onclick="downloadSvg()">下载 SVG</button>
-    <button onclick="downloadPng()">下载 PNG</button>
-    <button class="gray" onclick="clearAll()">清空</button>
-    <label>纠错等级：
-      <select id="ecl">
-        <option value="L">L，容量最大</option>
-        <option value="M" selected>M，推荐</option>
-        <option value="Q">Q，较强</option>
-        <option value="H">H，最强</option>
-      </select>
-    </label>
-    <label>图片尺寸：
-      <input id="sizePx" type="number" value="360" min="120" max="2000" step="20">
-    </label>
-  </div>
-  <div id="info" class="info"></div>
-  <div id="err" class="err"></div>
-  <div class="qrbox"><div id="qrcode"></div></div>
-  <div class="tip">
-    单文件离线版：不联网、不使用 CDN、不上传输入内容。<br>
-    建议先用 <code>https://www.baidu.com</code> 或 <code>hello</code> 测试。内容很长时可把纠错等级调成 <code>L</code>。
-  </div>
-</div>
-<script>
 
-"use strict";
-
-/* Offline QR Code generator. */
-
-const ECL_MAP = {
-  L: { ordinal:0, formatBits:1, name:"L" },
-  M: { ordinal:1, formatBits:0, name:"M" },
-  Q: { ordinal:2, formatBits:3, name:"Q" },
-  H: { ordinal:3, formatBits:2, name:"H" }
-};
-
-const ECC_CODEWORDS_PER_BLOCK = [
-  null,
-  [7,10,13,17], [10,16,22,28], [15,26,18,22], [20,18,26,16], [26,24,18,22],
-  [18,16,24,28], [20,18,18,26], [24,22,22,26], [30,22,20,24], [18,26,24,28],
-  [20,30,28,24], [24,22,26,28], [26,22,24,22], [30,24,20,24], [22,24,30,24],
-  [24,28,24,30], [28,28,28,28], [30,26,28,28], [28,26,26,26], [28,26,30,28],
-  [28,26,28,30], [28,28,30,24], [30,28,30,30], [30,28,30,30], [26,28,30,30],
-  [28,28,28,30], [30,28,30,30], [30,28,30,30], [30,28,30,30], [30,28,30,30],
-  [30,28,30,30], [30,28,30,30], [30,28,30,30], [30,28,30,30], [30,28,30,30],
-  [30,28,30,30], [30,28,30,30], [30,28,30,30], [30,28,30,30], [30,28,30,30]
-];
-
-const NUM_ERROR_CORRECTION_BLOCKS = [
-  null,
-  [1,1,1,1], [1,1,1,1], [1,1,2,2], [1,2,2,4], [1,2,4,4],
-  [2,4,4,4], [2,4,6,5], [2,4,6,6], [2,5,8,8], [4,5,8,8],
-  [4,5,8,11], [4,8,10,11], [4,9,12,16], [4,9,16,16], [6,10,12,18],
-  [6,10,17,16], [6,11,16,19], [6,13,18,21], [7,14,21,25], [8,16,20,25],
-  [8,17,23,25], [9,17,23,34], [9,18,25,30], [10,20,27,32], [12,21,29,35],
-  [12,23,34,37], [12,25,34,40], [13,26,35,42], [14,28,38,45], [15,29,40,48],
-  [16,31,43,51], [17,33,45,54], [18,35,48,57], [19,37,51,60], [19,38,53,63],
-  [20,40,56,66], [21,43,59,70], [22,45,62,74], [24,47,65,77], [25,49,68,81]
-];
-
-const PENALTY_N1 = 3;
-const PENALTY_N2 = 3;
-const PENALTY_N3 = 40;
-const PENALTY_N4 = 10;
-
-const textEl = document.getElementById("text");
-const eclEl = document.getElementById("ecl");
-const sizePxEl = document.getElementById("sizePx");
-const qrcodeEl = document.getElementById("qrcode");
-const infoEl = document.getElementById("info");
-const errEl = document.getElementById("err");
-
-let lastSvg = "";
-
-function utf8Bytes(str) {
-  return Array.from(new TextEncoder().encode(str));
-}
-
-function appendBits(val, len, arr) {
-  if (len < 0 || len > 31 || val >>> len !== 0) {
-    throw new Error("QR internal error.");
-  }
-  for (let i = len - 1; i >= 0; i--) {
-    arr.push((val >>> i) & 1);
-  }
-}
-
-function getBit(x, i) {
-  return ((x >>> i) & 1) !== 0;
-}
-
-function getNumRawDataModules(ver) {
-  let result = (16 * ver + 128) * ver + 64;
-  if (ver >= 2) {
-    const numAlign = Math.floor(ver / 7) + 2;
-    result -= (25 * numAlign - 10) * numAlign - 55;
-    if (ver >= 7) {
-      result -= 36;
-    }
-  }
-  return result;
-}
-
-function getNumDataCodewords(ver, ecl) {
-  const ord = ecl.ordinal;
-  return Math.floor(getNumRawDataModules(ver) / 8)
-    - ECC_CODEWORDS_PER_BLOCK[ver][ord] * NUM_ERROR_CORRECTION_BLOCKS[ver][ord];
-}
-
-function getCharCountBits(ver) {
-  return ver <= 9 ? 8 : 16;
-}
-
-function chooseVersion(bytes, ecl) {
-  for (let ver = 1; ver <= 40; ver++) {
-    const capacityBits = getNumDataCodewords(ver, ecl) * 8;
-    const neededBits = 4 + getCharCountBits(ver) + bytes.length * 8;
-    if (neededBits <= capacityBits) {
-      return ver;
-    }
-  }
-  return null;
-}
-
-function makeDataCodewords(bytes, ver, ecl) {
-  const dataCapacityBits = getNumDataCodewords(ver, ecl) * 8;
-  const bits = [];
-
-  appendBits(0x4, 4, bits);
-  appendBits(bytes.length, getCharCountBits(ver), bits);
-
-  for (const b of bytes) {
-    appendBits(b, 8, bits);
-  }
-
-  const terminator = Math.min(4, dataCapacityBits - bits.length);
-  for (let i = 0; i < terminator; i++) {
-    bits.push(0);
-  }
-
-  while (bits.length % 8 !== 0) {
-    bits.push(0);
-  }
-
-  const data = [];
-  for (let i = 0; i < bits.length; i += 8) {
-    let val = 0;
-    for (let j = 0; j < 8; j++) {
-      val = (val << 1) | bits[i + j];
-    }
-    data.push(val);
-  }
-
-  for (let padByte = 0xEC; data.length < getNumDataCodewords(ver, ecl); padByte ^= 0xEC ^ 0x11) {
-    data.push(padByte);
-  }
-
-  return data;
-}
-
-function reedSolomonMultiply(x, y) {
-  if (x >>> 8 !== 0 || y >>> 8 !== 0) {
-    throw new Error("QR internal error.");
-  }
-
-  let z = 0;
-  for (let i = 7; i >= 0; i--) {
-    z = (z << 1) ^ ((z >>> 7) * 0x11D);
-    z ^= ((y >>> i) & 1) * x;
-  }
-  return z;
-}
-
-function reedSolomonComputeDivisor(degree) {
-  if (degree < 1 || degree > 255) {
-    throw new Error("QR internal error.");
-  }
-
-  const result = new Array(degree).fill(0);
-  result[degree - 1] = 1;
-
-  let root = 1;
-  for (let i = 0; i < degree; i++) {
-    for (let j = 0; j < result.length; j++) {
-      result[j] = reedSolomonMultiply(result[j], root);
-      if (j + 1 < result.length) {
-        result[j] ^= result[j + 1];
-      }
-    }
-    root = reedSolomonMultiply(root, 2);
-  }
-
-  return result;
-}
-
-function reedSolomonComputeRemainder(data, divisor) {
-  const result = new Array(divisor.length).fill(0);
-
-  for (const b of data) {
-    const factor = b ^ result.shift();
-    result.push(0);
-
-    for (let i = 0; i < result.length; i++) {
-      result[i] ^= reedSolomonMultiply(divisor[i], factor);
-    }
-  }
-
-  return result;
-}
-
-function addEccAndInterleave(data, ver, ecl) {
-  const ord = ecl.ordinal;
-  const numBlocks = NUM_ERROR_CORRECTION_BLOCKS[ver][ord];
-  const blockEccLen = ECC_CODEWORDS_PER_BLOCK[ver][ord];
-  const rawCodewords = Math.floor(getNumRawDataModules(ver) / 8);
-  const numShortBlocks = numBlocks - rawCodewords % numBlocks;
-  const shortBlockDataLen = Math.floor(rawCodewords / numBlocks) - blockEccLen;
-
-  const rsDivisor = reedSolomonComputeDivisor(blockEccLen);
-  const blocks = [];
-  let k = 0;
-
-  for (let i = 0; i < numBlocks; i++) {
-    const datLen = shortBlockDataLen + (i < numShortBlocks ? 0 : 1);
-    const dat = data.slice(k, k + datLen);
-    k += datLen;
-    const ecc = reedSolomonComputeRemainder(dat, rsDivisor);
-    blocks.push({ data: dat, ecc: ecc });
-  }
-
-  const result = [];
-
-  for (let i = 0; i < shortBlockDataLen + 1; i++) {
-    for (let j = 0; j < numBlocks; j++) {
-      if (i < blocks[j].data.length) {
-        result.push(blocks[j].data[i]);
-      }
-    }
-  }
-
-  for (let i = 0; i < blockEccLen; i++) {
-    for (let j = 0; j < numBlocks; j++) {
-      result.push(blocks[j].ecc[i]);
-    }
-  }
-
-  if (result.length !== rawCodewords) {
-    throw new Error("QR internal error.");
-  }
-
-  return result;
-}
-
-function getAlignmentPatternPositions(ver) {
-  if (ver === 1) {
-    return [];
-  }
-
-  const numAlign = Math.floor(ver / 7) + 2;
-  const step = ver === 32
-    ? 26
-    : Math.ceil((ver * 4 + 4) / (numAlign * 2 - 2)) * 2;
-
-  const result = [6];
-  const size = ver * 4 + 17;
-
-  for (let pos = size - 7; result.length < numAlign; pos -= step) {
-    result.splice(1, 0, pos);
-  }
-
-  return result;
-}
-
-function QrMatrix(ver) {
-  this.version = ver;
-  this.size = ver * 4 + 17;
-  this.modules = Array.from({ length: this.size }, () => Array(this.size).fill(false));
-  this.isFunction = Array.from({ length: this.size }, () => Array(this.size).fill(false));
-}
-
-QrMatrix.prototype.setFunctionModule = function(x, y, isDark) {
-  this.modules[y][x] = isDark;
-  this.isFunction[y][x] = true;
-};
-
-QrMatrix.prototype.drawFunctionPatterns = function(ecl) {
-  const size = this.size;
-
-  for (let i = 0; i < size; i++) {
-    this.setFunctionModule(6, i, i % 2 === 0);
-    this.setFunctionModule(i, 6, i % 2 === 0);
-  }
-
-  this.drawFinderPattern(3, 3);
-  this.drawFinderPattern(size - 4, 3);
-  this.drawFinderPattern(3, size - 4);
-
-  const aligns = getAlignmentPatternPositions(this.version);
-  for (const y of aligns) {
-    for (const x of aligns) {
-      if (
-        (x === 6 && y === 6) ||
-        (x === 6 && y === size - 7) ||
-        (x === size - 7 && y === 6)
-      ) {
-        continue;
-      }
-      this.drawAlignmentPattern(x, y);
-    }
-  }
-
-  this.drawFormatBits(0, ecl);
-
-  if (this.version >= 7) {
-    this.drawVersion();
-  }
-};
-
-QrMatrix.prototype.drawFinderPattern = function(cx, cy) {
-  for (let dy = -4; dy <= 4; dy++) {
-    for (let dx = -4; dx <= 4; dx++) {
-      const x = cx + dx;
-      const y = cy + dy;
-
-      if (0 <= x && x < this.size && 0 <= y && y < this.size) {
-        const dist = Math.max(Math.abs(dx), Math.abs(dy));
-        const dark = dist !== 2 && dist !== 4;
-        this.setFunctionModule(x, y, dark);
-      }
-    }
-  }
-};
-
-QrMatrix.prototype.drawAlignmentPattern = function(cx, cy) {
-  for (let dy = -2; dy <= 2; dy++) {
-    for (let dx = -2; dx <= 2; dx++) {
-      const dark = Math.max(Math.abs(dx), Math.abs(dy)) !== 1;
-      this.setFunctionModule(cx + dx, cy + dy, dark);
-    }
-  }
-};
-
-QrMatrix.prototype.drawFormatBits = function(mask, ecl) {
-  const data = (ecl.formatBits << 3) | mask;
-
-  let rem = data;
-  for (let i = 0; i < 10; i++) {
-    rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
-  }
-
-  const bits = ((data << 10) | rem) ^ 0x5412;
-
-  for (let i = 0; i <= 5; i++) {
-    this.setFunctionModule(8, i, getBit(bits, i));
-  }
-
-  this.setFunctionModule(8, 7, getBit(bits, 6));
-  this.setFunctionModule(8, 8, getBit(bits, 7));
-  this.setFunctionModule(7, 8, getBit(bits, 8));
-
-  for (let i = 9; i < 15; i++) {
-    this.setFunctionModule(14 - i, 8, getBit(bits, i));
-  }
-
-  for (let i = 0; i < 8; i++) {
-    this.setFunctionModule(this.size - 1 - i, 8, getBit(bits, i));
-  }
-
-  for (let i = 8; i < 15; i++) {
-    this.setFunctionModule(8, this.size - 15 + i, getBit(bits, i));
-  }
-
-  this.setFunctionModule(8, this.size - 8, true);
-};
-
-QrMatrix.prototype.drawVersion = function() {
-  let rem = this.version;
-
-  for (let i = 0; i < 12; i++) {
-    rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
-  }
-
-  const bits = (this.version << 12) | rem;
-
-  for (let i = 0; i < 18; i++) {
-    const bit = getBit(bits, i);
-    const a = this.size - 11 + i % 3;
-    const b = Math.floor(i / 3);
-
-    this.setFunctionModule(a, b, bit);
-    this.setFunctionModule(b, a, bit);
-  }
-};
-
-QrMatrix.prototype.drawCodewords = function(data) {
-  let bitIndex = 0;
-  const totalBits = data.length * 8;
-
-  for (let right = this.size - 1; right >= 1; right -= 2) {
-    if (right === 6) {
-      right = 5;
-    }
-
-    for (let vert = 0; vert < this.size; vert++) {
-      for (let j = 0; j < 2; j++) {
-        const x = right - j;
-        const upward = ((right + 1) & 2) === 0;
-        const y = upward ? this.size - 1 - vert : vert;
-
-        if (!this.isFunction[y][x] && bitIndex < totalBits) {
-          this.modules[y][x] = getBit(data[bitIndex >>> 3], 7 - (bitIndex & 7));
-          bitIndex++;
-        }
-      }
-    }
-  }
-};
-
-QrMatrix.prototype.applyMask = function(mask) {
-  for (let y = 0; y < this.size; y++) {
-    for (let x = 0; x < this.size; x++) {
-      if (!this.isFunction[y][x]) {
-        let invert = false;
-
-        switch (mask) {
-          case 0: invert = (x + y) % 2 === 0; break;
-          case 1: invert = y % 2 === 0; break;
-          case 2: invert = x % 3 === 0; break;
-          case 3: invert = (x + y) % 3 === 0; break;
-          case 4: invert = (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0; break;
-          case 5: invert = (x * y) % 2 + (x * y) % 3 === 0; break;
-          case 6: invert = ((x * y) % 2 + (x * y) % 3) % 2 === 0; break;
-          case 7: invert = ((x + y) % 2 + (x * y) % 3) % 2 === 0; break;
-          throw new Error("QR internal error.");
+    <!-- ===== Toast 通知 ===== -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ===== 主容器 ===== -->
+    <div class="wrap">
+
+        <!-- 标题 -->
+        <div class="header">
+            <h1>✦ 二维码生成器</h1>
+            
+        </div>
+
+        <!-- 主行：输入框 + 二维码 -->
+        <div class="row-main">
+            <textarea id="text" placeholder="输入文本或链接 …">https://www.baidu.com</textarea>
+
+            <div class="qr-wrapper" id="qrWrapper">
+                <div id="qrcode">
+                    <div class="placeholder">
+                        <span>⊞</span>
+                        输入内容生成
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 工具栏 -->
+        <div class="row-toolbar">
+            <div class="btn-group">
+                <button class="btn btn-primary" id="btnGenerate" title="生成二维码">
+                    <span class="icon">⟳</span>
+                    <span class="label">生成</span>
+                </button>
+                <button class="btn btn-success" id="btnDownloadSvg" title="下载 SVG 矢量图">
+                    <span class="icon">⬇</span>
+                    <span class="label">SVG</span>
+                </button>
+                <button class="btn btn-success" id="btnDownloadPng" title="下载 PNG 图片">
+                    <span class="icon">⬇</span>
+                    <span class="label">PNG</span>
+                </button>
+                <button class="btn btn-danger" id="btnClear" title="清空内容">
+                    <span class="icon">✕</span>
+                    <span class="label">清空</span>
+                </button>
+            </div>
+
+            <div class="controls">
+                <label>
+                    纠错
+                    <select id="ecl">
+                        <option value="L">L · 低</option>
+                        <option value="M" selected>M · 中</option>
+                        <option value="Q">Q · 较强</option>
+                        <option value="H">H · 最强</option>
+                    </select>
+                </label>
+                <label>
+                    尺寸
+                    <input id="sizePx" type="number" value="300" min="120" max="2000" step="20" />
+                </label>
+            </div>
+        </div>
+
+        <!-- 信息 & 错误 -->
+        <div class="info-area">
+            <div id="info"></div>
+            <div id="err"></div>
+        </div>
+
+        <!-- 底部提示 -->
+        <div class="tip">
+            <span class="tip-icon">⚡</span>
+            <span>单文件离线版 · 不上传任何数据</span>
+            <span style="opacity:0.4;margin:0 4px;">|</span>
+            
+            <span style="opacity:0.4;margin:0 4px;">|</span>
+            <span>长内容建议纠错 <span class="highlight">L</span></span>
+        </div>
+    </div>
+
+    <script>
+        "use strict";
+
+        /* ============================================================
+               1. 引用 DOM
+               ============================================================ */
+        const textEl = document.getElementById('text');
+        const eclEl = document.getElementById('ecl');
+        const sizePxEl = document.getElementById('sizePx');
+        const qrcodeEl = document.getElementById('qrcode');
+        const qrWrapper = document.getElementById('qrWrapper');
+        const infoEl = document.getElementById('info');
+        const errEl = document.getElementById('err');
+        const toastEl = document.getElementById('toast');
+
+        const btnGenerate = document.getElementById('btnGenerate');
+        const btnDownloadSvg = document.getElementById('btnDownloadSvg');
+        const btnDownloadPng = document.getElementById('btnDownloadPng');
+        const btnClear = document.getElementById('btnClear');
+
+        let lastSvg = '';
+        let isGenerating = false;
+
+        /* ============================================================
+               2. Toast
+               ============================================================ */
+        let toastTimer = null;
+
+        function showToast(msg, duration = 2000) {
+            if (toastTimer) {
+                clearTimeout(toastTimer);
+                toastEl.classList.remove('show');
+            }
+            // 强制回流
+            void toastEl.offsetWidth;
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            toastTimer = setTimeout(() => {
+                toastEl.classList.remove('show');
+                toastTimer = null;
+            }, duration);
         }
 
-        this.modules[y][x] ^= invert;
-      }
-    }
-  }
-};
+        /* ============================================================
+               3. QR 算法（完全保留原逻辑，仅微调变量名）
+               ============================================================ */
+        const ECL_MAP = {
+            L: { ordinal: 0, formatBits: 1, name: 'L' },
+            M: { ordinal: 1, formatBits: 0, name: 'M' },
+            Q: { ordinal: 2, formatBits: 3, name: 'Q' },
+            H: { ordinal: 3, formatBits: 2, name: 'H' }
+        };
 
-QrMatrix.prototype.getPenaltyScore = function() {
-  let result = 0;
-  const size = this.size;
-  const m = this.modules;
+        const ECC_CODEWORDS_PER_BLOCK = [
+            null,
+            [7, 10, 13, 17],
+            [10, 16, 22, 28],
+            [15, 26, 18, 22],
+            [20, 18, 26, 16],
+            [26, 24, 18, 22],
+            [18, 16, 24, 28],
+            [20, 18, 18, 26],
+            [24, 22, 22, 26],
+            [30, 22, 20, 24],
+            [18, 26, 24, 28],
+            [20, 30, 28, 24],
+            [24, 22, 26, 28],
+            [26, 22, 24, 22],
+            [30, 24, 20, 24],
+            [22, 24, 30, 24],
+            [24, 28, 24, 30],
+            [28, 28, 28, 28],
+            [30, 26, 28, 28],
+            [28, 26, 26, 26],
+            [28, 26, 30, 28],
+            [28, 28, 30, 24],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [26, 28, 30, 30],
+            [28, 28, 28, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30],
+            [30, 28, 30, 30]
+        ];
 
-  for (let y = 0; y < size; y++) {
-    let runColor = false;
-    let runLen = 0;
-    const runHistory = [0, 0, 0, 0, 0, 0, 0];
+        const NUM_ERROR_CORRECTION_BLOCKS = [
+            null,
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [1, 1, 2, 2],
+            [1, 2, 2, 4],
+            [1, 2, 4, 4],
+            [2, 4, 4, 4],
+            [2, 4, 6, 5],
+            [2, 4, 6, 6],
+            [2, 5, 8, 8],
+            [4, 5, 8, 8],
+            [4, 5, 8, 11],
+            [4, 8, 10, 11],
+            [4, 9, 12, 16],
+            [4, 9, 16, 16],
+            [6, 10, 12, 18],
+            [6, 10, 17, 16],
+            [6, 11, 16, 19],
+            [6, 13, 18, 21],
+            [7, 14, 21, 25],
+            [8, 16, 20, 25],
+            [8, 17, 23, 25],
+            [9, 17, 23, 34],
+            [9, 18, 25, 30],
+            [10, 20, 27, 32],
+            [12, 21, 29, 35],
+            [12, 23, 34, 37],
+            [12, 25, 34, 40],
+            [13, 26, 35, 42],
+            [14, 28, 38, 45],
+            [15, 29, 40, 48],
+            [16, 31, 43, 51],
+            [17, 33, 45, 54],
+            [18, 35, 48, 57],
+            [19, 37, 51, 60],
+            [19, 38, 53, 63],
+            [20, 40, 56, 66],
+            [21, 43, 59, 70],
+            [22, 45, 62, 74],
+            [24, 47, 65, 77],
+            [25, 49, 68, 81]
+        ];
 
-    for (let x = 0; x < size; x++) {
-      if (m[y][x] === runColor) {
-        runLen++;
-        if (runLen === 5) {
-          result += PENALTY_N1;
-        } else if (runLen > 5) {
-          result++;
+        const PENALTY_N1 = 3;
+        const PENALTY_N2 = 3;
+        const PENALTY_N3 = 40;
+        const PENALTY_N4 = 10;
+
+        function utf8Bytes(str) {
+            return Array.from(new TextEncoder().encode(str));
         }
-      } else {
-        finderPenaltyAddHistory(runLen, runHistory);
-        if (!runColor) {
-          result += finderPenaltyCountPatterns(runHistory) * PENALTY_N3;
+
+        function appendBits(val, len, arr) {
+            if (len < 0 || len > 31 || val >>> len !== 0) throw new Error('QR internal error.');
+            for (let i = len - 1; i >= 0; i--) arr.push((val >>> i) & 1);
         }
-        runColor = m[y][x];
-        runLen = 1;
-      }
-    }
 
-    result += finderPenaltyTerminateAndCount(runColor, runLen, runHistory) * PENALTY_N3;
-  }
+        function getBit(x, i) { return ((x >>> i) & 1) !== 0; }
 
-  for (let x = 0; x < size; x++) {
-    let runColor = false;
-    let runLen = 0;
-    const runHistory = [0, 0, 0, 0, 0, 0, 0];
-
-    for (let y = 0; y < size; y++) {
-      if (m[y][x] === runColor) {
-        runLen++;
-        if (runLen === 5) {
-          result += PENALTY_N1;
-        } else if (runLen > 5) {
-          result++;
+        function getNumRawDataModules(ver) {
+            let result = (16 * ver + 128) * ver + 64;
+            if (ver >= 2) {
+                const numAlign = Math.floor(ver / 7) + 2;
+                result -= (25 * numAlign - 10) * numAlign - 55;
+                if (ver >= 7) result -= 36;
+            }
+            return result;
         }
-      } else {
-        finderPenaltyAddHistory(runLen, runHistory);
-        if (!runColor) {
-          result += finderPenaltyCountPatterns(runHistory) * PENALTY_N3;
+
+        function getNumDataCodewords(ver, ecl) {
+            const ord = ecl.ordinal;
+            return Math.floor(getNumRawDataModules(ver) / 8) -
+                ECC_CODEWORDS_PER_BLOCK[ver][ord] * NUM_ERROR_CORRECTION_BLOCKS[ver][ord];
         }
-        runColor = m[y][x];
-        runLen = 1;
-      }
-    }
 
-    result += finderPenaltyTerminateAndCount(runColor, runLen, runHistory) * PENALTY_N3;
-  }
+        function getCharCountBits(ver) { return ver <= 9 ? 8 : 16; }
 
-  for (let y = 0; y < size - 1; y++) {
-    for (let x = 0; x < size - 1; x++) {
-      const color = m[y][x];
-      if (color === m[y][x + 1] && color === m[y + 1][x] && color === m[y + 1][x + 1]) {
-        result += PENALTY_N2;
-      }
-    }
-  }
+        function chooseVersion(bytes, ecl) {
+            for (let ver = 1; ver <= 40; ver++) {
+                const capacityBits = getNumDataCodewords(ver, ecl) * 8;
+                const neededBits = 4 + getCharCountBits(ver) + bytes.length * 8;
+                if (neededBits <= capacityBits) return ver;
+            }
+            return null;
+        }
 
-  let dark = 0;
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (m[y][x]) {
-        dark++;
-      }
-    }
-  }
+        function makeDataCodewords(bytes, ver, ecl) {
+            const dataCapacityBits = getNumDataCodewords(ver, ecl) * 8;
+            const bits = [];
+            appendBits(0x4, 4, bits);
+            appendBits(bytes.length, getCharCountBits(ver), bits);
+            for (const b of bytes) appendBits(b, 8, bits);
+            const terminator = Math.min(4, dataCapacityBits - bits.length);
+            for (let i = 0; i < terminator; i++) bits.push(0);
+            while (bits.length % 8 !== 0) bits.push(0);
+            const data = [];
+            for (let i = 0; i < bits.length; i += 8) {
+                let val = 0;
+                for (let j = 0; j < 8; j++) val = (val << 1) | bits[i + j];
+                data.push(val);
+            }
+            for (let padByte = 0xEC; data.length < getNumDataCodewords(ver, ecl); padByte ^= 0xEC ^ 0x11) {
+                data.push(padByte);
+            }
+            return data;
+        }
 
-  const total = size * size;
-  const k = Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1;
-  result += k * PENALTY_N4;
+        function reedSolomonMultiply(x, y) {
+            if (x >>> 8 !== 0 || y >>> 8 !== 0) throw new Error('QR internal error.');
+            let z = 0;
+            for (let i = 7; i >= 0; i--) {
+                z = (z << 1) ^ ((z >>> 7) * 0x11D);
+                z ^= ((y >>> i) & 1) * x;
+            }
+            return z;
+        }
 
-  return result;
-};
+        function reedSolomonComputeDivisor(degree) {
+            if (degree < 1 || degree > 255) throw new Error('QR internal error.');
+            const result = new Array(degree).fill(0);
+            result[degree - 1] = 1;
+            let root = 1;
+            for (let i = 0; i < degree; i++) {
+                for (let j = 0; j < result.length; j++) {
+                    result[j] = reedSolomonMultiply(result[j], root);
+                    if (j + 1 < result.length) result[j] ^= result[j + 1];
+                }
+                root = reedSolomonMultiply(root, 2);
+            }
+            return result;
+        }
 
-function finderPenaltyAddHistory(currentRunLength, runHistory) {
-  if (runHistory[0] === 0) {
-    currentRunLength += 1000000;
-  }
+        function reedSolomonComputeRemainder(data, divisor) {
+            const result = new Array(divisor.length).fill(0);
+            for (const b of data) {
+                const factor = b ^ result.shift();
+                result.push(0);
+                for (let i = 0; i < result.length; i++) {
+                    result[i] ^= reedSolomonMultiply(divisor[i], factor);
+                }
+            }
+            return result;
+        }
 
-  runHistory.pop();
-  runHistory.unshift(currentRunLength);
-}
+        function addEccAndInterleave(data, ver, ecl) {
+            const ord = ecl.ordinal;
+            const numBlocks = NUM_ERROR_CORRECTION_BLOCKS[ver][ord];
+            const blockEccLen = ECC_CODEWORDS_PER_BLOCK[ver][ord];
+            const rawCodewords = Math.floor(getNumRawDataModules(ver) / 8);
+            const numShortBlocks = numBlocks - rawCodewords % numBlocks;
+            const shortBlockDataLen = Math.floor(rawCodewords / numBlocks) - blockEccLen;
+            const rsDivisor = reedSolomonComputeDivisor(blockEccLen);
+            const blocks = [];
+            let k = 0;
+            for (let i = 0; i < numBlocks; i++) {
+                const datLen = shortBlockDataLen + (i < numShortBlocks ? 0 : 1);
+                const dat = data.slice(k, k + datLen);
+                k += datLen;
+                const ecc = reedSolomonComputeRemainder(dat, rsDivisor);
+                blocks.push({ data: dat, ecc: ecc });
+            }
+            const result = [];
+            for (let i = 0; i < shortBlockDataLen + 1; i++) {
+                for (let j = 0; j < numBlocks; j++) {
+                    if (i < blocks[j].data.length) result.push(blocks[j].data[i]);
+                }
+            }
+            for (let i = 0; i < blockEccLen; i++) {
+                for (let j = 0; j < numBlocks; j++) {
+                    result.push(blocks[j].ecc[i]);
+                }
+            }
+            if (result.length !== rawCodewords) throw new Error('QR internal error.');
+            return result;
+        }
 
-function finderPenaltyCountPatterns(runHistory) {
-  const n = runHistory[1];
+        function getAlignmentPatternPositions(ver) {
+            if (ver === 1) return [];
+            const numAlign = Math.floor(ver / 7) + 2;
+            const step = ver === 32 ? 26 : Math.ceil((ver * 4 + 4) / (numAlign * 2 - 2)) * 2;
+            const result = [6];
+            const size = ver * 4 + 17;
+            for (let pos = size - 7; result.length < numAlign; pos -= step) {
+                result.splice(1, 0, pos);
+            }
+            return result;
+        }
 
-  if (
-    n > 0 &&
-    runHistory[2] === n &&
-    runHistory[3] === n * 3 &&
-    runHistory[4] === n &&
-    runHistory[5] === n &&
-    runHistory[0] >= n * 4 &&
-    runHistory[6] >= n
-  ) {
-    return 1;
-  }
+        function QrMatrix(ver) {
+            this.version = ver;
+            this.size = ver * 4 + 17;
+            this.modules = Array.from({ length: this.size }, () => Array(this.size).fill(false));
+            this.isFunction = Array.from({ length: this.size }, () => Array(this.size).fill(false));
+        }
 
-  if (
-    n > 0 &&
-    runHistory[2] === n &&
-    runHistory[3] === n * 3 &&
-    runHistory[4] === n &&
-    runHistory[5] === n &&
-    runHistory[6] >= n * 4 &&
-    runHistory[0] >= n
-  ) {
-    return 1;
-  }
+        QrMatrix.prototype.setFunctionModule = function(x, y, isDark) {
+            this.modules[y][x] = isDark;
+            this.isFunction[y][x] = true;
+        };
 
-  return 0;
-}
+        QrMatrix.prototype.drawFunctionPatterns = function(ecl) {
+            const size = this.size;
+            for (let i = 0; i < size; i++) {
+                this.setFunctionModule(6, i, i % 2 === 0);
+                this.setFunctionModule(i, 6, i % 2 === 0);
+            }
+            this.drawFinderPattern(3, 3);
+            this.drawFinderPattern(size - 4, 3);
+            this.drawFinderPattern(3, size - 4);
+            const aligns = getAlignmentPatternPositions(this.version);
+            for (const y of aligns) {
+                for (const x of aligns) {
+                    if ((x === 6 && y === 6) || (x === 6 && y === size - 7) || (x === size - 7 && y === 6)) continue;
+                    this.drawAlignmentPattern(x, y);
+                }
+            }
+            this.drawFormatBits(0, ecl);
+            if (this.version >= 7) this.drawVersion();
+        };
 
-function finderPenaltyTerminateAndCount(currentRunColor, currentRunLength, runHistory) {
-  if (currentRunColor) {
-    finderPenaltyAddHistory(currentRunLength, runHistory);
-    currentRunLength = 0;
-  }
+        QrMatrix.prototype.drawFinderPattern = function(cx, cy) {
+            for (let dy = -4; dy <= 4; dy++) {
+                for (let dx = -4; dx <= 4; dx++) {
+                    const x = cx + dx,
+                        y = cy + dy;
+                    if (0 <= x && x < this.size && 0 <= y && y < this.size) {
+                        const dist = Math.max(Math.abs(dx), Math.abs(dy));
+                        this.setFunctionModule(x, y, dist !== 2 && dist !== 4);
+                    }
+                }
+            }
+        };
 
-  currentRunLength += 1000000;
-  finderPenaltyAddHistory(currentRunLength, runHistory);
+        QrMatrix.prototype.drawAlignmentPattern = function(cx, cy) {
+            for (let dy = -2; dy <= 2; dy++) {
+                for (let dx = -2; dx <= 2; dx++) {
+                    const dark = Math.max(Math.abs(dx), Math.abs(dy)) !== 1;
+                    this.setFunctionModule(cx + dx, cy + dy, dark);
+                }
+            }
+        };
 
-  return finderPenaltyCountPatterns(runHistory);
-}
+        QrMatrix.prototype.drawFormatBits = function(mask, ecl) {
+            const data = (ecl.formatBits << 3) | mask;
+            let rem = data;
+            for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+            const bits = ((data << 10) | rem) ^ 0x5412;
+            for (let i = 0; i <= 5; i++) this.setFunctionModule(8, i, getBit(bits, i));
+            this.setFunctionModule(8, 7, getBit(bits, 6));
+            this.setFunctionModule(8, 8, getBit(bits, 7));
+            this.setFunctionModule(7, 8, getBit(bits, 8));
+            for (let i = 9; i < 15; i++) this.setFunctionModule(14 - i, 8, getBit(bits, i));
+            for (let i = 0; i < 8; i++) this.setFunctionModule(this.size - 1 - i, 8, getBit(bits, i));
+            for (let i = 8; i < 15; i++) this.setFunctionModule(8, this.size - 15 + i, getBit(bits, i));
+            this.setFunctionModule(8, this.size - 8, true);
+        };
 
-function cloneQrMatrix(qr) {
-  const q = new QrMatrix(qr.version);
-  q.modules = qr.modules.map(row => row.slice());
-  q.isFunction = qr.isFunction.map(row => row.slice());
-  return q;
-}
+        QrMatrix.prototype.drawVersion = function() {
+            let rem = this.version;
+            for (let i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
+            const bits = (this.version << 12) | rem;
+            for (let i = 0; i < 18; i++) {
+                const bit = getBit(bits, i);
+                const a = this.size - 11 + i % 3;
+                const b = Math.floor(i / 3);
+                this.setFunctionModule(a, b, bit);
+                this.setFunctionModule(b, a, bit);
+            }
+        };
 
-function encodeQr(text, eclName) {
-  const ecl = ECL_MAP[eclName] || ECL_MAP.M;
-  const bytes = utf8Bytes(text);
+        QrMatrix.prototype.drawCodewords = function(data) {
+            let bitIndex = 0;
+            const totalBits = data.length * 8;
+            for (let right = this.size - 1; right >= 1; right -= 2) {
+                if (right === 6) right = 5;
+                for (let vert = 0; vert < this.size; vert++) {
+                    for (let j = 0; j < 2; j++) {
+                        const x = right - j;
+                        const upward = ((right + 1) & 2) === 0;
+                        const y = upward ? this.size - 1 - vert : vert;
+                        if (!this.isFunction[y][x] && bitIndex < totalBits) {
+                            this.modules[y][x] = getBit(data[bitIndex >>> 3], 7 - (bitIndex & 7));
+                            bitIndex++;
+                        }
+                    }
+                }
+            }
+        };
 
-  const ver = chooseVersion(bytes, ecl);
-  if (ver === null) {
-    throw new Error("内容太长，超过 QR Code Version 40 的容量。请减少内容，或把纠错等级调成 L。");
-  }
+        QrMatrix.prototype.applyMask = function(mask) {
+            for (let y = 0; y < this.size; y++) {
+                for (let x = 0; x < this.size; x++) {
+                    if (!this.isFunction[y][x]) {
+                        let invert = false;
+                        switch (mask) {
+                            case 0:
+                                invert = (x + y) % 2 === 0;
+                                break;
+                            case 1:
+                                invert = y % 2 === 0;
+                                break;
+                            case 2:
+                                invert = x % 3 === 0;
+                                break;
+                            case 3:
+                                invert = (x + y) % 3 === 0;
+                                break;
+                            case 4:
+                                invert = (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0;
+                                break;
+                            case 5:
+                                invert = (x * y) % 2 + (x * y) % 3 === 0;
+                                break;
+                            case 6:
+                                invert = ((x * y) % 2 + (x * y) % 3) % 2 === 0;
+                                break;
+                            case 7:
+                                invert = ((x + y) % 2 + (x * y) % 3) % 2 === 0;
+                                break;
+                            default:
+                                throw new Error('QR internal error.');
+                        }
+                        this.modules[y][x] ^= invert;
+                    }
+                }
+            }
+        };
 
-  const dataCodewords = makeDataCodewords(bytes, ver, ecl);
-  const allCodewords = addEccAndInterleave(dataCodewords, ver, ecl);
+        QrMatrix.prototype.getPenaltyScore = function() {
+            let result = 0;
+            const size = this.size;
+            const m = this.modules;
 
-  const base = new QrMatrix(ver);
-  base.drawFunctionPatterns(ecl);
-  base.drawCodewords(allCodewords);
+            function finderPenaltyAddHistory(currentRunLength, runHistory) {
+                if (runHistory[0] === 0) currentRunLength += 1000000;
+                runHistory.pop();
+                runHistory.unshift(currentRunLength);
+            }
 
-  let best = null;
-  let bestMask = 0;
-  let bestPenalty = Infinity;
+            function finderPenaltyCountPatterns(runHistory) {
+                const n = runHistory[1];
+                if (n > 0 && runHistory[2] === n && runHistory[3] === n * 3 && runHistory[4] === n &&
+                    runHistory[5] === n && runHistory[0] >= n * 4 && runHistory[6] >= n) return 1;
+                if (n > 0 && runHistory[2] === n && runHistory[3] === n * 3 && runHistory[4] === n &&
+                    runHistory[5] === n && runHistory[6] >= n * 4 && runHistory[0] >= n) return 1;
+                return 0;
+            }
 
-  for (let mask = 0; mask < 8; mask++) {
-    const q = cloneQrMatrix(base);
-    q.applyMask(mask);
-    q.drawFormatBits(mask, ecl);
+            function finderPenaltyTerminateAndCount(currentRunColor, currentRunLength, runHistory) {
+                if (currentRunColor) { finderPenaltyAddHistory(currentRunLength, runHistory);
+                    currentRunLength = 0; }
+                currentRunLength += 1000000;
+                finderPenaltyAddHistory(currentRunLength, runHistory);
+                return finderPenaltyCountPatterns(runHistory);
+            }
 
-    const penalty = q.getPenaltyScore();
-    if (penalty < bestPenalty) {
-      bestPenalty = penalty;
-      bestMask = mask;
-      best = q;
-    }
-  }
+            for (let y = 0; y < size; y++) {
+                let runColor = false,
+                    runLen = 0;
+                const runHistory = [0, 0, 0, 0, 0, 0, 0];
+                for (let x = 0; x < size; x++) {
+                    if (m[y][x] === runColor) {
+                        runLen++;
+                        if (runLen === 5) result += PENALTY_N1;
+                        else if (runLen > 5) result++;
+                    } else {
+                        finderPenaltyAddHistory(runLen, runHistory);
+                        if (!runColor) result += finderPenaltyCountPatterns(runHistory) * PENALTY_N3;
+                        runColor = m[y][x];
+                        runLen = 1;
+                    }
+                }
+                result += finderPenaltyTerminateAndCount(runColor, runLen, runHistory) * PENALTY_N3;
+            }
 
-  return {
-    matrix: best.modules,
-    size: best.size,
-    version: ver,
-    mask: bestMask,
-    bytes: bytes.length,
-    ecl: ecl.name
-  };
-}
+            for (let x = 0; x < size; x++) {
+                let runColor = false,
+                    runLen = 0;
+                const runHistory = [0, 0, 0, 0, 0, 0, 0];
+                for (let y = 0; y < size; y++) {
+                    if (m[y][x] === runColor) {
+                        runLen++;
+                        if (runLen === 5) result += PENALTY_N1;
+                        else if (runLen > 5) result++;
+                    } else {
+                        finderPenaltyAddHistory(runLen, runHistory);
+                        if (!runColor) result += finderPenaltyCountPatterns(runHistory) * PENALTY_N3;
+                        runColor = m[y][x];
+                        runLen = 1;
+                    }
+                }
+                result += finderPenaltyTerminateAndCount(runColor, runLen, runHistory) * PENALTY_N3;
+            }
 
-function qrToSvg(qr, pixelSize) {
-  const quiet = 4;
-  const n = qr.size;
-  const total = n + quiet * 2;
+            for (let y = 0; y < size - 1; y++) {
+                for (let x = 0; x < size - 1; x++) {
+                    const color = m[y][x];
+                    if (color === m[y][x + 1] && color === m[y + 1][x] && color === m[y + 1][x + 1]) {
+                        result += PENALTY_N2;
+                    }
+                }
+            }
 
-  let path = "";
+            let dark = 0;
+            for (let y = 0; y < size; y++)
+                for (let x = 0; x < size; x++)
+                    if (m[y][x]) dark++;
+            const total = size * size;
+            const k = Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1;
+            result += k * PENALTY_N4;
+            return result;
+        };
 
-  for (let y = 0; y < n; y++) {
-    for (let x = 0; x < n; x++) {
-      if (qr.matrix[y][x]) {
-        path += "M" + (x + quiet) + "," + (y + quiet) + "h1v1h-1z";
-      }
-    }
-  }
+        function cloneQrMatrix(qr) {
+            const q = new QrMatrix(qr.version);
+            q.modules = qr.modules.map(row => row.slice());
+            q.isFunction = qr.isFunction.map(row => row.slice());
+            return q;
+        }
 
-  return (
-    '<svg xmlns="http://www.w3.org/2000/svg" ' +
-    'width="' + pixelSize + '" height="' + pixelSize + '" ' +
-    'viewBox="0 0 ' + total + ' ' + total + '" ' +
-    'shape-rendering="crispEdges">' +
-    '<rect width="100%" height="100%" fill="#fff"/>' +
-    '<path d="' + path + '" fill="#000"/>' +
-    '</svg>'
-  );
-}
+        function encodeQr(text, eclName) {
+            const ecl = ECL_MAP[eclName] || ECL_MAP.M;
+            const bytes = utf8Bytes(text);
+            const ver = chooseVersion(bytes, ecl);
+            if (ver === null) {
+                throw new Error('内容太长，超过 QR Code Version 40 的容量。请减少内容，或把纠错等级调成 L。');
+            }
+            const dataCodewords = makeDataCodewords(bytes, ver, ecl);
+            const allCodewords = addEccAndInterleave(dataCodewords, ver, ecl);
+            const base = new QrMatrix(ver);
+            base.drawFunctionPatterns(ecl);
+            base.drawCodewords(allCodewords);
+            let best = null,
+                bestMask = 0,
+                bestPenalty = Infinity;
+            for (let mask = 0; mask < 8; mask++) {
+                const q = cloneQrMatrix(base);
+                q.applyMask(mask);
+                q.drawFormatBits(mask, ecl);
+                const penalty = q.getPenaltyScore();
+                if (penalty < bestPenalty) {
+                    bestPenalty = penalty;
+                    bestMask = mask;
+                    best = q;
+                }
+            }
+            return {
+                matrix: best.modules,
+                size: best.size,
+                version: ver,
+                mask: bestMask,
+                bytes: bytes.length,
+                ecl: ecl.name
+            };
+        }
 
-function generate() {
-  errEl.textContent = "";
-  infoEl.textContent = "";
-  qrcodeEl.innerHTML = "";
-  lastSvg = "";
+        function qrToSvg(qr, pixelSize) {
+            const quiet = 4;
+            const n = qr.size;
+            const total = n + quiet * 2;
+            let path = '';
+            for (let y = 0; y < n; y++) {
+                for (let x = 0; x < n; x++) {
+                    if (qr.matrix[y][x]) {
+                        path += 'M' + (x + quiet) + ',' + (y + quiet) + 'h1v1h-1z';
+                    }
+                }
+            }
+            return '<svg xmlns="http://www.w3.org/2000/svg" ' +
+                'width="' + pixelSize + '" height="' + pixelSize + '" ' +
+                'viewBox="0 0 ' + total + ' ' + total + '" ' +
+                'shape-rendering="crispEdges">' +
+                '<rect width="100%" height="100%" fill="#fff"/>' +
+                '<path d="' + path + '" fill="#000"/>' +
+                '</svg>';
+        }
 
-  const text = textEl.value || "";
-  const eclName = eclEl.value || "M";
-  const pixelSize = Math.max(120, Math.min(2000, parseInt(sizePxEl.value || "360", 10)));
+        /* ============================================================
+               4. 核心操作
+               ============================================================ */
+        function generateQR() {
+            if (isGenerating) return;
+            isGenerating = true;
+            btnGenerate.disabled = true;
+            qrWrapper.classList.add('loading');
 
-  if (!text) {
-    infoEl.textContent = "请输入内容。";
-    return;
-  }
+            errEl.classList.remove('show');
+            infoEl.classList.remove('show');
+            errEl.textContent = '';
+            infoEl.innerHTML = '';
+            lastSvg = '';
 
-  try {
-    const qr = encodeQr(text, eclName);
-    const svg = qrToSvg(qr, pixelSize);
-    qrcodeEl.innerHTML = svg;
-    lastSvg = svg;
-    infoEl.innerHTML =
-      "UTF-8 字节数：<b>" + qr.bytes + "</b><br>" +
-      "二维码版本：<b>" + qr.version + "</b><br>" +
-      "矩阵尺寸：<b>" + qr.size + " × " + qr.size + "</b><br>" +
-      "纠错等级：<b>" + qr.ecl + "</b><br>" +
-      "Mask：<b>" + qr.mask + "</b><br>" ;
-      
-  } catch (e) {
-    errEl.textContent = e && e.message ? e.message : String(e);
-  }
-}
+            const text = textEl.value || '';
+            const eclName = eclEl.value || 'M';
+            const pixelSize = Math.max(120, Math.min(2000, parseInt(sizePxEl.value || '360', 10)));
 
-function clearAll() {
-  textEl.value = "";
-  qrcodeEl.innerHTML = "";
-  infoEl.textContent = "";
-  errEl.textContent = "";
-  lastSvg = "";
-}
+            if (!text) {
+                qrcodeEl.innerHTML =
+                    '<div class="placeholder"><span>⊞</span>输入内容生成</div>';
+                qrWrapper.classList.remove('has-qr');
+                isGenerating = false;
+                btnGenerate.disabled = false;
+                qrWrapper.classList.remove('loading');
+                return;
+            }
 
-function downloadSvg() {
-  if (!lastSvg) {
-    alert("请先生成二维码。");
-    return;
-  }
-  const blob = new Blob([lastSvg], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "qrcode.svg";
-  a.click();
-  URL.revokeObjectURL(url);
-}
+            // 使用 requestAnimationFrame 让 UI 先更新
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    try {
+                        const qr = encodeQr(text, eclName);
+                        const svg = qrToSvg(qr, pixelSize);
+                        qrcodeEl.innerHTML = svg;
+                        lastSvg = svg;
+                        qrWrapper.classList.add('has-qr');
 
-function downloadPng() {
-  if (!lastSvg) {
-    alert("请先生成二维码。");
-    return;
-  }
-  const size = Math.max(120, Math.min(2000, parseInt(sizePxEl.value || "360", 10)));
-  const blob = new Blob([lastSvg], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const img = new Image();
-  img.onload = function() {
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, size, size);
-    ctx.drawImage(img, 0, 0, size, size);
-    URL.revokeObjectURL(url);
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = "qrcode.png";
-    a.click();
-  };
-  img.onerror = function() {
-    URL.revokeObjectURL(url);
-    alert("PNG 导出失败，可以先下载 SVG。");
-  };
-  img.src = url;
-}
+                        // 显示信息
+                        infoEl.innerHTML =
+                            '<div class="stat-grid">' +
+                            '<div class="stat-item"><span class="label">字节</span><span class="value">' + qr
+                            .bytes + '</span></div>' +
+                            '<div class="stat-item"><span class="label">版本</span><span class="value">' + qr
+                            .version + '</span></div>' +
+                            '<div class="stat-item"><span class="label">矩阵</span><span class="value">' + qr
+                            .size + '×' + qr.size + '</span></div>' +
+                            '<div class="stat-item"><span class="label">纠错</span><span class="value">' + qr
+                            .ecl + '</span></div>' +
+                            '<div class="stat-item"><span class="label">Mask</span><span class="value">' + qr
+                            .mask + '</span></div>' +
+                            '</div>';
+                        infoEl.classList.add('show');
 
+                        showToast('✅ 二维码生成成功', 1500);
+                    } catch (e) {
+                        const msg = e && e.message ? e.message : String(e);
+                        errEl.textContent = msg;
+                        errEl.classList.add('show');
+                        qrcodeEl.innerHTML =
+                            '<div class="placeholder"><span>⚠</span>生成失败</div>';
+                        qrWrapper.classList.remove('has-qr');
+                        showToast('❌ ' + msg, 3000);
+                    } finally {
+                        isGenerating = false;
+                        btnGenerate.disabled = false;
+                        qrWrapper.classList.remove('loading');
+                    }
+                }, 80);
+            });
+        }
 
+        function clearAll() {
+            textEl.value = '';
+            qrcodeEl.innerHTML = '<div class="placeholder"><span>⊞</span>输入内容生成</div>';
+            qrWrapper.classList.remove('has-qr');
+            infoEl.classList.remove('show');
+            errEl.classList.remove('show');
+            infoEl.innerHTML = '';
+            errEl.textContent = '';
+            lastSvg = '';
+            showToast('已清空', 1000);
+        }
 
-textEl.addEventListener("input", generate);
-eclEl.addEventListener("change", generate);
-sizePxEl.addEventListener("change", generate);
-window.addEventListener("load", generate);
+        function downloadSvg() {
+            if (!lastSvg) {
+                showToast('⚠️ 请先生成二维码', 1800);
+                return;
+            }
+            const blob = new Blob([lastSvg], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'qrcode.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('⬇️ SVG 已下载', 1200);
+        }
 
-</script>
+        function downloadPng() {
+            if (!lastSvg) {
+                showToast('⚠️ 请先生成二维码', 1800);
+                return;
+            }
+            const size = Math.max(120, Math.min(2000, parseInt(sizePxEl.value || '360', 10)));
+            const blob = new Blob([lastSvg], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, size, size);
+                ctx.drawImage(img, 0, 0, size, size);
+                URL.revokeObjectURL(url);
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'qrcode.png';
+                a.click();
+                showToast('⬇️ PNG 已下载', 1200);
+            };
+            img.onerror = function() {
+                URL.revokeObjectURL(url);
+                showToast('⚠️ PNG 导出失败，试试 SVG', 2000);
+            };
+            img.src = url;
+        }
+
+        /* ============================================================
+               5. 事件绑定
+               ============================================================ */
+        // 防抖：输入时自动生成
+        let debounceTimer = null;
+
+        function autoGenerate() {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                generateQR();
+                debounceTimer = null;
+            }, 380);
+        }
+
+        textEl.addEventListener('input', autoGenerate);
+        eclEl.addEventListener('change', generateQR);
+        sizePxEl.addEventListener('change', generateQR);
+
+        btnGenerate.addEventListener('click', generateQR);
+        btnDownloadSvg.addEventListener('click', downloadSvg);
+        btnDownloadPng.addEventListener('click', downloadPng);
+        btnClear.addEventListener('click', clearAll);
+
+        // 快捷键：Ctrl+Enter 生成
+        textEl.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                generateQR();
+            }
+        });
+
+        // 页面加载后自动生成
+        window.addEventListener('load', function() {
+            setTimeout(generateQR, 200);
+        });
+
+        // 尺寸输入框：回车触发生成
+        sizePxEl.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                generateQR();
+            }
+        });
+
+        console.log('✦ 二维码生成器 · 离线版 已加载');
+        console.log('   💡 输入内容自动生成 · Ctrl+Enter 手动生成');
+    </script>
 </body>
 </html>
