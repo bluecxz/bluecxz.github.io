@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>安全离线二维码生成器</title>
+<title>二维码生成_离线</title>
 <style>
 body{margin:0;padding:24px;background:#f5f7fa;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;}
 .wrap{max-width:900px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.08);}
@@ -26,7 +26,7 @@ code{background:#f1f1f1;padding:2px 5px;border-radius:4px;}
 </head>
 <body>
 <div class="wrap">
-  <h1>安全离线二维码生成器</h1>
+  <h1>二维码生成</h1>
   <textarea id="text">https://www.baidu.com</textarea>
   <div class="row">
     <button onclick="generate()">生成二维码</button>
@@ -707,7 +707,7 @@ function generate() {
       "矩阵尺寸：<b>" + qr.size + " × " + qr.size + "</b><br>" +
       "纠错等级：<b>" + qr.ecl + "</b><br>" +
       "Mask：<b>" + qr.mask + "</b><br>" +
-      "运行方式：<b>完全离线，单 HTML 文件</b>";
+      
   } catch (e) {
     errEl.textContent = e && e.message ? e.message : String(e);
   }
