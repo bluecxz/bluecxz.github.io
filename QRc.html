@@ -706,7 +706,7 @@ function generate() {
       "二维码版本：<b>" + qr.version + "</b><br>" +
       "矩阵尺寸：<b>" + qr.size + " × " + qr.size + "</b><br>" +
       "纠错等级：<b>" + qr.ecl + "</b><br>" +
-      "Mask：<b>" + qr.mask + "</b><br>" +
+      "Mask：<b>" + qr.mask + "</b><br>" ;
       
   } catch (e) {
     errEl.textContent = e && e.message ? e.message : String(e);
