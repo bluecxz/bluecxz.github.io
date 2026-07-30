@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>网站导航 </title>
+  <!-- Font Awesome 6 (免费) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    /* ===== 全局重置 & 字体 ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 20px;
+      background: linear-gradient(145deg, #f0f4fe 0%, #d9e2f0 100%);
+    }
+
+    .container {
+      max-width: 1280px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 40px;
+      box-shadow: 0 30px 60px -20px rgba(0, 20, 40, 0.25),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      padding: 32px 36px;
+      transition: all 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* ===== 头部 ===== */
+    .header-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: #0b1b33;
+      margin-bottom: 24px;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-title i {
+      color: #2a7de1;
+      font-size: 32px;
+    }
+
+    /* ===== 导航栏 ===== */
+    .nav-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .category-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      list-style: none;
+    }
+
+    .tab-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(4px);
+      border-radius: 40px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #1f2a44;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      transition: all 0.25s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tab-item i {
+      font-size: 1.1em;
+      color: #3b4e6b;
+    }
+    .tab-item:hover {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 6px 14px rgba(26, 67, 113, 0.08);
+      transform: translateY(-2px);
+    }
+    .tab-item.active {
+      background: #1d4ed8;
+      color: white;
+      border-color: #1d4ed8;
+      box-shadow: 0 8px 18px rgba(29, 78, 216, 0.25);
+    }
+    .tab-item.active i {
+      color: white;
+    }
+
+    /* ===== 搜索框 ===== */
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(4px);
+      border-radius: 60px;
+      padding: 4px 4px 4px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      transition: all 0.2s;
+    }
+    .search-wrapper:focus-within {
+      box-shadow: 0 6px 18px rgba(29, 78, 216, 0.12);
+      border-color: #1d4ed8;
+    }
+    .search-wrapper i {
+      color: #6f7d98;
+      font-size: 18px;
+    }
+    .search-wrapper input {
+      border: none;
+      background: transparent;
+      padding: 10px 14px;
+      font-size: 16px;
+      min-width: 200px;
+      outline: none;
+      color: #1f2a44;
+    }
+    .search-wrapper input::placeholder {
+      color: #8b9ab5;
+      font-weight: 400;
+    }
+    .search-wrapper button {
+      background: #1d4ed8;
+      border: none;
+      color: white;
+      font-weight: 500;
+      padding: 8px 24px;
+      border-radius: 60px;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.3px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .search-wrapper button:hover {
+      background: #1a44b0;
+    }
+    .search-wrapper button:active {
+      transform: scale(0.96);
+    }
+
+    /* ===== 卡片网格 ===== */
+    .sections-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 26px;
+      margin-top: 6px;
+    }
+
+    .category-card {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 28px;
+      padding: 22px 20px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.03);
+      transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+      will-change: transform;
+    }
+    .category-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px -12px rgba(0, 20, 40, 0.12);
+      border-color: rgba(255, 255, 255, 1);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .card-header i {
+      font-size: 22px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(29, 78, 216, 0.08);
+      color: #1d4ed8;
+      border-radius: 14px;
+      transition: 0.2s;
+    }
+    .category-card:hover .card-header i {
+      background: rgba(29, 78, 216, 0.15);
+    }
+    .card-header h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #0f1c3d;
+      letter-spacing: -0.2px;
+    }
+
+    /* ===== 站点链接网格 ===== */
+    .sites-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 12px;
+      margin-bottom: 18px;
+    }
+
+    .site-link {
+      display: block;
+      background: rgba(247, 249, 253, 0.7);
+      padding: 10px 6px;
+      border-radius: 30px;
+      text-decoration: none;
+      color: #1f2a44;
+      font-weight: 500;
+      font-size: 14px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .site-link:hover {
+      background: #e6edfb;
+      border-color: #b7c9e6;
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.06);
+    }
+
+    /* ===== 查看更多 ===== */
+    .more-link {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #2a7de1;
+      text-decoration: none;
+      margin-top: 8px;
+      border-top: 1px dashed rgba(219, 228, 240, 0.6);
+      padding-top: 14px;
+      transition: color 0.2s;
+    }
+    .more-link i {
+      font-size: 13px;
+      transition: transform 0.2s ease;
+    }
+    .more-link:hover {
+      color: #1a56c7;
+    }
+    .more-link:hover i {
+      transform: translateX(4px);
+    }
+
+    /* ===== 隐藏卡片（搜索/筛选用） ===== */
+    .category-card.hidden-card {
+      display: none;
+    }
+
+    /* ===== 底部 ===== */
+    .footer-note {
+      text-align: right;
+      margin-top: 28px;
+      font-size: 14px;
+      color: #8ba0bc;
+      border-top: 1px solid rgba(238, 242, 246, 0.6);
+      padding-top: 20px;
+    }
+    .footer-note a {
+      color: #8ba0bc;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .footer-note a:hover {
+      color: #1d4ed8;
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 1024px) {
+      .container { padding: 28px 24px; }
+    }
+    @media (max-width: 900px) {
+      .sections-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+    }
+    @media (max-width: 640px) {
+      .sections-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+      .nav-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-wrapper {
+        width: 100%;
+      }
+      .search-wrapper input {
+        flex: 1;
+        min-width: 120px;
+      }
+      .category-tabs {
+        justify-content: center;
+      }
+      .tab-item {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+      .container {
+        padding: 20px 16px;
+        border-radius: 28px;
+      }
+      .header-title {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 标题（可自定义） -->
+  <div class="header-title">
+    <i class="fas fa-compass"></i> 我的导航
+  </div>
+
+  <!-- 导航栏：分类标签 + 搜索 -->
+  <div class="nav-bar">
+    <ul class="category-tabs" id="categoryTabs">
+      <!-- 全部标签（默认激活） -->
+      <li class="tab-item active" data-category="all"><i class="fas fa-th"></i> 全部</li>
+      <li class="tab-item" data-category="search"><i class="fas fa-magnifying-glass"></i> <span class="q-hint">Q</span>搜索引擎</li>
+      <li class="tab-item" data-category="tools"><i class="fas fa-users"></i> 工具</li>
+      <li class="tab-item" data-category="media"><i class="fas fa-video"></i> 媒体</li>
+      <li class="tab-item" data-category="shopping"><i class="fas fa-cart-shopping"></i> 购物网站</li>
+      <li class="tab-item" data-category="edu"><i class="fas fa-graduation-cap"></i> 教育资源</li>
+      <li class="tab-item" data-category="games"><i class="fas fa-newspaper"></i> 游戏</li>
+    </ul>
+
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="搜索站点..." />
+      <button id="searchBtn"><i class="fas fa-arrow-right"></i> 搜索</button>
+    </div>
+  </div>
+
+  <!-- 卡片区域 -->
+  <div class="sections-grid" id="cardsContainer">
+    <!-- 1. 搜索引擎 -->
+    <div class="category-card" data-category="search">
+      <div class="card-header">
+        <i class="fas fa-magnifying-glass"></i>
+        <h3>搜索引擎</h3>
+      </div>
+      <div class="sites-grid">
+        <a href="#" class="site-link" target="_blank">谷歌</a>
+        <a href="#" class="site-link" target="_blank">必应</a>
+        <a href="#" class="site-link" target="_blank">百度</a>
+        <a href="#" class="site-link" target="_blank">Yandex</a>
+        <a href="#" class="site-link" target="_blank">DuckDuckGo</a>
+        <span></span>
+      </div>
+      <a href="#" class="more-link" target="_blank">查看更多 <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <!-- 2. 工具 -->
+    <div class="category-card" data-category="tools">
+      <div class="card-header">
+        <i class="fas fa-users"></i>
+        <h3>工具</h3>
+      </div>
+      <div class="sites-grid">
+        <a href="fanyi/fy.html" class="site-link" target="_blank">fanyi</a>
+        <a href="JS混淆/JShx.html" class="site-link" target="_blank">JS混淆</a>
+        <a href="tiku/tk.html" class="site-link" target="_blank">TiKu</a>
+        <a href="双色球/ssq.html" class="site-link" target="_blank">双色球</a>
+        <a href="color.html" class="site-link" target="_blank">颜色转换</a>
+        <a href="wenbenduibi.html" class="site-link" target="_blank">文本对比</a>
+        <a href="HTML-YLQ.html" class="site-link" target="_blank">HTML预览器</a>
+        <a href="zsqc.html" class="site-link" target="_blank">去除代码注释</a>
+        <a href="https://1.will2.de5.net/MD-editor/MDeditor" class="site-link" target="_blank">Markdown-editor</a>
+        <a href="dyzs.html" class="site-link" target="_blank">打印助手</a>
+        <a href="QRc.html" class="site-link" target="_blank">二维码生成</a>
+        <a href="https://wen1ben-2zhuan-yu3yin.bluecxzb.workers.dev/" class="site-link" target="_blank">文字转语音</a>
+        <a href="https://magicstudio.com/zh/background-remover/" class="site-link" target="_blank">修图工具</a>
+      </div>
+      <a href="#" class="more-link" target="_blank">查看更多 <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <!-- 3. 媒体 -->
+    <div class="category-card" data-category="media">
+      <div class="card-header">
+        <i class="fas fa-video"></i>
+        <h3>媒体</h3>
+      </div>
+      <div class="sites-grid">
+        <a href="m3u8/m.html" class="site-link" target="_blank">播放器</a>
+        <a href="yinyue/yy.html" class="site-link" target="_blank">音乐播放器</a>
+        <a href="https://music.gdstudio.org/" class="site-link" target="_blank">在线音乐</a>
+        <a href="ld.html" class="site-link" target="_blank">langdu</a>
+        <a href="#" class="site-link" target="_blank">Dailymotion</a>
+        <a href="#" class="site-link" target="_blank">Hulu</a>
+      </div>
+      <a href="#" class="more-link" target="_blank">查看更多 <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <!-- 4. 购物网站 -->
+    <div class="category-card" data-category="shopping">
+      <div class="card-header">
+        <i class="fas fa-cart-shopping"></i>
+        <h3>购物网站</h3>
+      </div>
+      <div class="sites-grid">
+        <a href="#" class="site-link" target="_blank">亚马逊</a>
+        <a href="#" class="site-link" target="_blank">eBay</a>
+        <a href="#" class="site-link" target="_blank">阿里巴巴</a>
+        <a href="#" class="site-link" target="_blank">沃尔玛</a>
+        <a href="#" class="site-link" target="_blank">淘宝</a>
+        <a href="#" class="site-link" target="_blank">京东</a>
+      </div>
+      <a href="#" class="more-link" target="_blank">查看更多 <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <!-- 5. 教育资源 -->
+    <div class="category-card" data-category="edu">
+      <div class="card-header">
+        <i class="fas fa-graduation-cap"></i>
+        <h3>教育资源</h3>
+      </div>
+      <div class="sites-grid">
+        <a href="#" class="site-link" target="_blank">维基百科</a>
+        <a href="https://zh.ifixit.com/" class="site-link" target="_blank">维修手册</a>
+        <a href="https://zh.wikihow.com/%E9%A6%96%E9%A1%B5" class="site-link" target="_blank">万事指南</a>
+        <a href="https://www.lingohut.com/" class="site-link" target="_blank">语言学习</a>
+        <a href="#" class="site-link" target="_blank">Udemy</a>
+        <a href="#" class="site-link" target="_blank">MOOC</a>
+      </div>
+      <a href="#" class="more-link" target="_blank">查看更多 <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <!-- 6. 游戏 -->
+    <div class="category-card" data-category="games">
+      <div class="card-header">
+        <i class="fas fa-newspaper"></i>
+        <h3>游戏</h3>
+      </div>
+      <div class="sites-grid">
+        <a href="saolei.html" class="site-link" target="_blank">扫雷</a>
+        <a href="XQ.html" class="site-link" target="_blank">象棋</a>
+        <a href="hrd" class="site-link" target="_blank">华容道</a>
+        <a href="#" class="site-link" target="_blank">路透社</a>
+        <a href="#" class="site-link" target="_blank">ABC新闻</a>
+        <a href="#" class="site-link" target="_blank">NHK新闻</a>
+      </div>
+      <a href="#" class="more-link" target="_blank">查看更多 <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <div class="footer-note">
+    <a href="1.html" target="_blank">.</a>
+  </div>
+</div>
+
+<!-- ===== JavaScript 交互 (搜索 + 筛选) ===== -->
+<script>
+  (function() {
+    const cards = document.querySelectorAll('.category-card');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const tabs = document.querySelectorAll('.tab-item');
+
+    // ---- 筛选函数 ----
+    function filterCards(category, keyword) {
+      keyword = keyword.trim().toLowerCase();
+      cards.forEach(card => {
+        const cardCategory = card.dataset.category;
+        // 分类匹配
+        const categoryMatch = (category === 'all' || cardCategory === category);
+        // 关键词匹配（在卡片内所有站点链接文本中搜索）
+        let keywordMatch = true;
+        if (keyword !== '') {
+          const links = card.querySelectorAll('.site-link');
+          let found = false;
+          links.forEach(link => {
+            const text = link.textContent.trim().toLowerCase();
+            if (text.includes(keyword)) found = true;
+          });
+          keywordMatch = found;
+        }
+        // 同时满足分类和关键词则显示，否则隐藏
+        if (categoryMatch && keywordMatch) {
+          card.classList.remove('hidden-card');
+        } else {
+          card.classList.add('hidden-card');
+        }
+      });
+    }
+
+    // ---- 分类标签点击 ----
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        // 更新激活样式
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        const category = this.dataset.category;
+        const keyword = searchInput.value;
+        filterCards(category, keyword);
+      });
+    });
+
+    // ---- 搜索（输入时实时过滤） ----
+    function performSearch() {
+      const keyword = searchInput.value;
+      const activeTab = document.querySelector('.tab-item.active');
+      const category = activeTab ? activeTab.dataset.category : 'all';
+      filterCards(category, keyword);
+    }
+
+    searchInput.addEventListener('input', performSearch);
+    searchBtn.addEventListener('click', performSearch);
+
+    // ---- 初始显示全部（保证搜索框为空时全部可见） ----
+    filterCards('all', '');
+  })();
+</script>
+</body>
+</html>
