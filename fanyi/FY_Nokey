@@ -6,177 +6,452 @@
     <title>翻译</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; width: 100%; overflow: hidden; background: #1e293b; }
-        body { font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+        }
 
         .app-container {
-            display: flex; flex-direction: column; height: 100vh; width: 100vw;
-            background: #f1f5f9; overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background: #f1f5f9;
+            overflow: hidden;
         }
-        .main-layout { flex: 1; display: flex; min-height: 0; overflow: hidden; }
 
+        .main-layout {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        
         .config-panel {
-            width: 340px; background: #ffffff; border-right: 1px solid #e2e8f0;
-            display: flex; flex-direction: column; padding: 20px 18px;
-            overflow-y: auto; flex-shrink: 0;
-            box-shadow: 2px 0 8px rgba(0,0,0,0.02); z-index: 2;
-            transition: width .2s ease, padding .2s ease, opacity .15s;
-        }
-        .config-panel.collapsed {
-            width: 0; padding: 0; border-right: none;
-            opacity: 0; pointer-events: none; overflow: hidden;
+            width: 340px;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 18px;
+            overflow-y: auto;
+            transition: width 0.2s ease, padding 0.2s ease, opacity 0.15s;
+            flex-shrink: 0;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+            z-index: 2;
         }
 
-        .translation-core { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #fff; overflow: hidden; }
-        .split-view { flex: 1; display: flex; flex-direction: row; min-height: 0; overflow: hidden; background: #fff; }
-        .original-area, .translated-area {
-            flex: 1; display: flex; flex-direction: column; padding: 2px 5px;
-            min-width: 0; background: #fff; position: relative;
+        .config-panel.collapsed {
+            width: 0;
+            padding: 0;
+            border-right: none;
+            opacity: 0;
+            pointer-events: none;
+            overflow: hidden;
         }
-        .original-area { border-right: 1px solid #eef2f6; }
+
+        
+        .translation-core {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .split-view {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            min-height: 0;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .original-area, .translated-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2px 5px;
+            min-width: 0;
+            background: #fff;
+            position: relative;
+        }
+
+        .original-area {
+            border-right: 1px solid #eef2f6;
+        }
 
         .text-input, .text-output {
-            flex: 1; width: 100%; border: 1px solid #e2e8f0; border-radius: 20px;
-            padding: 18px 20px; font-size: 16px; line-height: 1.55;
-            font-family: inherit; resize: none; background: #fefefe;
-            transition: all .2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            flex: 1;
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 18px 20px;
+            font-size: 16px;
+            line-height: 1.55;
+            font-family: inherit;
+            resize: none;
+            background: #fefefe;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         }
+
         .text-input:focus {
-            outline: none; border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
-        .text-output { background: #fafcff; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+
+        .text-output {
+            background: #fafcff;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
 
         .bottom-bar-area {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-top: 1px; padding: 0 2px; flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1px;
+            padding: 0 2px;
+            flex-shrink: 0;
         }
+
         .char-counter {
-            font-size: 10px; color: #64748b; background: #f1f5f9;
-            padding: 2px 8px; border-radius: 30px;
+            font-size: 10px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 30px;
         }
-        .copy-btn-wrapper { margin-left: auto; }
+
+        .copy-btn-wrapper {
+            margin-left: auto;
+        }
+
         .copy-btn {
-            background: #f1f5f9; border: none; padding: 2px 8px; border-radius: 40px;
-            font-size: 10px; font-weight: 500; color: #1e293b; cursor: pointer;
-            transition: .2s; display: inline-flex; align-items: center; gap: 2px;
+            background: #f1f5f9;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 40px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
         }
-        .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
+
+        .copy-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
 
         .global-toolbar {
-            background: #fff; border-top: 1px solid #e2edf2; padding: 10px 5px;
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 10px; flex-wrap: wrap; z-index: 3;
+            background: #ffffff;
+            border-top: 1px solid #e2edf2;
+            padding: 10px 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            z-index: 3;
             box-shadow: 0 -2px 8px rgba(0,0,0,0.02);
         }
-        .toolbar-left, .toolbar-right { display: flex; min-width: 120px; }
-        .toolbar-center { flex: 1; display: flex; justify-content: center; }
-        .toolbar-right { justify-content: flex-end; }
+
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            min-width: 120px;
+        }
+        .toolbar-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .toolbar-right {
+            justify-content: flex-end;
+        }
 
         .btn {
-            border: none; background: #f1f5f9; padding: 5px 15px; border-radius: 60px;
-            font-weight: 600; font-size: 14px; display: inline-flex;
-            align-items: center; gap: 5px; cursor: pointer; transition: .2s; color: #1e293b;
+            border: none;
+            background: #f1f5f9;
+            padding: 5px 15px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #1e293b;
         }
-        .btn-primary { background: #3b82f6; color: white; box-shadow: 0 2px 5px rgba(59,130,246,.2); }
-        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
-        .btn-outline { background: white; border: 1px solid #cbd5e1; }
-        .btn-outline:hover { background: #f8fafc; border-color: #3b82f6; }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 2px 5px rgba(59,130,246,0.2);
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        .btn-outline {
+            background: white;
+            border: 1px solid #cbd5e1;
+        }
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+        }
+        .btn-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        .btn-danger:hover {
+            background: #fecaca;
+            color: #991b1b;
+        }
 
         .lang-switcher {
-            display: flex; align-items: center; gap: 1px; background: #f8fafc;
-            padding: 1px 5px; border-radius: 30px; border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 1px;
+            background: #f8fafc;
+            padding: 1px 5px;
+            border-radius: 30px;
+            border: 1px solid #e2e8f0;
         }
         .lang-select {
-            padding: 8px 1px; border: none; background: transparent; font-weight: 500;
-            font-size: 12px; cursor: pointer; border-radius: 30px; outline: none; color: #0f172a;
+            padding: 8px 1px;
+            border: none;
+            background: transparent;
+            font-weight: 500;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 30px;
+            outline: none;
+            color: #0f172a;
         }
         .swap-icon {
-            background: #eef2ff; border-radius: 50%; width: 30px; height: 30px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: .2s; color: #3b82f6;
+            background: #eef2ff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #3b82f6;
         }
-        .swap-icon:hover { background: #d9e6ff; transform: rotate(180deg); }
+        .swap-icon:hover {
+            background: #d9e6ff;
+            transform: rotate(180deg);
+        }
 
+        
         .config-title {
-            font-size: 1rem; font-weight: 600; margin-bottom: 5px;
-            display: flex; align-items: center; gap: 5px; color: #0f172a;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #0f172a;
         }
         .config-select-group {
-            margin-bottom: 10px; background: #f8fafc; border-radius: 20px;
-            padding: 5px 5px; border: 1px solid #e2e8f0;
+            margin-bottom: 10px;
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 5px 5px;
+            border: 1px solid #e2e8f0;
         }
         .config-select-group label {
-            font-size: 13px; font-weight: 600; color: #1e293b;
-            display: block; margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            display: block;
+            margin-bottom: 8px;
         }
-        .select-with-delete { display: flex; gap: 8px; align-items: center; }
+        .select-with-delete {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
         #configSelect {
-            flex: 1; padding: 10px 12px; border-radius: 40px; border: 1px solid #cbd5e1;
-            background: white; font-size: 14px; font-weight: 500; cursor: pointer; outline: none;
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
         }
         .delete-config-btn {
-            background: #fee2e2; border: none; width: 38px; height: 38px;
-            border-radius: 40px; color: #b91c1c; cursor: pointer;
-            display: inline-flex; align-items: center; justify-content: center; transition: .2s;
+            background: #fee2e2;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 40px;
+            color: #b91c1c;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
         }
-        .delete-config-btn:hover { background: #fecaca; color: #991b1b; }
+        .delete-config-btn:hover {
+            background: #fecaca;
+            color: #991b1b;
+        }
 
+        
         .manual-config-group {
-            margin-top: 5px; margin-bottom: 20px; background: #ffffff;
-            border: 1px solid #e2e8f0; border-radius: 24px; padding: 16px 14px;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 16px 14px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
         .manual-config-group h4 {
-            font-size: 12px; font-weight: 600; margin-bottom: 5px;
-            display: flex; align-items: center; gap: 5px; color: #0f172a;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #0f172a;
         }
         .manual-config-group input, .manual-config-group textarea {
-            width: 100%; padding: 5px 5px; border: 1px solid #cbd5e1;
-            border-radius: 16px; font-size: 12px; font-family: 'Segoe UI', system-ui;
-            margin-bottom: 10px; background: #fefefe; transition: .2s;
+            width: 100%;
+            padding: 5px 5px;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            font-size: 12px;
+            font-family: 'Segoe UI', system-ui;
+            margin-bottom: 10px;
+            background: #fefefe;
+            transition: 0.2s;
         }
         .manual-config-group input:focus, .manual-config-group textarea:focus {
-            outline: none; border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59,130,246,.1);
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
         }
-        .manual-config-group textarea { resize: vertical; min-height: 70px; }
+        .manual-config-group textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
         .save-config {
-            background: #0f172a; color: white; width: 100%; border: none;
-            padding: 5px; border-radius: 40px; font-weight: 600;
-            margin-top: 6px; cursor: pointer; transition: .2s;
+            background: #0f172a;
+            color: white;
+            width: 100%;
+            border: none;
+            padding: 5px;
+            border-radius: 40px;
+            font-weight: 600;
+            margin-top: 6px;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .save-config:hover { background: #1e293b; }
+        .save-config:hover {
+            background: #1e293b;
+        }
 
-        .field-hint { font-size: 10px; color: #94a3b8; margin: -6px 0 10px 6px; }
-
+        .import-format-hint {
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 11px;
+            color: #334155;
+            margin-top: 12px;
+            font-family: monospace;
+            word-break: break-all;
+        }
         .api-status {
-            margin-top: 18px; padding: 10px; border-radius: 40px;
-            font-size: 12px; text-align: center; background: #f1f5f9;
+            margin-top: 18px;
+            padding: 10px;
+            border-radius: 40px;
+            font-size: 12px;
+            text-align: center;
+            background: #f1f5f9;
         }
-        .api-status.connected { background: #e0f2fe; color: #0369a1; }
-        .api-status.disconnected { background: #fee2e2; color: #b91c1c; }
-        .status { margin-top: 12px; font-size: 12px; text-align: center; }
+        .api-status.connected {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        .api-status.disconnected {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .status {
+            margin-top: 12px;
+            font-size: 12px;
+            text-align: center;
+        }
         .loader-mini {
-            display: inline-block; width: 16px; height: 16px;
-            border: 2px solid #e2e8f0; border-top-color: #3b82f6;
-            border-radius: 50%; animation: spin .6s linear infinite; margin-right: 8px;
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .error-details {
-            background: #fee2e2; font-size: 12px; padding: 8px;
-            border-radius: 12px; margin-top: 8px; display: none;
+            background: #fee2e2;
+            font-size: 12px;
+            padding: 8px;
+            border-radius: 12px;
+            margin-top: 8px;
+            display: none;
         }
         .import-config-area {
-            margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;
+            margin-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
         }
-        .import-config-btn { background: #334155; margin-bottom: 8px; }
-
+        .import-config-btn {
+            background: #334155;
+            margin-bottom: 8px;
+        }
+        
         @media (max-width: 650px) {
-            .split-view { flex-direction: column; }
+            .split-view {
+                flex-direction: column;
+            }
             .original-area, .translated-area {
-                border-right: none; border-bottom: 1px solid #eef2f6; padding: 5px;
+                border-right: none;
+                border-bottom: 1px solid #eef2f6;
+                padding: 5px;
             }
             .original-area { flex: 1; order: 2; min-height: 33%; }
             .translated-area { order: 1; flex: 2; min-height: 0; }
@@ -187,7 +462,9 @@
             .swap-icon { width: 26px; height: 26px; }
             .toolbar-left, .toolbar-right { min-width: auto; }
             .config-panel { width: 280px; }
-            .select-with-delete { flex-wrap: wrap; }
+            .select-with-delete {
+                flex-wrap: wrap;
+            }
         }
         .text-output::-webkit-scrollbar { width: 5px; }
     </style>
@@ -195,12 +472,13 @@
 <body>
 <div class="app-container">
     <div class="main-layout">
-        <!-- 左侧配置面板 -->
+        <!-- 左侧配置面板 (折叠/展开) -->
         <div class="config-panel collapsed" id="configPanel">
             <div class="config-title">
                 <i class="fas fa-layer-group"></i> 配置
             </div>
 
+            <!-- 配置组下拉菜单 + 删除按钮 -->
             <div class="config-select-group">
                 <label><i class="fas fa-list-ul"></i> 当前配置</label>
                 <div class="select-with-delete">
@@ -211,32 +489,35 @@
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
+                
             </div>
 
-            <!-- 手动配置：Key 可选 -->
+            <!-- 手动配置区域 (保存后自动清空表单) -->
             <div class="manual-config-group">
-                <h4><i class="fas fa-pen-alt"></i> 添加配置</h4>
-                <input type="text" id="manual-config-name" placeholder="配置名称（如：本机）" autocomplete="off">
-                <input type="text" id="api-host" placeholder="API Host（如：http://127.0.0.1:8085）" autocomplete="off">
-                <div class="field-hint">本机 llama.cpp 填 http://127.0.0.1:8085；留空则用此默认值</div>
-                <input type="password" id="api-key" placeholder="API Key（本机可留空）" autocomplete="off">
-                <div class="field-hint">使用云端服务（OpenAI 等）时填写；本机无认证服务器可留空</div>
-                <input type="text" id="model-id" placeholder="模型名称（可留空）" autocomplete="off">
-                <textarea id="custom-prompt" rows="2" placeholder="自定义系统提示词（可留空，留空使用默认翻译提示词）"></textarea>
+                <h4><i class="fas fa-pen-alt"></i> 添加</h4>
+                <input type="text" id="manual-config-name" placeholder="N" autocomplete="off">
+                <input type="password" id="api-key" placeholder="K">
+                <input type="text" id="api-host" placeholder="H">
+                <input type="text" id="model-id" placeholder="M">
+                <textarea id="custom-prompt" rows="2" placeholder=" "></textarea>
                 <button class="save-config" id="save-config"><i class="fas fa-plus-circle"></i> 保存到配置组</button>
             </div>
 
+            <!-- 导入JSON配置区 -->
             <div class="import-config-area">
-                <button class="save-config import-config-btn" id="import-config-btn">
+                <button class="save-config import-config-btn" id="import-config-btn" style="background:#334155;">
                     <i class="fas fa-upload"></i> 导入配置
                 </button>
                 <input type="file" id="import-file-input" accept=".json" style="display:none;">
+                
             </div>
 
+            <!-- API状态 & 配置状态提示 -->
             <div class="api-status disconnected" id="api-status">
                 <i class="fas fa-times-circle"></i> 未选择有效配置
             </div>
             <div class="status" id="config-status"></div>
+            
         </div>
 
         <!-- 右侧翻译核心区域 -->
@@ -257,19 +538,19 @@
                         </div>
                     </div>
                     <div class="error-details" id="error-details"></div>
-                    <button id="show-error" class="copy-btn" style="display: none; margin-top: 8px; font-size:12px;">
-                        <i class="fas fa-bug"></i> 查看错误详情
-                    </button>
+                    <button id="show-error" class="copy-btn" style="display: none; margin-top: 8px; font-size:12px;"><i class="fas fa-bug"></i> 查看错误详情</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 底部工具栏：左侧显示配置按钮，中间为语言切换器（多语言功能），右侧为翻译按钮 -->
     <div class="global-toolbar">
         <div class="toolbar-left">
             <button id="toggleConfigBtn" class="btn btn-outline"><i class="fas fa-sliders-h"></i> 配置</button>
         </div>
         <div class="toolbar-center">
+            <!-- 多语言转换功能按钮组（语言选择 + 交换图标）移至页面正中间 -->
             <div class="lang-switcher">
                 <select id="source-lang" class="lang-select">
                     <option value="英语">英语</option><option value="中文">中文</option><option value="日语">日语</option>
@@ -285,65 +566,92 @@
             </div>
         </div>
         <div class="toolbar-right">
+            <!-- 翻译按钮移到靠右边位置 -->
             <button id="translate-btn" class="btn btn-primary"><i class="fas fa-language"></i> 翻译</button>
         </div>
     </div>
-    <div id="loader" style="display: none; position: fixed; bottom: 80px; right: 20px; background: white; border-radius: 30px; padding: 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size:12px;">
-        <span class="loader-mini"></span> 翻译中...
-    </div>
+    <div id="loader" style="display: none; position: fixed; bottom: 80px; right: 20px; background: white; border-radius: 30px; padding: 6px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size:12px;"><span class="loader-mini"></span> 翻译中...</div>
 </div>
 
 <script>
     (function(){
-        // ---------- DOM ----------
-        const inputText        = document.getElementById('input-text');
-        const outputTextDiv    = document.getElementById('output-text');
-        const translateBtn     = document.getElementById('translate-btn');
-        const copyBtn          = document.getElementById('copy-btn');
-        const swapBtn          = document.getElementById('swap-languages');
-        const sourceLang       = document.getElementById('source-lang');
-        const targetLang       = document.getElementById('target-lang');
-        const charCountSpan    = document.getElementById('char-count');
-        const loader           = document.getElementById('loader');
-        const configStatusDiv  = document.getElementById('config-status');
-        const apiStatusDiv     = document.getElementById('api-status');
-        const errorDetailsDiv  = document.getElementById('error-details');
-        const showErrorBtn     = document.getElementById('show-error');
-        const importConfigBtn  = document.getElementById('import-config-btn');
-        const importFileInput  = document.getElementById('import-file-input');
-        const configPanel      = document.getElementById('configPanel');
-        const toggleConfigBtn  = document.getElementById('toggleConfigBtn');
-        const configSelect     = document.getElementById('configSelect');
-        const deleteConfigBtn  = document.getElementById('deleteConfigBtn');
+        
+        const inputText = document.getElementById('input-text');
+        const outputTextDiv = document.getElementById('output-text');
+        const translateBtn = document.getElementById('translate-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const swapBtn = document.getElementById('swap-languages');
+        const sourceLang = document.getElementById('source-lang');
+        const targetLang = document.getElementById('target-lang');
+        const charCountSpan = document.getElementById('char-count');
+        const loader = document.getElementById('loader');
+        const configStatusDiv = document.getElementById('config-status');
+        const apiStatusDiv = document.getElementById('api-status');
+        const errorDetailsDiv = document.getElementById('error-details');
+        const showErrorBtn = document.getElementById('show-error');
+        const importConfigBtn = document.getElementById('import-config-btn');
+        const importFileInput = document.getElementById('import-file-input');
+        const configPanel = document.getElementById('configPanel');
+        const toggleConfigBtn = document.getElementById('toggleConfigBtn');
+        const configSelect = document.getElementById('configSelect');
+        const deleteConfigBtn = document.getElementById('deleteConfigBtn');
 
+        
         const manualConfigName = document.getElementById('manual-config-name');
-        const apiHostInput     = document.getElementById('api-host');
-        const apiKeyInput      = document.getElementById('api-key');
-        const modelIdInput     = document.getElementById('model-id');
-        const customPromptInput= document.getElementById('custom-prompt');
-        let saveConfigBtn      = document.getElementById('save-config');
+        const apiKeyInput = document.getElementById('api-key');
+        const apiHostInput = document.getElementById('api-host');
+        const modelIdInput = document.getElementById('model-id');
+        const customPromptInput = document.getElementById('custom-prompt');
+        let saveConfigBtn = document.getElementById('save-config');
 
-        // ---------- 常量 ----------
-        const DEFAULT_HOST = "http://127.0.0.1:8085";
-        const DEFAULT_MODEL = "local-model";
-
-        // ---------- 状态 ----------
-        let configGroups = [];
+        
+        let configGroups = [];       
         let currentConfigName = null;
         let isTranslating = false;
         let autoTranslateTimeout = null;
         let lastTranslatedText = '';
 
-        const STORAGE_KEY_MULTI  = 'ai-translator-multi-configs-v2';
-        const STORAGE_KEY_ACTIVE = 'ai-translator-active-config-v2';
+        
+        const STORAGE_KEY_MULTI = 'ai-translator-multi-configs';
+        const STORAGE_KEY_ACTIVE = 'ai-translator-active-config';
 
-        // ---------- 存储 ----------
+        
         function saveMultiConfigsToLocal() {
             localStorage.setItem(STORAGE_KEY_MULTI, JSON.stringify(configGroups));
         }
+
         function saveActiveConfigName() {
-            if (currentConfigName) localStorage.setItem(STORAGE_KEY_ACTIVE, currentConfigName);
-            else localStorage.removeItem(STORAGE_KEY_ACTIVE);
+            if (currentConfigName) {
+                localStorage.setItem(STORAGE_KEY_ACTIVE, currentConfigName);
+            } else {
+                localStorage.removeItem(STORAGE_KEY_ACTIVE);
+            }
+        }
+
+        
+        function migrateOldSingleConfig() {
+            const oldConfigRaw = localStorage.getItem('ai-translator-config');
+            if (oldConfigRaw && configGroups.length === 0) {
+                try {
+                    const old = JSON.parse(oldConfigRaw);
+                    if (old.apiKey && old.apiKey.trim()) {
+                        const migrated = {
+                            name: "默认配置(旧)",
+                            apiKey: old.apiKey.trim(),
+                            apiHost: old.apiHost?.trim() || "",
+                            modelId: old.modelId?.trim() || "",
+                            customPrompt: old.customPrompt?.trim() || ""
+                        };
+                        configGroups.push(migrated);
+                        currentConfigName = migrated.name;
+                        saveMultiConfigsToLocal();
+                        saveActiveConfigName();
+                        localStorage.removeItem('ai-translator-config');
+                        return true;
+                    }
+                } catch(e) { console.warn("迁移失败", e); }
+            }
+            return false;
         }
 
         function loadMultiConfigs() {
@@ -352,7 +660,7 @@
                 try {
                     const parsed = JSON.parse(stored);
                     if (Array.isArray(parsed)) {
-                        // 只要求 name，其他字段均可选
+                        // 修改：不再过滤 apiKey 为空的配置，仅要求 name 存在
                         configGroups = parsed.filter(cfg => cfg && cfg.name);
                     } else {
                         configGroups = [];
@@ -361,6 +669,8 @@
             } else {
                 configGroups = [];
             }
+            migrateOldSingleConfig();
+
             const activeName = localStorage.getItem(STORAGE_KEY_ACTIVE);
             if (activeName && configGroups.some(c => c.name === activeName)) {
                 currentConfigName = activeName;
@@ -387,9 +697,11 @@
             for (let cfg of configGroups) {
                 const option = document.createElement('option');
                 option.value = cfg.name;
-                const mark = cfg.apiKey ? " 🔑" : (cfg.apiHost ? " 🖥" : " ⚠");
-                option.textContent = cfg.name + mark;
-                if (currentConfigName === cfg.name) option.selected = true;
+                // 修改：标记配置时不再依赖 apiKey，用 ✔ 表示存在，空 key 也显示为可用
+                option.textContent = cfg.name + (cfg.apiKey ? " ✔" : " ✔ (无密钥)");
+                if (currentConfigName === cfg.name) {
+                    option.selected = true;
+                }
                 configSelect.appendChild(option);
             }
         }
@@ -401,92 +713,126 @@
                 return;
             }
             const cfg = configGroups.find(c => c.name === currentConfigName);
+            // 修改：不再检查 apiKey 是否为空，只要配置存在就视为有效
             if (!cfg) {
                 apiStatusDiv.className = 'api-status disconnected';
-                apiStatusDiv.innerHTML = '<i class="fas fa-times-circle"></i> 配置不存在';
+                apiStatusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 配置不存在';
                 return;
             }
             apiStatusDiv.className = 'api-status connected';
-            const host = cfg.apiHost || DEFAULT_HOST + "（默认）";
-            const auth = cfg.apiKey ? " · 带 Key" : " · 无 Key";
-            apiStatusDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${escapeHtml(cfg.name)}<br><span style="font-size:10px;opacity:.8;">${escapeHtml(host)}${auth}</span>`;
+            // 显示配置信息，如果无 apiKey 则显示“无认证”
+            const authInfo = cfg.apiKey && cfg.apiKey.trim() ? '' : ' (无认证)';
+            apiStatusDiv.innerHTML = `<i class="fas fa-check-circle"></i> 当前配置：${escapeHtml(cfg.name)} (${cfg.modelId || 'gpt-3.5-turbo'})${authInfo}`;
         }
 
         function getCurrentConfig() {
             if (!currentConfigName) return null;
             const cfg = configGroups.find(c => c.name === currentConfigName);
+            // 修改：只检查配置是否存在，不要求 apiKey
             if (!cfg) return null;
-            let host = (cfg.apiHost && cfg.apiHost.trim()) || DEFAULT_HOST;
-            // 若没写协议，自动补 http://
-            if (!/^https?:\/\//i.test(host)) host = "http://" + host;
-            host = host.replace(/\/+$/, "");
             return {
-                apiHost: host,
-                apiKey: (cfg.apiKey && cfg.apiKey.trim()) || "",
-                modelId: (cfg.modelId && cfg.modelId.trim()) || DEFAULT_MODEL,
-                customPrompt: (cfg.customPrompt && cfg.customPrompt.trim()) || ""
+                apiKey: cfg.apiKey ? cfg.apiKey.trim() : "",
+                apiHost: cfg.apiHost?.trim() || "",
+                modelId: cfg.modelId?.trim() || "",
+                customPrompt: cfg.customPrompt?.trim() || ""
             };
         }
 
         function switchToConfig(configName) {
             if (!configName) return false;
-            if (!configGroups.some(c => c.name === configName)) return false;
+            const exists = configGroups.some(c => c.name === configName);
+            if (!exists) return false;
             currentConfigName = configName;
             saveActiveConfigName();
             refreshConfigSelect();
             updateApiStatusUI();
-            if (inputText.value.trim() !== "") triggerAutoTranslate();
+            if (inputText.value.trim() !== "") {
+                triggerAutoTranslate();
+            }
             return true;
         }
 
-        // ---------- 状态提示 ----------
-        function flashStatus(msg, cls) {
-            configStatusDiv.textContent = msg;
-            configStatusDiv.className = 'status ' + (cls || '');
-            setTimeout(() => { configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 2500);
-        }
-
-        // ---------- 删除 ----------
+        
         function deleteCurrentConfig() {
-            if (configGroups.length === 0) { flashStatus('⚠️ 没有可删除的配置', 'error'); return; }
+            if (configGroups.length === 0) {
+                configStatusDiv.textContent = '⚠️ 没有可删除的配置';
+                configStatusDiv.className = 'status error';
+                setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 2000);
+                return;
+            }
             const selectedName = configSelect.value;
-            if (!selectedName) { flashStatus('请先选择一个配置组', 'error'); return; }
-            if (!confirm(`确定要删除配置组“${selectedName}”吗？`)) return;
+            if (!selectedName) {
+                configStatusDiv.textContent = '请先选择一个配置组';
+                configStatusDiv.className = 'status error';
+                setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 2000);
+                return;
+            }
+            const confirmDel = confirm(`确定要删除配置组“${selectedName}”吗？此操作不可撤销。`);
+            if (!confirmDel) return;
 
             const index = configGroups.findIndex(c => c.name === selectedName);
             if (index !== -1) {
                 configGroups.splice(index, 1);
                 saveMultiConfigsToLocal();
+                
                 if (currentConfigName === selectedName) {
-                    currentConfigName = configGroups.length > 0 ? configGroups[0].name : null;
+                    if (configGroups.length > 0) {
+                        currentConfigName = configGroups[0].name;
+                    } else {
+                        currentConfigName = null;
+                    }
                     saveActiveConfigName();
                 }
                 refreshConfigSelect();
                 updateApiStatusUI();
-                flashStatus(`✅ 已删除配置组“${selectedName}”`, 'success');
+                configStatusDiv.textContent = `✅ 已删除配置组“${selectedName}”`;
+                configStatusDiv.className = 'status success';
+                setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 2500);
+                
                 if (inputText.value.trim() !== "") triggerAutoTranslate();
                 else if (outputTextDiv.innerHTML) outputTextDiv.innerHTML = '';
+            } else {
+                configStatusDiv.textContent = '❌ 配置不存在';
+                configStatusDiv.className = 'status error';
+                setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 2000);
             }
         }
 
-        // ---------- 新增/更新配置 ----------
+        
         function addOrUpdateManualConfig() {
             const name = manualConfigName.value.trim();
+            const apiKey = apiKeyInput.value.trim(); // 可以为空
             const apiHost = apiHostInput.value.trim() || "";
-            const apiKey = apiKeyInput.value.trim() || "";
             const modelId = modelIdInput.value.trim() || "";
             const customPrompt = customPromptInput.value.trim();
 
-            if (!name) { flashStatus('❌ 请填写配置名称', 'error'); return false; }
-            // 不再强制要求 apiKey
+            if (!name) {
+                configStatusDiv.textContent = '❌ 请填写配置名称';
+                configStatusDiv.className = 'status error';
+                setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 2500);
+                return false;
+            }
+            // 修改：删除了 apiKey 必须非空的检查
 
-            const cfg = { name, apiHost, apiKey, modelId, customPrompt };
             const existingIndex = configGroups.findIndex(c => c.name === name);
             if (existingIndex !== -1) {
-                if (!confirm(`配置组 "${name}" 已存在，是否覆盖？`)) return false;
-                configGroups[existingIndex] = cfg;
+                const confirmReplace = confirm(`配置组 "${name}" 已存在，是否覆盖？`);
+                if (!confirmReplace) return false;
+                configGroups[existingIndex] = {
+                    name: name,
+                    apiKey: apiKey,
+                    apiHost: apiHost,
+                    modelId: modelId,
+                    customPrompt: customPrompt
+                };
             } else {
-                configGroups.push(cfg);
+                configGroups.push({
+                    name: name,
+                    apiKey: apiKey,
+                    apiHost: apiHost,
+                    modelId: modelId,
+                    customPrompt: customPrompt
+                });
             }
 
             saveMultiConfigsToLocal();
@@ -494,44 +840,53 @@
             saveActiveConfigName();
             refreshConfigSelect();
             updateApiStatusUI();
-            flashStatus(`✅ 配置组“${name}”已保存并激活`, 'success');
+            configStatusDiv.textContent = `✅ 配置组“${name}”已保存并激活`;
+            configStatusDiv.className = 'status success';
+            setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 3000);
 
+            
             manualConfigName.value = '';
-            apiHostInput.value = '';
             apiKeyInput.value = '';
+            apiHostInput.value = '';
             modelIdInput.value = '';
             customPromptInput.value = '';
+            
             if (inputText.value.trim() !== "") triggerAutoTranslate();
             return true;
         }
 
-        // ---------- 导入 ----------
+        
         function importMultiConfigs(jsonData) {
             let configsArray = null;
-            if (Array.isArray(jsonData)) configsArray = jsonData;
-            else if (jsonData.configs && Array.isArray(jsonData.configs)) configsArray = jsonData.configs;
-            else throw new Error("无效格式: 需要 { configs: [...] } 或直接数组");
+            if (Array.isArray(jsonData)) {
+                configsArray = jsonData;
+            } else if (jsonData.configs && Array.isArray(jsonData.configs)) {
+                configsArray = jsonData.configs;
+            } else {
+                throw new Error("无效格式: 需要提供 { configs: [...] } 或直接数组");
+            }
             if (!configsArray.length) throw new Error("配置列表为空");
-
             const newGroups = [];
             for (let item of configsArray) {
-                if (!item.name || typeof item.name !== 'string')
-                    throw new Error("每个配置需要 name 字段(字符串)");
+                if (!item.name || typeof item.name !== 'string') throw new Error("每个配置需要 name 字段(字符串)");
+                // 修改：不再要求 apiKey 必须存在，可以为空字符串
                 const name = item.name.trim();
-                if (newGroups.some(g => g.name === name))
-                    throw new Error(`重复的配置名称: ${name}`);
+                if (newGroups.some(g => g.name === name)) throw new Error(`重复的配置名称: ${name}`);
                 newGroups.push({
-                    name,
-                    apiHost: (item.apiHost && item.apiHost.trim()) || "",
+                    name: name,
                     apiKey: (item.apiKey && item.apiKey.trim()) || "",
+                    apiHost: (item.apiHost && item.apiHost.trim()) || "",
                     modelId: (item.modelId && item.modelId.trim()) || "",
                     customPrompt: (item.customPrompt && item.customPrompt.trim()) || ""
                 });
             }
             for (let newCfg of newGroups) {
                 const idx = configGroups.findIndex(g => g.name === newCfg.name);
-                if (idx !== -1) configGroups[idx] = newCfg;
-                else configGroups.push(newCfg);
+                if (idx !== -1) {
+                    configGroups[idx] = newCfg;
+                } else {
+                    configGroups.push(newCfg);
+                }
             }
             saveMultiConfigsToLocal();
             if (!currentConfigName || !configGroups.some(g => g.name === currentConfigName)) {
@@ -545,92 +900,85 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
         }
 
-        // ---------- 翻译请求 ----------
-        async function translateTextWithAPI(text, source, target, config) {
-            if (!config) throw new Error("请先配置有效的 API Host");
+        
+        async function translateTextWithGPT(text, source, target, config) {
+            // 修改：不再强制要求 apiKey，允许空 key 情况
+            if (!config) throw new Error("请先配置有效的API");
             const apiUrl = `${config.apiHost}/v1/chat/completions`;
-
-            let systemPrompt;
-            if (config.customPrompt && config.customPrompt.trim() !== '') {
-                systemPrompt = config.customPrompt.trim();
-            } else {
-                systemPrompt = `你是一个专业的翻译助手，请将${source}文本准确翻译成${target}。要求：1.只返回翻译成${target}的结果不做其他解释，显示在第一行。2.如果英文语句中有语法错误，纠正语句并空一行显示“纠正为：XXX”。3.如果输入只有一个单词，只返回翻译结果不做其他解释，再空一行然后显示对应音标，格式为[xxx]。4.再提供2个语义完全相同的英文例句，空一行然后显示在“例句为：1.XXX”`;
+            let systemPrompt = config.customPrompt && config.customPrompt.trim() !== '' 
+                ? config.customPrompt.trim() 
+                : `你是一个专业的翻译助手，请将${source}文本准确翻译成${target}。要求：1.只返回翻译成${target}的结果不做其他解释，显示在第一行。2.如果英文语句中有语法错误，纠正语句并空一行显示“纠正为：XXX”，3.如果输入只有一个单词，只返回翻译结果不做其他解释，再空一行然后显示对应音标，格式为[xxx]。4.再提供2个语义完全相同的英文例句，空一行然后显示在“例句为：1.XXX”`;
+            if(!config.customPrompt || config.customPrompt.trim() === ''){
+                systemPrompt = systemPrompt.replace('${source}', source).replace('${target}', target);
             }
-
-            // 构建 Header：有 Key 才加 Authorization
-            const headers = { 'Content-Type': 'application/json' };
-            if (config.apiKey) {
+            // 修改：构造 headers 时，只有当 apiKey 非空才添加 Authorization
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (config.apiKey && config.apiKey.trim() !== '') {
                 headers['Authorization'] = `Bearer ${config.apiKey}`;
             }
-
-            let response;
-            try {
-                response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({
-                        model: config.modelId,
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user",   content: text }
-                        ],
-                        temperature: 0.3,
-                        max_tokens: 2000
-                    })
-                });
-            } catch (netErr) {
-                throw new Error(`无法连接到服务器（${apiUrl}）：${netErr.message}`);
-            }
-
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    model: config.modelId,
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: text }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 2000
+                })
+            });
             const respText = await response.text();
-            if (!response.ok) {
+            if(!response.ok){
                 let msg = `HTTP ${response.status}`;
-                try {
+                try{
                     const errData = JSON.parse(respText);
-                    msg = errData.error?.message || errData.detail || msg;
-                } catch(e){}
+                    msg = errData.error?.message || msg;
+                }catch(e){}
                 throw new Error(msg);
             }
             const data = JSON.parse(respText);
-            if (!data.choices || !data.choices[0]?.message?.content) throw new Error("API 返回异常");
+            if(!data.choices || !data.choices[0]?.message?.content) throw new Error("API返回异常");
             return data.choices[0].message.content;
         }
 
-        // ---------- 翻译主流程 ----------
         async function performTranslation() {
             const text = inputText.value.trim();
             errorDetailsDiv.style.display = 'none';
             showErrorBtn.style.display = 'none';
-
             const currentConfigObj = getCurrentConfig();
             if (!currentConfigObj) {
-                outputTextDiv.innerHTML = '<p style="color:#ef4444;">⚠️ 无有效配置组，请在左侧添加一个配置（Host 可留空使用默认本机）。</p>';
+                outputTextDiv.innerHTML = '<p style="color: #ef4444;">⚠️ 无有效配置组，请手动添加配置或导入JSON并选择一个配置组。</p>';
                 return;
             }
             if (text === '') { outputTextDiv.innerHTML = ''; return; }
-            if (text.length > 2000) {
-                outputTextDiv.innerHTML = '<p style="color:red;">超出字符限制</p>';
-                return;
-            }
+            if (text.length > 2000) { outputTextDiv.innerHTML = '<p style="color: red;">超出字符限制</p>'; return; }
             if (text === lastTranslatedText && isTranslating) return;
             lastTranslatedText = text;
-
             isTranslating = true;
             loader.style.display = 'flex';
             translateBtn.disabled = true;
             try {
-                const translated = await translateTextWithAPI(
-                    text, sourceLang.value, targetLang.value, currentConfigObj
-                );
+                const translated = await translateTextWithGPT(text, sourceLang.value, targetLang.value, currentConfigObj);
                 outputTextDiv.innerHTML = translated;
+                loader.style.display = 'none';
+                translateBtn.disabled = false;
+                isTranslating = false;
             } catch(err) {
-                outputTextDiv.innerHTML = `<p style="color:red;">翻译出错: ${escapeHtml(err.message)}</p>`;
+                outputTextDiv.innerHTML = `<p style="color: red;">翻译出错: ${err.message}</p>`;
                 errorDetailsDiv.textContent = err.stack || err.message;
                 showErrorBtn.style.display = 'inline-block';
-            } finally {
                 loader.style.display = 'none';
                 translateBtn.disabled = false;
                 isTranslating = false;
@@ -638,86 +986,88 @@
         }
 
         function triggerAutoTranslate() {
-            if (autoTranslateTimeout) clearTimeout(autoTranslateTimeout);
-            if (inputText.value.trim() === '') {
+            if(autoTranslateTimeout) clearTimeout(autoTranslateTimeout);
+            if(inputText.value.trim() === '') {
                 outputTextDiv.innerHTML = '';
                 showErrorBtn.style.display = 'none';
                 errorDetailsDiv.style.display = 'none';
                 return;
             }
-            if (inputText.value.length > 2000) {
-                outputTextDiv.innerHTML = '<p style="color:red;">文本超过2000字符限制</p>';
+            if(inputText.value.length > 2000) {
+                outputTextDiv.innerHTML = '<p style="color: red;">文本超过2000字符限制</p>';
                 return;
             }
             autoTranslateTimeout = setTimeout(() => performTranslation(), 500);
         }
 
-        // ---------- 事件绑定 ----------
+        
         inputText.addEventListener('input', function() {
             const cnt = inputText.value.length;
             charCountSpan.textContent = cnt;
-            charCountSpan.style.color = cnt > 2000 ? 'red' : '#64748b';
+            if(cnt > 2000) charCountSpan.style.color = 'red';
+            else charCountSpan.style.color = '#64748b';
             triggerAutoTranslate();
         });
         translateBtn.addEventListener('click', () => performTranslation());
-
         copyBtn.addEventListener('click', () => {
             const content = outputTextDiv.innerText;
-            if (!content || content.includes('翻译出错') || content === '') return;
+            if(!content || content.includes('翻译出错') || content === '') return;
             navigator.clipboard.writeText(content).then(() => {
                 copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制!';
                 setTimeout(() => { copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制译文'; }, 1800);
-            }).catch(() => alert('复制失败'));
+            }).catch(()=>alert('复制失败'));
         });
-
         swapBtn.addEventListener('click', () => {
             const tempSrc = sourceLang.value;
             sourceLang.value = targetLang.value;
             targetLang.value = tempSrc;
+            const inputVal = inputText.value;
             const outVal = outputTextDiv.innerText;
-            if (outVal && !outVal.includes('翻译出错') && outVal.trim() !== '' && !outVal.includes('无有效配置')) {
+            if(outVal && !outVal.includes('翻译出错') && outVal.trim() !== '' && !outVal.includes('无有效配置')){
                 inputText.value = outVal;
+                triggerAutoTranslate();
+            } else if(inputVal.trim() !== ''){
+                triggerAutoTranslate();
             }
-            triggerAutoTranslate();
         });
-
-        sourceLang.addEventListener('change', () => { if (inputText.value.trim()) triggerAutoTranslate(); });
-        targetLang.addEventListener('change', () => { if (inputText.value.trim()) triggerAutoTranslate(); });
-
+        sourceLang.addEventListener('change', () => { if(inputText.value.trim()) triggerAutoTranslate(); });
+        targetLang.addEventListener('change', () => { if(inputText.value.trim()) triggerAutoTranslate(); });
         showErrorBtn.addEventListener('click', () => {
             errorDetailsDiv.style.display = errorDetailsDiv.style.display === 'none' ? 'block' : 'none';
         });
-
         configSelect.addEventListener('change', (e) => {
             const selectedName = e.target.value;
             if (selectedName && configGroups.some(c => c.name === selectedName)) {
                 switchToConfig(selectedName);
-                flashStatus(`✅ 已切换至「${selectedName}」`, 'success');
+                configStatusDiv.textContent = `✅ 已切换至「${selectedName}」`;
+                configStatusDiv.className = 'status success';
+                setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 2500);
             }
         });
-
-        deleteConfigBtn.addEventListener('click', deleteCurrentConfig);
-
+        deleteConfigBtn.addEventListener('click', () => deleteCurrentConfig());
         importConfigBtn.addEventListener('click', () => importFileInput.click());
         importFileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (!file) return;
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = (ev) => {
                 try {
                     const jsonObj = JSON.parse(ev.target.result);
                     const importedCount = importMultiConfigs(jsonObj);
-                    flashStatus(`✅ 成功导入/更新 ${importedCount} 组配置`, 'success');
+                    configStatusDiv.textContent = `✅ 成功导入/更新 ${importedCount} 组配置，当前激活: ${currentConfigName || '无'}`;
+                    configStatusDiv.className = 'status success';
+                    setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 3500);
                     if (inputText.value.trim() !== "") triggerAutoTranslate();
                 } catch(err) {
-                    flashStatus(`❌ 导入失败: ${err.message}`, 'error');
+                    configStatusDiv.textContent = `❌ 导入失败: ${err.message}`;
+                    configStatusDiv.className = 'status error';
+                    setTimeout(()=>{ configStatusDiv.textContent = ''; configStatusDiv.className = 'status'; }, 4000);
                 } finally {
                     importFileInput.value = '';
                 }
             };
             reader.readAsText(file, 'UTF-8');
         });
-
         if (saveConfigBtn) {
             const newSaveBtn = saveConfigBtn.cloneNode(true);
             saveConfigBtn.parentNode.replaceChild(newSaveBtn, saveConfigBtn);
@@ -727,31 +1077,24 @@
                 addOrUpdateManualConfig();
             });
         }
-
         let isConfigCollapsed = true;
         function updateToggleUI() {
-            toggleConfigBtn.innerHTML = isConfigCollapsed
-                ? '<i class="fas fa-sliders-h"></i> 配置'
-                : '<i class="fas fa-times"></i> 配置';
+            toggleConfigBtn.innerHTML = isConfigCollapsed ? '<i class="fas fa-sliders-h"></i> 配置' : '<i class="fas fa-times"></i> 配置';
         }
         toggleConfigBtn.addEventListener('click', () => {
             configPanel.classList.toggle('collapsed');
             isConfigCollapsed = configPanel.classList.contains('collapsed');
             updateToggleUI();
         });
-
-        // ---------- 初始化 ----------
+        
         loadMultiConfigs();
         refreshConfigSelect();
         updateApiStatusUI();
         if (configGroups.length === 0) {
-            configStatusDiv.innerHTML = '<i class="fas fa-info-circle"></i> 请添加配置：填 Host 即可，本机可留空';
-            configPanel.classList.remove('collapsed');
-            isConfigCollapsed = false;
-            updateToggleUI();
+            configStatusDiv.innerHTML = '<i class="fas fa-info-circle"></i> 请手动添加配置组或导入';
         } else if (currentConfigName) {
             configStatusDiv.innerHTML = `✨ 当前配置: ${currentConfigName}`;
-            setTimeout(() => { configStatusDiv.innerHTML = ''; }, 2000);
+            setTimeout(()=>{ configStatusDiv.innerHTML = ''; }, 2000);
         }
         updateToggleUI();
         outputTextDiv.innerHTML = '';
